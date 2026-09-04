@@ -27,6 +27,13 @@ export class FeedStore {
   close() {
     this.db.close();
   }
+  eventHead(): number {
+    return Number(this.db.prepare("SELECT COALESCE(MAX(rowid),0) AS n FROM events").get()!.n);
+  }
+  eventsAfter(after: number, through: number) {
+    return this.db.prepare("SELECT rowid AS sequence,data FROM events WHERE rowid>? AND rowid<=? ORDER BY rowid LIMIT 201").all(after, through)
+      .map(r => ({ sequence: Number(r.sequence), event: JSON.parse(String(r.data)) as FeedEvent }));
+  }
   acquireLease(now = Date.now(), duration = 60_000) {
     return (
       this.db

@@ -57,12 +57,20 @@ export class MissionStore {
     if (this.list(owner).length >= 100)
       throw new Error("This workspace has reached its 100 mission limit.");
     const hunter = project.researchKind === "contract" ? hunters[1] : hunters[0];
+    let previous: Mission | null = null;
+    if(input.previousMissionId!==undefined) {
+      if(typeof input.previousMissionId!=="string")throw new Error("Invalid previous mission.");
+      previous=this.get(owner,input.previousMissionId);
+      if(!previous?.report || !previous.reportHash || previous.status!=="reported")throw new Error("Choose a completed report in this workspace as the baseline.");
+      if(previous.address.toLowerCase()!==project.contract.toLowerCase() || previous.provider!==input.provider || previous.hunterId!==hunter.id)throw new Error("Comparison must keep the same contract, provider and Hunter.");
+    }
     const createdAt = new Date().toISOString();
     const id = `0x${randomBytes(32).toString("hex")}`;
     const thesis = hunter.question;
     const deadline = Math.floor(Date.now() / 1000) + 86400;
     const mission: Mission = {
       id,
+      ...(previous?{previousMissionId:previous.id}:{}),
       hunterId: hunter.id,
       projectId: project.id,
       address: project.contract,
@@ -79,6 +87,7 @@ export class MissionStore {
             budget,
             fee: "0.01",
             deadline,
+            ...(previous?{previousMissionId:previous.id,previousReportHash:previous.reportHash}:{}),
           }),
         ),
       ),

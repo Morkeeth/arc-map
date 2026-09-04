@@ -162,3 +162,24 @@ now open their latest saved thesis automatically. Same-name radar rows show cont
 Production HTTP checks returned 200 for discovery, theses, agents, radar and integration health.
 An eight-hour idle-sleep inhibitor is running to support the local workers; closing the laptop
 can still interrupt them. No unbounded financial worker is running.
+
+## NIGHT-2026-09-05 intervention slice — 2026-09-04 23:58 UTC
+
+The experiment's frozen baseline is `587ddc9` plus its recorded dirty tree at 23:24:25 UTC.
+Earlier capabilities above were already in flight or completed before this brief arrived; do
+not attribute all night commits to the intervention. The persistent goal is now active through
+08:00 Paris or verified completion of the authorized brief. No new financial authority.
+
+New slice: server-persisted private follows, ticket-scoped review windows and immutable report
+reruns/comparisons. The source sequence, not observation timestamps, defines unread records;
+an old response arriving late is not lost. Reading/refreshing cannot acknowledge a window.
+Legacy local follows migrate without deleting their local copy. Clearing the workspace cookie
+still loses access; this is not cross-device identity.
+
+`scripts/test-follows-http.ts --wait` followed USDC/EURC and Wrapped USDC at 23:56:41 UTC,
+observed one actual listing change by 23:57:42, and acknowledged only that saved window.
+Owner isolation and invented-ticket rejection fired. The official SDK exercised 18 advertised
+tools, including rerun/compare and follow/review; no separate model result is claimed yet.
+41 application tests, typecheck and build passed. Browser connection repeatedly timed out;
+the new interface is implemented but its visual flow is not yet verified. Next: restore browser
+verification, link saved Hunter evidence into theses, and run an independent bounded agent client.

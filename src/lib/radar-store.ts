@@ -18,6 +18,13 @@ export class RadarStore {
       CREATE TABLE IF NOT EXISTS radar_lease (id INTEGER PRIMARY KEY, until INTEGER NOT NULL);`);
   }
   close() { this.db.close(); }
+  eventHead(): number {
+    return Number(this.db.prepare("SELECT COALESCE(MAX(rowid),0) AS n FROM radar_events").get()!.n);
+  }
+  eventsAfter(after: number, through: number) {
+    return this.db.prepare("SELECT rowid AS sequence,data FROM radar_events WHERE rowid>? AND rowid<=? ORDER BY rowid LIMIT 201").all(after, through)
+      .map(r => ({ sequence: Number(r.sequence), event: JSON.parse(String(r.data)) as RadarEvent }));
+  }
   acquire(now = Date.now()) {
     return this.db.prepare("INSERT INTO radar_lease VALUES(1,?) ON CONFLICT(id) DO UPDATE SET until=excluded.until WHERE until<=?").run(now + 60000, now).changes > 0;
   }

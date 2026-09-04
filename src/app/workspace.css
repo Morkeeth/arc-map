@@ -823,6 +823,14 @@
 .work-title > .work-refresh:has(svg + *) { width: auto; }
 .work-refresh.work-text-button { width: auto; min-height: 38px; height: auto; padding: 10px 14px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .thesis-chart svg { max-height: 180px; }
+.followed-projects { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+.report-comparison { padding: 24px; background: #f8fbff; border: 1px solid #dce6f2; border-radius: 8px; margin-bottom: 24px; line-height: 1.7; }
+.comparison-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.comparison-pair > div { min-width: 0; padding: 15px 0; }
+@media (max-width:760px) { .comparison-pair { grid-template-columns:1fr; gap:8px; } .report-comparison { padding:16px; } }
+.followed-changes .work-event { display: block; }
+.followed-changes > .work-text-button { margin-top: 20px; }
+@media (max-width: 760px) { .work-header nav { overflow-x: auto; gap: 19px; } .work-header nav > * { flex-shrink: 0; } }
 .thesis-detail .report-heading { align-items: flex-start; margin-bottom: 16px; }
 .thesis-detail .report-heading h2 { margin-bottom: 8px; }
 @media (max-width: 760px) { .thesis-layout { grid-template-columns: 1fr; } .thesis-detail { padding: 20px; } .thesis-list { max-height: 260px; overflow-y: auto; } .thesis-detail h2 { font-size: 23px; } .thesis-form-grid { gap: 0 12px; } }

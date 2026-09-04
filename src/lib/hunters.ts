@@ -57,6 +57,7 @@ export type MissionReport = {
 };
 export type Mission = {
   id: string;
+  previousMissionId?: string;
   hunterId: string;
   projectId: string;
   address: string;

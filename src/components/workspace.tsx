@@ -22,6 +22,8 @@ import type { FeedData } from "@/lib/feed-types";
 import type { RadarData } from "@/lib/radar-types";
 import { useHunterWallet } from "./wallet-provider";
 import { RepositoryPanel } from "./repository-panel";
+import { FollowedChanges, type FollowedData } from "./followed-changes";
+import { ReportComparison } from "./report-comparison";
 
 const time = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -62,7 +64,7 @@ export function Workspace({
 }: {
   initialView?: "discover" | "hunters";
 }) {
-  const [view, setView] = useState(initialView);
+  const [view, setView] = useState<"discover"|"hunters"|"changes">(initialView);
   const [feed, setFeed] = useState<FeedData | null>(null);
   const [radar, setRadar] = useState<RadarData | null>(null);
   const [catalogView, setCatalogView] = useState<"radar" | "curated">("radar");
@@ -71,6 +73,8 @@ export function Workspace({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All activity");
   const [following, setFollowing] = useState<string[]>([]);
+  const [followedData, setFollowedData] = useState<FollowedData|null>(null);
+  const [followBusy, setFollowBusy] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [mission, setMission] = useState<Mission | null>(null);
@@ -105,6 +109,19 @@ export function Workspace({
   }, [mission?.id, mission?.status]);
   async function load() {
     setError("");
+    // Establish the private cookie before any other owner-scoped route starts.
+    try {
+      let data=await api("/api/follows");
+      if(!localStorage.getItem("arcmap.follows.migrated.v2")) {
+        const legacy=JSON.parse(localStorage.getItem("arcmap.projects.v1")||"[]");
+        if(Array.isArray(legacy)) for(const id of legacy.slice(0,100)) {
+          if(typeof id==="string" && (projects.some(p=>p.id===id)||/^arc:0x[0-9a-f]{40}$/.test(id))) data=await api("/api/follows",{action:"follow",projectId:id});
+        }
+        localStorage.setItem("arcmap.follows.migrated.v2","true");
+      }
+      setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));setStorageReady(true);
+    }
+    catch { setError("Saved follows unavailable. Existing data remains visible."); }
     void api("/api/integrations").then(setIndexHealth).catch(() => setIndexHealth(null));
     const results = await Promise.allSettled([
       api("/api/feed"),
@@ -126,27 +143,21 @@ export function Workspace({
   }
   useEffect(() => {
     void load();
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem("arcmap.projects.v1") || "[]",
-      );
-      if (Array.isArray(saved))
-        setFollowing(saved.filter((id) => typeof id === "string" && (projects.some((p) => p.id === id) || /^arc:0x[0-9a-f]{40}$/.test(id))));
-    } catch {
-      setError("Local follows could not be loaded.");
-    }
-    setStorageReady(true);
   }, []);
-  function follow(id: string) {
-    const next = following.includes(id)
-      ? following.filter((x) => x !== id)
-      : [...following, id];
+  async function follow(id: string) {
+    setFollowBusy(true);
     try {
-      localStorage.setItem("arcmap.projects.v1", JSON.stringify(next));
-      setFollowing(next);
-    } catch {
-      setError("Your browser could not save this follow.");
-    }
+      const data=await api("/api/follows",{action:following.includes(id)?"unfollow":"follow",projectId:id});
+      setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));
+    } catch { setError("Your follow could not be saved. Try again."); }
+    finally {setFollowBusy(false);}
+  }
+  async function reviewChanges() {
+    if(!followedData)return;
+    setFollowBusy(true);
+    try {setFollowedData(await api("/api/follows",{action:"review",ticket:followedData.ticket}));}
+    catch {setError("Review could not be saved. Refresh changes and try again.");}
+    finally {setFollowBusy(false);}
   }
   function selectMission(item: Mission) {
     setMission(item);
@@ -155,16 +166,17 @@ export function Workspace({
     const target = allProjects.find((p) => p.id === item.projectId);
     if (target) setSelected(target);
   }
-  async function run() {
+  async function run(previous?:Mission) {
     setBusy("Researching");
     setError("");
     setChain(null);
     setTx(null);
     try {
       const created = await api("/api/missions", {
-        projectId: selected.id,
-        provider,
-        budget,
+        projectId: previous?.projectId || selected.id,
+        provider: previous?.provider || provider,
+        budget: previous?.budget || budget,
+        ...(previous?{previousMissionId:previous.id}:{}),
       });
       setMission(created.mission);
       const result = await api(`/api/missions/${created.mission.id}/run`, {});
@@ -232,6 +244,7 @@ export function Workspace({
       (filter !== "Onchain" || e.kind !== "code"),
   ).sort((a,b) => Number(Boolean(b.eventAt)) - Number(Boolean(a.eventAt)) || (b.eventAt || b.observedAt).localeCompare(a.eventAt || a.observedAt)).slice(0, 12);
   const report = mission?.report;
+  const previousReport=mission?.previousMissionId?missions.find(m=>m.id===mission.previousMissionId):undefined;
   const selectedHunter = selected.researchKind === "contract" ? hunters[1] : hunters[0];
   return (
     <div className="workbench">
@@ -255,6 +268,7 @@ export function Workspace({
           <Link href="/map">
             Map <ArrowUpRight size={13} />
           </Link>
+          <button className={view==="changes"?"active":""} onClick={()=>setView("changes")}>Changes{followedData?.events.length?` (${followedData.events.length})`:""}</button>
           <Link href="/agents">
             <Terminal size={15} /> Agents
           </Link>
@@ -284,7 +298,7 @@ export function Workspace({
             <h1>
               {view === "discover"
                 ? "What’s taking shape."
-                : "Put a thesis to work."}
+                : view==="changes"?"What changed while you were away.":"Put a thesis to work."}
             </h1>
           </div>
           <button
@@ -432,7 +446,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : (
+            ) : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
@@ -519,8 +533,8 @@ export function Workspace({
               </div>
               <button
                 className="follow-compact"
-                disabled={!storageReady}
-                onClick={() => follow(selected.id)}
+                disabled={!storageReady || followBusy}
+                onClick={() => void follow(selected.id)}
               >
                 {following.includes(selected.id) ? <Check size={17} /> : "+"}
                 <span>
@@ -646,6 +660,8 @@ export function Workspace({
             className="mission-report"
             aria-live="polite"
           >
+            {previousReport && report && <ReportComparison previous={previousReport} current={mission}/>}
+            {report && <button className="work-refresh work-text-button" disabled={Boolean(busy)} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
             <div className="report-heading">
               <div>
                 <span className="work-kicker">MISSION {short(mission.id)}</span>
@@ -847,7 +863,7 @@ export function Workspace({
         <footer className="work-footer">
           <span>Bounded live radar + curated sources · GitHub + Arcscan · X not connected</span>
           <span>
-            Testnet only · Follows saved on this device · No investment returns
+            Testnet only · Private workspace follows · No investment returns
           </span>
         </footer>
       </main>

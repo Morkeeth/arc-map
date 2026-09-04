@@ -73,6 +73,17 @@ async function main() {
       saved.data.mission.reportHash,
       executed.data.mission.reportHash,
     );
+    const repeated=await call("create_research_mission",{projectId:"sun-token",provider:"explorer",budget:"0.05",previousMissionId:saved.data.mission.id});
+    assert.equal(repeated.error,false);
+    const rechecked=await call("run_research_mission",{id:repeated.data.mission.id});
+    assert.equal(rechecked.error,false);
+    const comparison=await call("compare_research_reports",{previousId:saved.data.mission.id,currentId:rechecked.data.mission.id});
+    assert.equal(comparison.error,false);
+    assert.equal(comparison.data.comparison.previousReportHash,saved.data.mission.reportHash);
+    const followed=await call("follow_project",{projectId:"sun-token"});
+    assert.equal(followed.error,false);
+    const changes=await call("followed_changes");assert.equal(changes.error,false);
+    const reviewed=await call("review_followed_changes",{ticket:changes.data.ticket});assert.equal(reviewed.error,false);
     console.log(
       JSON.stringify(
         {
@@ -90,6 +101,8 @@ async function main() {
             "persisted report retrieval",
             "live radar search and repository inspection",
             "thesis baseline, check, retrieval and cancellation",
+            "immutable report rerun and pinned comparison",
+            "durable project follow and ticket-scoped review",
           ],
           limitation:
             "Protocol integration test, not a separate LLM evaluation. No wallet action or Graph query was substituted.",
