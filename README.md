@@ -19,6 +19,8 @@ In a second terminal, start the source collector:
 
 ```sh
 npm run ingest:watch
+npm run radar:watch
+npm run theses:watch
 ```
 
 It checks the curated GitHub/Arcscan sources every five minutes. `npm run ingest` performs one
@@ -36,15 +38,40 @@ npm run typecheck
 npm run build
 ```
 
-## Working discovery and Hunter build
+## Current build — 2026-09-05
+
+Radar → a sourced target → a Hunter report → a pinned thesis → scheduled evidence checks.
+The first users are two people already watching Arc; the return visit should show what changed.
+
+- `/`: live, bounded contract/token radar plus curated projects. Unknown names remain untrusted.
+- `/theses`: private claims with locked criteria, live baselines, evidence timelines and finite
+  read-only schedules. Cancellation fences in-flight checks. No probabilities or returns are invented.
+- Distribution and Activity Hunters inspect token transfers and contract calls. Ship Hunter
+  inspects the sourced Arc node and Circle Agent Stack repositories.
+- The `arcmap` SUN transfer subgraph is published to Graph Studio and returned live indexed data.
+  Broader radar targets require explicit explorer research; they are not Graph-indexed by implication.
+- Arc testnet research escrow was deployed and a capped live lifecycle completed: 0.05 funded,
+  0.01 fixed fee, 0.04 reclaimed. Total gas including deployment: 0.0262614 native testnet USDC.
+  This was an operator-controlled CLI run, **not a verified Privy browser payment flow**.
+- `/api/mcp` exposes 13 research tools, including radar, repository inspection, theses and checks.
+  The official SDK integration test exercised those flows. It is not an independent LLM evaluation.
+- `contracts/sandbox` contains local-chain-only asset-backed strategy shares. Eleven local tests
+  cover allocation limits, losses, share transfer, redemption and frozen-venue in-kind exits.
+  No strategy token has been deployed publicly. This is unaudited research, not a live investment product.
+
+Run `npm run backup` for local SQLite snapshots with integrity checks. Private mission/thesis
+data and wallet-run records stay outside git. See [overnight build status](docs/OVERNIGHT-BUILD.md)
+and [launch operations](docs/LAUNCH-OPERATIONS.md) for live boundaries and recovery instructions.
+
+## Earlier discovery slice (historical)
 
 - **Discovery workspace** at `/`: source observations, project selection, filters and local follows.
 - **Hunters** at `/hunters`: saved private research missions, explicit Graph/explorer provider selection,
   evidence-backed conclusions and immutable report commitments.
 - Privy wallet connection UI and simulated, wallet-approved Arc testnet funding/withdrawal preparation.
-  Authentication and public-network payment verification remain open.
+  Browser authentication/payment verification remains open; the CLI testnet path is verified above.
 - A fixed-fee research escrow with executor, payee, expected report hash, deadline, budget cap,
-  cancellation and surplus withdrawal. Tested on an isolated local EVM, not deployed to Arc.
+  cancellation and surplus withdrawal. Tested locally and now deployed on Arc testnet.
 - MCP Streamable HTTP at `/api/mcp`: project discovery, Hunter catalog, mission creation, live
   research and report retrieval. Verified with the official SDK client.
 - Four curated project profiles at `/projects/:id`, with explicit evidence for source associations.
@@ -60,9 +87,9 @@ npm run build
 - **Hunt this** runs a fixed, read-only scout against the latest returned transfer page. It reports
   sender/recipient counts, repeated senders, event time and source transactions, with sample limits.
 - A read-only JSON scout endpoint for agents: `/api/hunt?address=0x...`.
-- An optional Graph discovery adapter with an explicit schema contract. It is not deployed.
+- An optional Graph token-discovery adapter with an explicit schema contract remains separate.
 - A separate [Graph transfer index](subgraphs/arcmap/README.md), initialized for Studio slug
-  `arcmap` on Arc Testnet. It is not deployed or connected to the hunter yet.
+  `arcmap` on Arc Testnet is deployed and connected to the Distribution Hunter.
 
 The atlas is a discovery layout, not a geographic map or a measured wallet relationship graph.
 Only a bounded set of tokens is shown. Token labels and category names do not establish official
@@ -70,10 +97,9 @@ protocol deployments. A current fetch may contain old events.
 
 ## Next product capabilities
 
-Hosted Graph indexing; broader source coverage; X ingestion; shared account watchlists;
-agent-selected investigation steps; a dedicated settlement worker; actual Arc testnet payment
-verification; and separately reviewed strategy backing. The contract and payment preparation
-exist locally; no live escrow or investment token is claimed.
+Public hosting; X ingestion; shared account watchlists; independently evaluated agent-selected
+investigations; verified Privy browser payments; and separately reviewed strategy backing.
+The research escrow is live on testnet. No public strategy token or mainnet readiness is claimed.
 
 The first customers are two people already watching Arc for useful projects and ideas. The
 product should help them answer: what changed, why might it matter, and what should we investigate?
@@ -107,17 +133,17 @@ agent evaluation. That initial slice was API-tested only; see the newer Hunter b
 
 ## Hunter verification — 2026-09-05
 
-The expanded unit tests and production build are supplemented by Foundry contract tests,
+The initial Hunter unit tests and production build were supplemented by Foundry contract tests,
 a local-EVM payment lifecycle and an official MCP SDK client flow. The browser research flow
 returned a real explorer sample, showed the missing-Graph failure, and opened Privy's login
 modal. No login credentials or wallet signature were supplied. Desktop and narrow layouts
 were inspected; the full phone wallet/transaction flow remains unverified.
 
-Latest run: 19 application tests and 12 contract tests passed. The standalone production server
+Initial Hunter run: 19 application tests and 12 contract tests passed. The standalone production server
 returned 200 for discovery, Hunters, agent docs, Hunter capabilities and private mission listing.
 Graph code generation and WASM compilation passed. At 390 CSS pixels the workspace had no
 horizontal overflow and project selection scrolled to the Hunter controls.
 
 Run `npm run check:integrations` to probe actual live readiness. Configuration presence is not
 successful authentication or deployment. The payment contract is testnet-only. Investment
-shares, autonomous trading and mainnet support are not implemented.
+shares are local-sandbox-only; autonomous trading and mainnet support are not implemented.

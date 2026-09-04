@@ -11,6 +11,7 @@ export type Project = {
   relation: string;
   repo?: string;
   contract?: string;
+  researchKind?: "token" | "contract";
 };
 
 // A curated source catalog, not invented activity or a complete ecosystem census.

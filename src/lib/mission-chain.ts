@@ -12,6 +12,7 @@ import {
 import { arcTestnet } from "viem/chains";
 import { escrowAbi } from "./escrow";
 import type { Mission } from "./hunters";
+import { assessIndexFreshness } from "./index-freshness";
 
 export function chainConfig() {
   const address = process.env.HUNTER_ESCROW_ADDRESS,
@@ -148,13 +149,8 @@ export async function prepareMissionAction(
     const indexedBlock = await client.getBlock({
       blockNumber: BigInt(mission.report.indexedBlock),
     });
-    if (
-      state.blockTimestamp - Number(indexedBlock.timestamp) > 300 ||
-      Number(indexedBlock.timestamp) > state.blockTimestamp
-    )
-      throw new Error(
-        "Graph indexing is stale or inconsistent with the chain. Action blocked.",
-      );
+    const freshness = assessIndexFreshness({ chainTimestamp: state.blockTimestamp, indexedTimestamp: Number(indexedBlock.timestamp), chainBlock: Number(state.block), indexedBlock: mission.report.indexedBlock, now: Math.floor(Date.now() / 1000) });
+    if (!freshness.fresh) throw new Error(freshness.reason!);
     if (state.funded) throw new Error("Mission is already funded.");
     if (mission.deadline <= Math.floor(Date.now() / 1000))
       throw new Error("Mission expired. Create a new one.");

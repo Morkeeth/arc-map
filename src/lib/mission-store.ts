@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { randomBytes } from "node:crypto";
 import { keccak256, toHex, parseEther } from "viem";
-import { projects } from "./projects";
+import { researchProject, graphCovers } from "./research-catalog";
 import { hunters, type Mission, type MissionReport } from "./hunters";
 
 export class MissionStore {
@@ -38,11 +38,13 @@ export class MissionStore {
     return row ? JSON.parse(String(row.data)) : null;
   }
   create(owner: string, input: Record<string, unknown>): Mission {
-    const project = projects.find((p) => p.id === input.projectId);
+    const project = researchProject(input.projectId);
     if (!project?.contract)
       throw new Error("Choose a project with a sourced contract address.");
     if (input.provider !== "graph" && input.provider !== "explorer")
       throw new Error("Choose Graph or explorer explicitly.");
+    if (input.provider === "graph" && !graphCovers(project.contract))
+      throw new Error("This contract is not covered by the deployed Graph transfer index. Choose the explorer explicitly for a free preview.");
     const budget = typeof input.budget === "string" ? input.budget : "";
     if (
       !/^\d{1,2}(\.\d{1,4})?$/.test(budget) ||
@@ -54,7 +56,7 @@ export class MissionStore {
       );
     if (this.list(owner).length >= 100)
       throw new Error("This workspace has reached its 100 mission limit.");
-    const hunter = hunters[0];
+    const hunter = project.researchKind === "contract" ? hunters[1] : hunters[0];
     const createdAt = new Date().toISOString();
     const id = `0x${randomBytes(32).toString("hex")}`;
     const thesis = hunter.question;

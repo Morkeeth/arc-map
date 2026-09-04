@@ -18,6 +18,15 @@ export const hunters = [
     execution:
       "Rules-based research runner. No autonomous trading or model-generated investment advice.",
   },
+  {
+    id: "activity", name: "Activity Hunter", code: "H02",
+    mandate: "Inspect successful contract transactions without confusing calls with adoption.",
+    description: "Reads a bounded sample of incoming contract transactions, their dates and distinct hashes.",
+    question: "Does the returned sample contain successful transactions to this contract?",
+    falsifier: "An empty sample cannot establish that no historical activity exists. Successful calls do not prove independent users or economic demand.",
+    tools: ["inspect_contract_transactions", "commit_research_report"],
+    execution: "Rules-based research runner. No autonomous trading or model-generated investment advice.",
+  },
 ] as const;
 export type EvidenceProvider = "graph" | "explorer";
 export type MissionReport = {
@@ -40,7 +49,7 @@ export type MissionReport = {
     from: string;
     to: string;
     timestamp: string | null;
-    logIndex: number;
+    logIndex: number | null;
   }[];
   observations: string[];
   limitations: string[];

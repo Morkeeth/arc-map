@@ -15,6 +15,8 @@ RUN npm run build
 FROM dependencies AS collector
 COPY --chown=node:node src ./src
 COPY --chown=node:node scripts/ingest.ts ./scripts/ingest.ts
+COPY --chown=node:node scripts/radar.ts ./scripts/radar.ts
+COPY --chown=node:node scripts/thesis-worker.ts ./scripts/thesis-worker.ts
 COPY --chown=node:node tsconfig.json ./tsconfig.json
 RUN mkdir -p /app/.data && chown node:node /app/.data
 USER node

@@ -19,8 +19,14 @@ export default function Page() {
             ARCMAP_AGENT_TOKEN and supply it through your client's secure
             Authorization header, never in a URL.
           </p>
-          <pre>{`discover_projects → list_hunters
-create_research_mission → run_research_mission → get_research_mission`}</pre>
+          <pre>{`search_radar → discover_projects → list_hunters
+create_research_mission → run_research_mission → get_research_mission
+inspect_repository
+create_thesis → check_thesis → get_thesis → cancel_thesis
+integration_readiness`}</pre>
+          <p>Theses pin a live baseline and a fixed criterion. Creating one opts into
+            a finite, read-only schedule. A running thesis worker is required;
+            checks do not move funds. Cancellation stops remaining checks.</p>
           <p>
             Mission tools use an agent-specific private workspace. This is
             separate from your browser session. A proposed budget does not
@@ -29,6 +35,9 @@ create_research_mission → run_research_mission → get_research_mission`}</pre
         </section>
         <section className="source-box">
           <h2>Start with the field.</h2>
+          <pre>GET /api/radar</pre>
+          <p>Observed contracts and token listings, source dates, coverage and health.
+            First observed is not a launch date. Only SUN currently has Graph transfer coverage.</p>
           <pre>GET /api/feed</pre>
           <p>
             Returns curated projects, up to 200 recent feed records, source

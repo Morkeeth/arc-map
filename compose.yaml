@@ -27,5 +27,21 @@ services:
     volumes:
       - arcmap-data:/app/.data
     restart: unless-stopped
+  theses:
+    build:
+      context: .
+      target: collector
+    command: ["npm", "run", "theses:watch"]
+    volumes:
+      - arcmap-data:/app/.data
+    restart: unless-stopped
+  radar:
+    build:
+      context: .
+      target: collector
+    command: ["npm", "run", "radar:watch"]
+    volumes:
+      - arcmap-data:/app/.data
+    restart: unless-stopped
 volumes:
   arcmap-data:

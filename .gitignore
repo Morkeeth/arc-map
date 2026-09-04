@@ -9,4 +9,6 @@ test-results/
 CLAUDE.local.md
 .data/
 contracts/cache/
+contracts/sandbox/cache/
+contracts/sandbox/broadcast/
 contracts/broadcast/

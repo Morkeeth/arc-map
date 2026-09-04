@@ -1,6 +1,21 @@
 # Architecture and next proofs
 
-## Current boundaries
+## Current implementation — 2026-09-05
+
+The sections below preserve the earlier launch plan. For current execution status, use
+`OVERNIGHT-BUILD.md` and `LAUNCH-OPERATIONS.md`.
+
+Radar, curated feed, private missions and private theses each have SQLite stores. Three isolated
+read-only workers collect sources and check finite schedules. Browser and MCP routes use the
+same research providers. Distribution, contract Activity and repository Ship investigations are
+implemented. The SUN Graph subgraph and fixed-fee research escrow are deployed to Arc testnet;
+the operator-run fund/settle/refund lifecycle succeeded. Browser Privy payment remains unverified.
+
+Theses pin source baselines and criteria, then append observations. A lease token prevents a
+cancelled or superseded worker from committing. Strategy shares live only in a separate local
+ERC-4626 sandbox, not in the research escrow or public app. No mainnet support is enabled.
+
+## Initial boundaries (historical)
 
 Next.js App Router, React, TypeScript, Lucide. npm lockfile pins resolved dependencies.
 

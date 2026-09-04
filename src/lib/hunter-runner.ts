@@ -3,6 +3,7 @@ import { scoutToken } from "./providers/explorer";
 import { queryGraphTransfers } from "./providers/graph-transfers";
 import type { Mission, MissionReport } from "./hunters";
 import type { HuntReport } from "./types";
+import { inspectContractActivity } from "./providers/contract-activity";
 
 export function buildMissionReport(
   mission: Mission,
@@ -70,6 +71,10 @@ export function buildMissionReport(
   };
 }
 export async function runHunter(mission: Mission): Promise<MissionReport> {
+  if (mission.hunterId === "activity") {
+    if (mission.provider !== "explorer") throw new Error("Activity Hunter requires the explicit explorer provider.");
+    return inspectContractActivity(mission);
+  }
   if (mission.provider === "explorer")
     return buildMissionReport(mission, await scoutToken(mission.address), null);
   const data = await queryGraphTransfers(mission.address);

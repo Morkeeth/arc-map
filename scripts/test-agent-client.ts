@@ -23,7 +23,8 @@ async function main() {
   try {
     await client.connect(transport);
     const catalog = await client.listTools();
-    assert.equal(catalog.tools.length, 5);
+    for (const name of ["discover_projects", "search_radar", "integration_readiness", "create_research_mission", "run_research_mission", "get_research_mission"])
+      assert.ok(catalog.tools.some(t => t.name === name));
     async function call(name: string, args: Record<string, unknown> = {}) {
       const result = await client.callTool({ name, arguments: args });
       const content = result.content as { type: string; text?: string }[];
@@ -33,6 +34,24 @@ async function main() {
       };
     }
     const discovery = await call("discover_projects");
+    const radar = await call("search_radar", { kind: "contract" });
+    assert.equal(radar.error, false);
+    const ship = await call("inspect_repository", { projectId: "arc-node" });
+    assert.equal(ship.error, false);
+    assert.ok(ship.data.repository.commits.length > 0);
+    const thesis = await call("create_thesis", { projectId: "arc-node", claim: "The default branch head will change within eight hours.", metric: "repository-head", threshold: 1, hours: 8, intervalMinutes: 30, checks: 2 });
+    assert.equal(thesis.error, false);
+    try {
+      const checked = await call("check_thesis", { id: thesis.data.thesis.id });
+      assert.equal(checked.error, false);
+      const history = await call("get_thesis", { id: thesis.data.thesis.id });
+      assert.equal(history.error, false);
+      assert.equal(history.data.thesis.commitment, thesis.data.thesis.commitment);
+      assert.equal(history.data.checks.length, 1);
+    } finally {
+      const cancelled = await call("cancel_thesis", { id: thesis.data.thesis.id });
+      assert.equal(cancelled.error, false);
+    }
     assert.ok(
       discovery.data.projects.some((p: { id: string }) => p.id === "sun-token"),
     );
@@ -69,6 +88,8 @@ async function main() {
             "mission creation",
             "live research execution",
             "persisted report retrieval",
+            "live radar search and repository inspection",
+            "thesis baseline, check, retrieval and cancellation",
           ],
           limitation:
             "Protocol integration test, not a separate LLM evaluation. No wallet action or Graph query was substituted.",

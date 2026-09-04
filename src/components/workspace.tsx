@@ -19,7 +19,9 @@ import {
 import { projects, type Project } from "@/lib/projects";
 import { hunters, type Mission } from "@/lib/hunters";
 import type { FeedData } from "@/lib/feed-types";
+import type { RadarData } from "@/lib/radar-types";
 import { useHunterWallet } from "./wallet-provider";
+import { RepositoryPanel } from "./repository-panel";
 
 const time = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -62,6 +64,9 @@ export function Workspace({
 }) {
   const [view, setView] = useState(initialView);
   const [feed, setFeed] = useState<FeedData | null>(null);
+  const [radar, setRadar] = useState<RadarData | null>(null);
+  const [catalogView, setCatalogView] = useState<"radar" | "curated">("radar");
+  const [displayLimit, setDisplayLimit] = useState(8);
   const [selected, setSelected] = useState<Project>(projects[0]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All activity");
@@ -70,6 +75,7 @@ export function Workspace({
   const [missions, setMissions] = useState<Mission[]>([]);
   const [mission, setMission] = useState<Mission | null>(null);
   const [capabilities, setCapabilities] = useState<Capability | null>(null);
+  const [indexHealth, setIndexHealth] = useState<{ checkedAt: string; graph: { queryVerified: boolean; fresh: boolean; reason: string | null; indexedBlock: number | null } } | null>(null);
   const [provider, setProvider] = useState<"graph" | "explorer">("graph");
   const [budget, setBudget] = useState("0.05");
   const [busy, setBusy] = useState("");
@@ -99,10 +105,12 @@ export function Workspace({
   }, [mission?.id, mission?.status]);
   async function load() {
     setError("");
+    void api("/api/integrations").then(setIndexHealth).catch(() => setIndexHealth(null));
     const results = await Promise.allSettled([
       api("/api/feed"),
       api("/api/hunters"),
       api("/api/missions"),
+      api("/api/radar"),
     ]);
     if (results[0].status === "fulfilled") setFeed(results[0].value);
     else setError("Feed unavailable. Existing evidence remains visible.");
@@ -110,6 +118,11 @@ export function Workspace({
       setCapabilities(results[1].value.capabilities);
     if (results[2].status === "fulfilled")
       setMissions(results[2].value.missions);
+    if (results[3].status === "fulfilled") {
+      const updated = results[3].value as RadarData;
+      setRadar(updated);
+      setSelected(previous => updated.projects.find(p => p.id === previous.id) || previous);
+    }
   }
   useEffect(() => {
     void load();
@@ -118,7 +131,7 @@ export function Workspace({
         localStorage.getItem("arcmap.projects.v1") || "[]",
       );
       if (Array.isArray(saved))
-        setFollowing(saved.filter((id) => projects.some((p) => p.id === id)));
+        setFollowing(saved.filter((id) => typeof id === "string" && (projects.some((p) => p.id === id) || /^arc:0x[0-9a-f]{40}$/.test(id))));
     } catch {
       setError("Local follows could not be loaded.");
     }
@@ -139,7 +152,8 @@ export function Workspace({
     setMission(item);
     setChain(null);
     setTx(null);
-    setSelected(projects.find((p) => p.id === item.projectId)!);
+    const target = allProjects.find((p) => p.id === item.projectId);
+    if (target) setSelected(target);
   }
   async function run() {
     setBusy("Researching");
@@ -196,20 +210,29 @@ export function Workspace({
       setBusy("");
     }
   }
-  const visible = projects.filter(
+  const allProjects = [...projects, ...(radar?.projects || [])];
+  const selectedRecord = radar?.records.find(r => r.id === selected.id);
+  const graphCovered = selected.contract?.toLowerCase() === projects[0].contract?.toLowerCase();
+  const visible = (catalogView === "radar" ? radar?.projects || [] : projects).filter(
     (p) =>
       `${p.name} ${p.symbol} ${p.category} ${p.summary} ${p.question} ${p.contract || ""}`
         .toLowerCase()
         .includes(query.toLowerCase()) &&
       (filter !== "Following" || following.includes(p.id)),
   );
-  const events = (feed?.events || []).filter(
+  const radarEvents = (radar?.events || []).map(e => ({
+    id: e.id, projectId: `arc:${e.address.toLowerCase()}`, kind: e.source === "verification" ? "code" : "onchain",
+    title: e.title, detail: e.source === "token-list" ? `${e.holders === null ? "Unknown" : e.holders.toLocaleString()} holder addresses reported. This listing is not a launch or a count of people.` : e.source === "verification" ? "Arcscan recorded source-code verification. This is not a security audit or proof of an official deployment." : "A successful contract transaction appears in the sampled recent page. The page is not a complete activity history.",
+    sourceUrl: e.sourceUrl, observedAt: e.observedAt, eventAt: e.eventAt,
+  }));
+  const events = (catalogView === "radar" ? radarEvents : feed?.events || []).filter(
     (e) =>
       visible.some((p) => p.id === e.projectId) &&
       (filter !== "Code" || e.kind === "code") &&
       (filter !== "Onchain" || e.kind !== "code"),
-  );
+  ).sort((a,b) => Number(Boolean(b.eventAt)) - Number(Boolean(a.eventAt)) || (b.eventAt || b.observedAt).localeCompare(a.eventAt || a.observedAt)).slice(0, 12);
   const report = mission?.report;
+  const selectedHunter = selected.researchKind === "contract" ? hunters[1] : hunters[0];
   return (
     <div className="workbench">
       <header className="work-header">
@@ -235,6 +258,7 @@ export function Workspace({
           <Link href="/agents">
             <Terminal size={15} /> Agents
           </Link>
+          <Link href="/theses">Theses</Link>
         </nav>
         <button
           className="wallet-button"
@@ -281,6 +305,10 @@ export function Workspace({
             {view === "discover" ? (
               <>
                 <div className="work-controls">
+                  <div className="work-tabs" role="group" aria-label="Discovery catalog">
+                    <button aria-pressed={catalogView === "radar"} onClick={() => { setCatalogView("radar"); setDisplayLimit(8); }}>Live radar</button>
+                    <button aria-pressed={catalogView === "curated"} onClick={() => { setCatalogView("curated"); setDisplayLimit(8); }}>Curated projects</button>
+                  </div>
                   <label className="work-search">
                     <Search size={17} />
                     <input
@@ -310,10 +338,10 @@ export function Workspace({
                 </div>
                 <div className="project-list">
                   <div className="list-caption">
-                    <span>PROJECTS UNDER OBSERVATION</span>
-                    <span>{visible.length} curated</span>
+                    <span>{catalogView === "radar" ? "CONTRACTS UNDER OBSERVATION" : "CURATED PROJECTS"}</span>
+                    <span>{visible.length} {catalogView === "radar" ? "observed" : "curated"}</span>
                   </div>
-                  {visible.map((p) => (
+                  {visible.slice(0, displayLimit).map((p) => (
                     <button
                       key={p.id}
                       className={`project-line ${selected.id === p.id ? "selected" : ""}`}
@@ -330,6 +358,7 @@ export function Workspace({
                       <ChevronRight size={16} />
                     </button>
                   ))}
+                  {visible.length > displayLimit && <button className="work-refresh work-text-button" onClick={() => setDisplayLimit(n => n + 8)}>Show 8 more</button>}
                   {!visible.length && (
                     <p className="work-empty">
                       No projects match this view. Change the filter or follow a
@@ -337,12 +366,13 @@ export function Workspace({
                     </p>
                   )}
                 </div>
+                {catalogView === "radar" && <p className="report-time">{radar?.coverage || "Waiting for the discovery collector. No records are invented."}</p>}
                 <div className="list-caption activity-caption">
                   <span>LATEST SOURCE OBSERVATIONS</span>
                   <span>Event dates shown below</span>
                 </div>
                 <div className="work-feed">
-                  {!feed ? (
+                  {!(catalogView === "radar" ? radar : feed) ? (
                     <p className="work-empty">Loading source observations…</p>
                   ) : !events.length ? (
                     <p className="work-empty">
@@ -363,14 +393,14 @@ export function Workspace({
                             <button
                               onClick={() =>
                                 showProject(
-                                  projects.find(
+                                  allProjects.find(
                                     (p) => p.id === event.projectId,
                                   )!,
                                 )
                               }
                             >
                               {
-                                projects.find((p) => p.id === event.projectId)!
+                                allProjects.find((p) => p.id === event.projectId)!
                                   .name
                               }
                             </button>
@@ -410,20 +440,20 @@ export function Workspace({
                   </div>
                   <div>
                     <span className="work-kicker">
-                      {hunters[0].code} / TRANSFER ANALYSIS
+                      {selectedHunter.code} / SOURCE ANALYSIS
                     </span>
-                    <h2>{hunters[0].name}</h2>
-                    <p>{hunters[0].mandate}</p>
+                    <h2>{selectedHunter.name}</h2>
+                    <p>{selectedHunter.mandate}</p>
                   </div>
                   <span className="work-tag">Rules-based</span>
                 </section>
                 <section className="hunter-mandate">
                   <h3>The mandate</h3>
-                  <p>{hunters[0].description}</p>
+                  <p>{selectedHunter.description}</p>
                   <h3>What would change the view?</h3>
-                  <p>{hunters[0].falsifier}</p>
+                  <p>{selectedHunter.falsifier}</p>
                   <div className="hunter-tool-list">
-                    {hunters[0].tools.map((t) => (
+                    {selectedHunter.tools.map((t) => (
                       <span key={t}>
                         <Terminal size={12} />
                         {t.replaceAll("_", " ")}
@@ -450,7 +480,7 @@ export function Workspace({
                       <Crosshair size={18} />
                       <span>
                         <strong>
-                          {projects.find((p) => p.id === m.projectId)?.name}
+                          {allProjects.find((p) => p.id === m.projectId)?.name || m.projectId}
                         </strong>
                         <small>
                           {time(m.createdAt)} · {m.provider}
@@ -518,11 +548,14 @@ export function Workspace({
                 Contract {short(selected.contract)} <ArrowUpRight size={13} />
               </a>
             )}
+            {selectedRecord && <p className="report-time">First observed {time(selectedRecord.firstObservedAt)}. {selectedRecord.verifiedAt && `Source verified ${time(selectedRecord.verifiedAt)}. `}{selectedRecord.lastActivityAt && `Sampled activity ${time(selectedRecord.lastActivityAt)}. `}No launch date inferred.</p>}
+            <Link className="evidence-link" href={`/theses?project=${encodeURIComponent(selected.id)}`}>Track a thesis about this project <ArrowRight size={13}/></Link>
+            {selected.repo && <RepositoryPanel key={selected.id} projectId={selected.id}/>}
             <section className="mission-composer">
               <span className="work-kicker">
                 <Crosshair size={13} /> THE HUNT
               </span>
-              <h3>{hunters[0].question}</h3>
+              <h3>{selectedHunter.question}</h3>
               {!selected.contract ? (
                 <p className="work-empty">
                   No verified contract association is configured for this
@@ -539,7 +572,7 @@ export function Workspace({
                         setProvider(e.target.value as "graph" | "explorer")
                       }
                     >
-                      <option value="graph">
+                      <option value="graph" disabled={!graphCovered}>
                         The Graph · transfer subgraph
                       </option>
                       <option value="explorer">
@@ -547,10 +580,19 @@ export function Workspace({
                       </option>
                     </select>
                   </label>
+                  {!graphCovered && <p className="setup-note">This token is outside the deployed Graph index. Choose Arcscan explicitly for a free preview. Graph coverage will not be implied.</p>}
                   {provider === "graph" && !capabilities?.graphConfigured && (
                     <p className="setup-note">
                       Graph endpoint not configured. A Graph run will stop with
                       a visible error; it will not substitute explorer data.
+                    </p>
+                  )}
+                  {provider === "graph" && capabilities?.graphConfigured && (
+                    <p className="setup-note" role="status">
+                      {indexHealth?.graph.fresh
+                        ? `Graph index checked at block ${indexHealth.graph.indexedBlock}. Funding is still checked per mission.`
+                        : indexHealth?.graph.reason || "Checking live index readiness. Configuration alone does not enable funding."}
+                      {indexHealth && ` Checked ${time(indexHealth.checkedAt)}.`}
                     </p>
                   )}
                   <label>
@@ -577,7 +619,7 @@ export function Workspace({
                   </div>
                   <button
                     className="work-primary-button"
-                    disabled={Boolean(busy)}
+                    disabled={Boolean(busy) || (provider === "graph" && !graphCovered)}
                     onClick={() => {
                       setView("hunters");
                       void run();
@@ -803,7 +845,7 @@ export function Workspace({
           </section>
         )}
         <footer className="work-footer">
-          <span>Curated coverage · GitHub + Arcscan · X not connected</span>
+          <span>Bounded live radar + curated sources · GitHub + Arcscan · X not connected</span>
           <span>
             Testnet only · Follows saved on this device · No investment returns
           </span>

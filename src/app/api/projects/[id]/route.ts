@@ -1,4 +1,5 @@
-import { findProject, sourceIds } from "@/lib/projects";
+import { sourceIds } from "@/lib/projects";
+import { researchProject } from "@/lib/research-catalog";
 import { FeedStore } from "@/lib/feed-store";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -6,7 +7,7 @@ export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const project = findProject((await context.params).id);
+  const project = researchProject((await context.params).id);
   if (!project)
     return Response.json({ error: "Unknown project" }, { status: 404 });
   const store = new FeedStore();

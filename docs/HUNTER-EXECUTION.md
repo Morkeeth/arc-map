@@ -4,7 +4,8 @@
 
 ARC MAP discovers projects. Hunters investigate explicit theses using indexed evidence.
 The target is a funded, accountable agent loop; strategy backing comes after paid research.
-This build implements one rules-based Distribution Hunter, not an LLM portfolio manager.
+This build implements rules-based Distribution and Activity Hunters plus sourced repository
+inspection (Ship Hunter), not an LLM portfolio manager.
 
 The working app starts with projects and source observations, not a marketing hero. Select
 a project, inspect its evidence, run a research mission, and review the result. The chosen
