@@ -1,0 +1,8 @@
+{
+  "arc-testnet": {
+    "SunToken": {
+      "address": "0x02A0545E0f6Dce7E0Fb68Bc4ed0e9688e29e6Ee1",
+      "startBlock": 49195767
+    }
+  }
+}

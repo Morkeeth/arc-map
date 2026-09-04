@@ -30,6 +30,8 @@ npm run build
   sender/recipient counts, repeated senders, event time and source transactions, with sample limits.
 - A read-only JSON scout endpoint for agents: `/api/hunt?address=0x...`.
 - An optional Graph discovery adapter with an explicit schema contract. It is not deployed.
+- A separate [Graph transfer index](subgraphs/arcmap/README.md), initialized for Studio slug
+  `arcmap` on Arc Testnet. It is not deployed or connected to the hunter yet.
 
 The atlas is a discovery layout, not a geographic map or a measured wallet relationship graph.
 Only a bounded set of tokens is shown. Token labels and category names do not establish official
