@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DiscoveryHeader, Scout } from "@/components/discovery";
+import { DiscoveryHeader } from "@/components/discovery";
 export default function Page() {
   return (
     <>
@@ -8,10 +8,25 @@ export default function Page() {
         <span className="field-label">THE HUNT / AGENT ACCESS</span>
         <h1>Give your agent a lead.</h1>
         <p>
-          The same source-backed records you see in the app. Read-only HTTP, no
-          wallet or API secret required on this local server.
+          Discover projects, create research missions and retrieve source-backed
+          findings. Wallet signing remains outside the agent tools.
         </p>
-        <Scout />
+        <section className="source-box">
+          <h2>Connect a research agent.</h2>
+          <pre>POST /api/mcp</pre>
+          <p>
+            Stateless MCP Streamable HTTP. Configure the server-side
+            ARCMAP_AGENT_TOKEN and supply it through your client's secure
+            Authorization header, never in a URL.
+          </p>
+          <pre>{`discover_projects → list_hunters
+create_research_mission → run_research_mission → get_research_mission`}</pre>
+          <p>
+            Mission tools use an agent-specific private workspace. This is
+            separate from your browser session. A proposed budget does not
+            authorize payment. Graph failures remain visible.
+          </p>
+        </section>
         <section className="source-box">
           <h2>Start with the field.</h2>
           <pre>GET /api/feed</pre>
@@ -38,8 +53,9 @@ export default function Page() {
           </p>
         </section>
         <div className="feed-notice">
-          This is an HTTP API, not yet an MCP server. Autonomous decisions,
-          funded missions and wallet execution are not enabled.
+          The first Hunter is rules-based. MCP tools do not sign transactions,
+          trade or issue investment tokens. Testnet funding requires a
+          configured escrow and explicit wallet approval.
         </div>
         <Link className="text-action" href="/projects/sun-token">
           Inspect the first case →

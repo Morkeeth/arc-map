@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
+  output: "standalone",
+  turbopack: { root: process.cwd() },
   poweredByHeader: false,
   async headers() {
     return [{ source: "/:path*", headers: [
@@ -11,4 +13,3 @@ const config: NextConfig = {
   },
 };
 export default config;
-

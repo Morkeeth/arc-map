@@ -9,19 +9,32 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "ingest": "tsx scripts/ingest.ts",
-    "ingest:watch": "tsx scripts/ingest.ts --watch"
+    "ingest:watch": "tsx scripts/ingest.ts --watch",
+    "test:contracts": "forge test --root contracts",
+    "test:lifecycle": "forge build --root contracts && tsx scripts/test-hunter-lifecycle.ts",
+    "hunter:settle": "tsx scripts/settle-hunter.ts",
+    "test:agent": "tsx scripts/test-agent-client.ts",
+    "check:integrations": "tsx scripts/check-integrations.ts"
   },
   "dependencies": {
+    "@privy-io/react-auth": "^3.40.0",
+    "lucide-react": "1.41.0",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "lucide-react": "1.41.0"
+    "viem": "^2.56.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@types/node": "^22.0.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "^19.2.0",
-    "typescript": "^5.9.0",
-    "tsx": "^4.20.0"
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "overrides": {
+    "axios": "^1.20.0",
+    "ws@^8.0.0": "^8.21.3",
+    "decode-uri-component": "^0.5.0"
   }
 }

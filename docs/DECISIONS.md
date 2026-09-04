@@ -1,3 +1,17 @@
+# Hunter build decision — 2026-09-05
+
+User chose an ambitious Graph-backed Hunter loop: discover projects, form a thesis, hire the
+Hunter, then eventually back a bounded strategy. This build implements research missions,
+MCP access, Privy connection UI and a testnet-only payment contract. Strategy tokens and
+real-money investment pools remain separate, unimplemented work.
+
+Design ruling: replace the cluttered landing-page hero and explainer with a working discovery
+surface. Project selection leads to evidence and the Hunter action. Keep professional light
+blue styling, one font and clear provenance.
+
+Live Graph publishing and a capped Arc testnet deployment/payment test were requested as
+separate approvals during the build. No approval has been inferred from credential storage.
+
 # Decisions and origin
 
 ## 2026-09-04 — ARC MAP is settled
@@ -42,3 +56,15 @@ feed, project pages, durable changes, following and read-only hunts form the fir
 Graph-backed AI, shared research and funded hunts deepen the same product; paid integrations
 must not gate a useful tracker. The user also requested meme-friendly design, retained in BRAND.md.
 This is a plan, not a claim these capabilities are built or a public deployment is authorized.
+# Professional direction and forecasting proposal — 2026-09-04
+
+User ruling: professional and cool, not for children. Keep the light blue palette and one
+font. Remove the cartoon scout, tilted stickers and childish slogans. The local UI now
+uses an evidence-loop diagram and restrained project marks.
+
+User proposal: forecasting which newly launched projects will succeed. Recommendation,
+not yet an approved or implemented feature: project milestone forecasts with fixed deadlines,
+published resolution criteria, linked evidence, timestamped human/agent forecasts and accuracy
+history. Keep observed facts separate from forecasts. No invented consensus percentages.
+Start without money stakes; funded investigations remain separate from market positions.
+Discovery and THE HUNT remain the core product. No prediction market contracts were added.

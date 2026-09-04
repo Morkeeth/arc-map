@@ -4,7 +4,7 @@ Status: first implemented direction, 2026-09-04.
 
 ## Identity
 
-Name: **ARC MAP**. Primary promise: **Find your next rabbit hole.**
+Name: **ARC MAP**. Primary promise: **Know what’s moving on Arc.**
 Product sentence: Explore Arc, follow the stories, and send a hunter after the questions that matter.
 Signature action: **Hunt this**.
 
@@ -34,17 +34,20 @@ ARC MAP is the destination. THE HUNT is the investigation mode. Hunt this is the
 
 ## Structure
 
-Persistent wordmark + agent entry; short navigation rail; search and districts; a dominant token
-atlas; a field-note panel containing observation, open question and Hunt this. A completed scout
-returns its evidence below the same map. Mobile stacks map, selected note and findings.
+Persistent wordmark and compact navigation: Discover, Hunters, Map, Agents. The front page
+is a working surface: project list, source observations and one selected-project inspector.
+No large marketing hero, explanatory workflow card or competing Hunt sidebar. The inspector
+contains the actual research action; results show evidence and then bounded payment controls.
+On phones, project selection brings the inspector into view. The map remains a separate view.
 
 Districts are illustrative navigation groupings inferred from metadata. Do not draw connecting
 lines that imply observed flows until the backing relationships have actually been measured.
 
 ## Voice
 
-User ruling: make the design cooler and meme-friendly while keeping light blue and one font.
-Use playful project stickers, a distinctive blue scout and shareable findings with sources.
+User ruling, 2026-09-04: professional and cool, not for children. Keep light blue and one font.
+Use precise typography, restrained project marks and source-linked findings. No cartoon mascot,
+rotated stickers or childish slogans. Personality comes from sharp observations, not decoration.
 The joke comes from measured observations; no invented activity or unsupported scam labels.
 Today on Arc is the launch front page. The map remains the exploration view.
 

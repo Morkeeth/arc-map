@@ -14,7 +14,6 @@ import {
   LoaderCircle,
   RefreshCw,
   Search,
-  Sparkles,
   Telescope,
   Terminal,
 } from "lucide-react";
@@ -78,7 +77,8 @@ export function DiscoveryHeader() {
         ARC MAP<span className="edition-pill">FIELD EDITION</span>
       </Link>
       <nav aria-label="Main navigation">
-        <Link href="/">Today</Link>
+        <Link href="/">Discover</Link>
+        <Link href="/hunters">Hunters</Link>
         <Link href="/map">The map</Link>
         <Link href="/agents">
           <Terminal size={15} /> For agents
@@ -88,24 +88,28 @@ export function DiscoveryHeader() {
   );
 }
 
-export function Scout({ large = false }: { large?: boolean }) {
+export function EvidenceDiagram({ large = false }: { large?: boolean }) {
   return (
-    <div
-      className={`scout-figure ${large ? "scout-large" : ""}`}
-      aria-hidden="true"
-    >
-      <div className="scout-orbit" />
-      <div className="scout-body">
-        <div className="scout-eyes">
-          <i />
-          <i />
-        </div>
-        <div className="scout-grin" />
+    <div className={`evidence-diagram ${large ? "evidence-large" : ""}`}>
+      <span className="evidence-caption">THE RESEARCH LOOP</span>
+      <div className="evidence-row">
+        <span>01</span>
+        <strong>Observe</strong>
+        <small>Code · contracts · source claims</small>
       </div>
-      <div className="scout-lens">
-        <Search />
+      <div className="evidence-row">
+        <span>02</span>
+        <strong>Investigate</strong>
+        <small>Compare evidence. Test the story.</small>
       </div>
-      <span className="scout-sticker">BRING RECEIPTS.</span>
+      <div className="evidence-row">
+        <span>03</span>
+        <strong>Follow</strong>
+        <small>Track what changes next.</small>
+      </div>
+      <div className="evidence-footer">
+        <Compass size={16} /> ARC MAP / THE HUNT
+      </div>
     </div>
   );
 }
@@ -238,12 +242,12 @@ export function Today() {
         <section className="discovery-hero">
           <div>
             <span className="field-label">
-              <span /> YOUR DAILY DOSE OF ARC
+              <span /> ARC ECOSYSTEM INTELLIGENCE
             </span>
             <h1>
-              Less noise.
+              Know what’s
               <br />
-              <em>More rabbit holes.</em>
+              <em>moving on Arc.</em>
             </h1>
             <p>
               What people claim. What builders ship.
@@ -260,16 +264,14 @@ export function Today() {
             </div>
           </div>
           <div className="hero-scout">
-            <span className="floating-note">
-              curiosity has entered the chat ↗
-            </span>
-            <Scout large />
+            <EvidenceDiagram large />
           </div>
         </section>
         <div className="source-ribbon">
           <span>
             <span className={`health-dot ${fresh ? "healthy" : ""}`} /> {fresh}{" "}
-            / {projects.flatMap(sourceIds).length} tracked sources checked within 15 min
+            / {projects.flatMap(sourceIds).length} tracked sources checked
+            within 15 min
           </span>
           <span>GitHub + Arcscan</span>
           <span>X: not connected</span>
@@ -300,7 +302,7 @@ export function Today() {
                 <Search size={17} />
                 <input
                   aria-label="Search projects and signals"
-                  placeholder="Find a project or rabbit hole…"
+                  placeholder="Search projects, code and activity…"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                 />
@@ -367,7 +369,7 @@ export function Today() {
                 <Telescope size={32} />
                 <h3>
                   {filter === "Following"
-                    ? "Choose your first rabbit hole."
+                    ? "Follow a project to track its changes."
                     : "No observations in this view yet."}
                 </h3>
                 <p>
@@ -404,8 +406,8 @@ export function Today() {
                 But who came back?
               </h2>
               <p>
-                SUN’s distribution is our first rabbit hole. Inspect the source,
-                then send a scout after the transfers.
+                SUN’s distribution is the first investigation. Inspect the
+                source, then send a scout after the transfers.
               </p>
               <Link className="blue-action" href="/projects/sun-token">
                 Open the case <ArrowUpRight size={16} />
@@ -424,9 +426,9 @@ export function Today() {
               </Link>
             </section>
             <div className="field-motto">
-              a little less doomscroll.
+              Read the signal.
               <br />
-              <strong>a little more discovery.</strong>
+              <strong>Question the story.</strong>
             </div>
           </aside>
         </div>
@@ -434,7 +436,7 @@ export function Today() {
           <div className="section-top">
             <div>
               <span className="field-label">PLACES TO START</span>
-              <h2>Pick a rabbit hole.</h2>
+              <h2>Projects under observation.</h2>
             </div>
             <span className="directory-count">
               {matches.length} curated profiles · coverage is growing
@@ -449,7 +451,6 @@ export function Today() {
                     className={`project-sticker sticker-${project.id}`}
                   >
                     {project.symbol}
-                    <Sparkles size={13} />
                   </Link>
                   <Follow project={project} state={follows} />
                 </div>
@@ -527,7 +528,6 @@ export function ProjectDetail({ project }: { project: Project }) {
         <section className="project-intro">
           <div className={`project-sticker sticker-${project.id}`}>
             {project.symbol}
-            <Sparkles size={18} />
           </div>
           <div>
             <span className="field-label">
@@ -598,8 +598,8 @@ export function ProjectDetail({ project }: { project: Project }) {
           <aside>
             <section className="hunt-teaser">
               <span className="field-label">THE HUNT</span>
-              <Scout />
-              <h2>Curiosity needs receipts.</h2>
+              <EvidenceDiagram />
+              <h2>Follow the evidence.</h2>
               <p>
                 {project.contract
                   ? "Send a read-only scout to inspect the latest returned transfer page."
@@ -684,7 +684,7 @@ export function ProjectDetail({ project }: { project: Project }) {
             <span className="field-label">
               <Check size={16} /> SCOUT RETURNED
             </span>
-            <h2>Brought receipts.</h2>
+            <h2>Investigation findings.</h2>
             <div className="case-stats">
               <div>
                 <strong>{report.examined}</strong>

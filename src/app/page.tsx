@@ -1,5 +1,5 @@
-import { Today } from "@/components/discovery";
+import { Workspace } from "@/components/workspace";
 
 export default function Page() {
-  return <Today />;
+  return <Workspace />;
 }

@@ -25,7 +25,6 @@
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  transform: rotate(-8deg);
 }
 .edition-pill {
   font-size: 8px;
@@ -131,126 +130,53 @@
   display: grid;
   place-items: center;
 }
-.floating-note {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border: 1px solid #cbdcf8;
-  background: #fff;
-  padding: 8px 13px;
-  border-radius: 6px;
-  transform: rotate(-5deg);
-  font-size: 11px;
-  color: #587cae;
+.evidence-diagram {
+  width: 100%;
+  max-width: 330px;
+  margin: 20px auto;
+  padding: 22px;
+  background: #f8fbff;
+  border: 1px solid #dce7f5;
+  border-radius: 8px;
+  text-align: left;
 }
-.scout-figure {
-  position: relative;
-  width: 180px;
-  height: 175px;
-  margin: 15px auto;
+.evidence-caption {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #627998;
 }
-.scout-large {
-  transform: scale(1.3);
-  margin-top: 50px;
+.evidence-row {
+  display: grid;
+  grid-template-columns: 25px 1fr;
+  gap: 5px 9px;
+  padding: 18px 0;
+  border-bottom: 1px solid #dce7f5;
 }
-.scout-orbit {
-  position: absolute;
-  inset: 0;
-  border: 1px dashed #b2cff5;
-  border-radius: 50%;
-  transform: rotate(-15deg) scaleX(1.2);
+.evidence-row > span {
+  grid-row: span 2;
+  font-size: 10px;
+  color: #326bff;
+  padding-top: 3px;
 }
-.scout-body {
-  position: absolute;
-  left: 32px;
-  top: 24px;
-  width: 109px;
-  height: 104px;
-  background: #326bff;
-  border-radius: 42% 45% 35% 37%;
-  transform: rotate(-9deg);
-  box-shadow:
-    inset -9px -9px 0 #235ddd,
-    5px 10px 0 #326bff10;
+.evidence-row strong {
+  font-size: 15px;
+  font-weight: 500;
+  color: #18335b;
 }
-.scout-body:before,
-.scout-body:after {
-  content: "";
-  position: absolute;
-  background: #2459d3;
-  width: 21px;
-  height: 25px;
-  bottom: -15px;
-  border-radius: 0 0 8px 8px;
+.evidence-row small {
+  font-size: 10px;
+  color: #627998;
+  line-height: 1.6;
 }
-.scout-body:before {
-  left: 19px;
-  transform: rotate(8deg);
-}
-.scout-body:after {
-  right: 17px;
-  transform: rotate(-9deg);
-}
-.scout-eyes {
+.evidence-footer {
   display: flex;
-  gap: 13px;
-  position: absolute;
-  top: 31px;
-  left: 23px;
-}
-.scout-eyes i {
-  display: block;
-  width: 19px;
-  height: 25px;
-  background: #fff;
-  border-radius: 10px;
-  position: relative;
-}
-.scout-eyes i:after {
-  content: "";
-  width: 7px;
-  height: 11px;
-  background: #173057;
-  position: absolute;
-  top: 7px;
-  right: 3px;
-  border-radius: 5px;
-}
-.scout-grin {
-  position: absolute;
-  width: 19px;
-  height: 9px;
-  top: 68px;
-  left: 46px;
-  border-bottom: 3px solid white;
-  border-radius: 50%;
-}
-.scout-lens {
-  position: absolute;
-  right: 3px;
-  top: 65px;
-  transform: rotate(-15deg);
-  color: #19375e;
-}
-.scout-lens svg {
-  width: 67px;
-  height: 67px;
-  stroke-width: 2.4;
-  background: #eef7ff66;
-  border-radius: 50%;
-}
-.scout-sticker {
-  position: absolute;
-  bottom: 1px;
-  left: 10px;
+  gap: 9px;
+  align-items: center;
+  padding-top: 18px;
   font-size: 9px;
   letter-spacing: 1px;
-  background: #fff;
-  border: 1px solid #b9ceec;
-  padding: 6px 10px;
-  border-radius: 4px;
-  transform: rotate(7deg);
-  font-weight: 700;
+  color: #326bff;
 }
 .source-ribbon {
   display: flex;
@@ -462,7 +388,6 @@
   font-size: 8px;
   color: #4874bc;
   letter-spacing: 1.2px;
-  transform: rotate(-4deg);
 }
 .hunt-teaser h2 {
   font-size: 27px;
@@ -517,7 +442,6 @@
   line-height: 1.8;
   color: #95a8c2;
   margin: 30px 12px;
-  transform: rotate(-3deg);
 }
 .field-motto strong {
   font-weight: 500;
@@ -619,7 +543,7 @@
   box-shadow: 0 0 0 1px #cfddf5;
   font-size: 16px;
   font-weight: 700;
-  transform: rotate(-8deg);
+
   flex-shrink: 0;
 }
 .project-sticker svg {
@@ -633,12 +557,10 @@
   background: #e8f4ff;
   color: #3783b1;
   border-radius: 50%;
-  transform: rotate(8deg);
 }
 .sticker-circle-agent-stack {
   background: #edf0ff;
   color: #6676b3;
-  transform: rotate(8deg);
 }
 .sticker-dromos-labs {
   background: #e5f5f9;

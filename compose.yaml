@@ -1,0 +1,31 @@
+services:
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        NEXT_PUBLIC_APP_ORIGIN: ${NEXT_PUBLIC_APP_ORIGIN:-http://localhost:3117}
+        NEXT_PUBLIC_PRIVY_APP_ID: ${NEXT_PUBLIC_PRIVY_APP_ID:-cmp5vd2h3000c0di993q8z1l6}
+    ports:
+      - "127.0.0.1:3117:3000"
+    volumes:
+      - arcmap-data:/app/.data
+    environment:
+      GRAPH_TRANSFERS_URL: ${GRAPH_TRANSFERS_URL:-}
+      GRAPH_API_KEY: ${GRAPH_API_KEY:-}
+      ARC_RPC_URL: ${ARC_RPC_URL:-https://rpc.testnet.arc.network}
+      HUNTER_ESCROW_ADDRESS: ${HUNTER_ESCROW_ADDRESS:-}
+      HUNTER_ESCROW_CODE_HASH: ${HUNTER_ESCROW_CODE_HASH:-}
+      HUNTER_EXECUTOR_ADDRESS: ${HUNTER_EXECUTOR_ADDRESS:-}
+      HUNTER_SERVICE_ADDRESS: ${HUNTER_SERVICE_ADDRESS:-}
+      ARCMAP_AGENT_TOKEN: ${ARCMAP_AGENT_TOKEN:-}
+    restart: unless-stopped
+  collector:
+    build:
+      context: .
+      target: collector
+    volumes:
+      - arcmap-data:/app/.data
+    restart: unless-stopped
+volumes:
+  arcmap-data:

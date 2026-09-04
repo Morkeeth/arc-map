@@ -25,6 +25,16 @@ Do not reopen the idea slate. Keep the map and hunter in one product.
 - Run npm test, npm run typecheck, npm run build for changes to core evidence handling.
 - Check the actual screen at desktop and phone widths for interface changes.
 
+## Hunter build boundaries
+
+- Read docs/HUNTER-EXECUTION.md before changing missions, payments or agent tools.
+- Research is rules-based; do not call it autonomous AI decision-making.
+- Graph transfer queries use GRAPH_TRANSFERS_URL and the Transfer schema, not the old token schema.
+- Local Anvil receipts are not Arc receipts. Funding controls remain closed without verified configuration.
+- Wallet funds pay for fixed-price research, not investment shares. No Hunter token has been issued.
+- Preserve the testnet-only contract guard, expected-report commitment and owner refund controls.
+- Run contract and lifecycle tests when changing escrow behavior. Never use a user key in local tests.
+
 ## Readiness
 
 See docs/ARCHITECTURE.md for current boundaries and next verification checkpoints.

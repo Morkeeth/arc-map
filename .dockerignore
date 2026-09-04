@@ -1,0 +1,15 @@
+.git
+node_modules
+.next
+.data
+.env
+.env.*
+CLAUDE.local.md
+*.tsbuildinfo
+contracts
+subgraphs
+test-results
+tests
+scripts/test-*
+scripts/settle-hunter.ts
+scripts/check-integrations.ts
