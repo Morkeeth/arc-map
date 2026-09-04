@@ -33,3 +33,12 @@ before any public submission. Event rules may require spec-driven artifacts in t
 Fresh, light-blue direction inspired by arc.io. DM Sans across all surfaces.
 ARC MAP is the destination; THE HUNT is investigation; Hunt this is the CTA.
 Narrative starts from data and separates observations from questions.
+
+## Launch priority — 2026-09-04
+
+User direction: keep an ambitious build plan; launch as fast as possible so people can track
+what is happening on Arc. The launch-first sequence is in docs/ARCHITECTURE.md. A sourced Today
+feed, project pages, durable changes, following and read-only hunts form the first public release.
+Graph-backed AI, shared research and funded hunts deepen the same product; paid integrations
+must not gate a useful tracker. The user also requested meme-friendly design, retained in BRAND.md.
+This is a plan, not a claim these capabilities are built or a public deployment is authorized.

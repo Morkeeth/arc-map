@@ -1,5 +1,5 @@
-import { Atlas } from "@/components/atlas";
+import { Today } from "@/components/discovery";
 
 export default function Page() {
-  return <Atlas />;
+  return <Today />;
 }

@@ -43,6 +43,11 @@ lines that imply observed flows until the backing relationships have actually be
 
 ## Voice
 
+User ruling: make the design cooler and meme-friendly while keeping light blue and one font.
+Use playful project stickers, a distinctive blue scout and shareable findings with sources.
+The joke comes from measured observations; no invented activity or unsupported scam labels.
+Today on Arc is the launch front page. The map remains the exploration view.
+
 Curious, specific, concise. Ask a question a user can send a hunter to answer.
 Use “observed”, “sample”, “unknown”, and source timestamps where those limits affect interpretation.
 Avoid “alpha”, “guaranteed opportunity”, “real users” from address counts, and certainty from an

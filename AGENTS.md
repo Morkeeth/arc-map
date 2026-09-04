@@ -10,6 +10,7 @@ Do not reopen the idea slate. Keep the map and hunter in one product.
 
 ## Working rules
 
+- If CLAUDE.local.md exists, read its local credential-handling instructions, never the secret file itself.
 - Read README.md and docs/BRAND.md before changing the product.
 - Never copy project-specific code, designs, data models or assets from previous entries.
 - Use live source data or an explicit unavailable state. No invented users, activity, funds or findings.

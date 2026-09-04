@@ -15,6 +15,21 @@ npm run dev
 
 Requires Node 22 (see .nvmrc). Open http://localhost:3107. No keys or wallet connection are needed for this first slice.
 
+In a second terminal, start the source collector:
+
+```sh
+npm run ingest:watch
+```
+
+It checks the curated GitHub/Arcscan sources every five minutes. `npm run ingest` performs one
+check. A database lease limits ingestion to once per minute across local processes. The feed API
+only reads stored data; refreshing the page does not trigger upstream calls. The worker must
+remain running; this is not yet a hosted scheduler that works with the laptop closed.
+
+Public source observations persist in `.data/arcmap.sqlite` (ignored by git). Override the path
+with `ARCMAP_DB_PATH` for a persistent host volume. This uses Node 22's experimental built-in
+SQLite support. Do not deploy it on ephemeral storage or copy wallet credentials into this database.
+
 ```sh
 npm test
 npm run typecheck
@@ -23,6 +38,14 @@ npm run build
 
 ## First working slice
 
+- **Today on Arc** at `/`: stored source observations, project search, filters and reading position.
+- Four curated project profiles at `/projects/:id`, with explicit evidence for source associations.
+- Real GitHub default-branch commit observations for Arc node and Circle Agent Stack; SUN counter
+  baselines and changes from Arcscan. Source event time and retrieval time remain distinct.
+- Persistent SQLite observations, duplicate protection, source-health checks and outage recovery.
+- Per-browser project follows and a Following feed. No shared accounts or cross-device sync yet.
+- Read-only agent routes: `/api/feed`, `/api/feed?since=<ISO timestamp>`, `/api/projects/:id`.
+  Usage and limitations are visible at `/agents`. These are HTTP routes, not MCP yet.
 - A token atlas fetched from the Arc testnet explorer, with search and metadata-based districts.
 - Field notes that distinguish observed counts from open investigation questions.
 - A per-browser token watchlist. There is no account sync or background monitoring yet.
@@ -39,8 +62,8 @@ protocol deployments. A current fetch may contain old events.
 
 ## Next product capabilities
 
-Live Graph indexing; project discovery beyond ERC-20 listings; durable change detection;
-shared watchlists; agent-selected investigation steps; MCP support; Privy-backed mission budgets
+Live Graph indexing; broader source/project coverage; X ingestion; shared watchlists;
+agent-selected investigation steps; MCP support; Privy-backed mission budgets
 and real USDC payments on Arc. These are planned, not working capabilities of this kickoff.
 
 The first customers are two people already watching Arc for useful projects and ideas. The
@@ -62,3 +85,12 @@ back to explorer data under a Graph label. Scouts currently always use the explo
 
 This kickoff is a local development application. Public hosting needs persistent rate limiting,
 authentication and worker isolation for agent workloads before paid or autonomous hunts are enabled.
+
+## Verification — 2026-09-04
+
+Eleven evidence/store tests, TypeScript and the production build pass. A live ingestion run
+successfully checked all three configured sources and stored three initial feed entries. HTTP
+checks exercised Today, map, project and agent pages; unknown projects returned 404, invalid
+feed timestamps returned 400. The feed → project → advertised scout route returned 50 SUN
+transfer events across one sampled transaction. This was a direct API check, not an autonomous
+agent evaluation. Browser automation was unavailable, so visual and click-through QA remain open.
