@@ -54,7 +54,7 @@ project directory, a raw transaction feed, an unexplained score or a token badge
   do not create fake launches; copied names never become official project associations.
   Verify: bounded live ingestion plus persistence, deduplication and outage tests; inspect phone UI.
 
-- [ ] **04. Open the Hunter to discovered contracts**
+- [x] **04. Open the Hunter to discovered contracts**
   Spec ref: Product promise > Hunters
   What to build: allow the explorer Hunter to inspect a sourced discovered contract, while
   Graph availability remains restricted to addresses actually indexed by the deployed subgraph.
@@ -149,7 +149,16 @@ project directory, a raw transaction feed, an unexplained score or a token badge
 - Desktop and 390-CSS-pixel thesis/radar layouts inspected. Latest text-button fixes inspected.
 - Source and client-bundle scan found no saved secret values. Private data stays ignored.
 
-Open checkpoints are deliberately not marked complete: generic-contract browser research,
-repository release/claim comparison, independent agent-led evaluation, and persistent public-host
+Open checkpoints are deliberately not marked complete: repository release/claim comparison,
+independent model evaluation, and persistent public-host
 restore/authentication verification still need work. Ship Hunter currently examines commits only.
 No public domain, hosting, mainnet deployment or public investment token was purchased/launched.
+
+Follow-up at 23:50 UTC: the generic Counter contract completed a browser preview with one
+successful subsequent call. Arcscan also returned the deployment transaction; it is now explicitly
+excluded and regression-tested. The primary coding agent selected this target through the shared
+tool layer and ran an explorer mission; this is not a separate-model review. Returning visitors
+now open their latest saved thesis automatically. Same-name radar rows show contract fragments.
+Production HTTP checks returned 200 for discovery, theses, agents, radar and integration health.
+An eight-hour idle-sleep inhibitor is running to support the local workers; closing the laptop
+can still interrupt them. No unbounded financial worker is running.

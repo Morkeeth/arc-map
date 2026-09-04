@@ -352,7 +352,7 @@ export function Workspace({
                       </span>
                       <span>
                         <strong>{p.name}</strong>
-                        <small>{p.category}</small>
+                        <small>{p.category}{p.id.startsWith("arc:") && p.contract ? ` · ${short(p.contract)}` : ""}</small>
                       </span>
                       <span className="project-line-summary">{p.summary}</span>
                       <ChevronRight size={16} />
@@ -580,7 +580,7 @@ export function Workspace({
                       </option>
                     </select>
                   </label>
-                  {!graphCovered && <p className="setup-note">This token is outside the deployed Graph index. Choose Arcscan explicitly for a free preview. Graph coverage will not be implied.</p>}
+                  {!graphCovered && <p className="setup-note">This target is outside the deployed Graph index. Choose Arcscan explicitly for a free preview. Graph coverage will not be implied.</p>}
                   {provider === "graph" && !capabilities?.graphConfigured && (
                     <p className="setup-note">
                       Graph endpoint not configured. A Graph run will stop with
