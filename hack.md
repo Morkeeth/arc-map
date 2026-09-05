@@ -48,58 +48,37 @@ coverage or mainnet spend to fill a gap.
 
 ## PLAN (risk-first)
 
-### Slice 1 — Ship Hunter saved-release investigations  ← NOW
+### Slice 1 — Ship Hunter saved-release investigations
 **Risk:** We have been calling commit lists “Ship Hunter”. The product gap and the
 hackathon loss mode are the same: nearer proxy (commit title / tag name) instead of
-the release object. Building more UI on commits would cement the wrong object.
+the release object.
 
-**Build:**
-- Fetch and parse GitHub Releases for curated repos (not commits-as-releases).
-- Persist owner-scoped saved investigations with immutable claim + first observation.
-- Compare a declared shipping claim against observed release fields (tag, published_at,
-  assets, draft/prerelease). Stance from evidence, not name rank.
-- Naive baseline arm: “latest non-draft tag string contains claim token” — scored
-  against the evidence arm on the same live objects. If naive wins, that is the finding.
-- Failing controls: malformed timestamps, outage, empty list (agent-stack), draft-only.
-- Cold-clone offline fixture + one-command eval script (no key, no network required).
-- API + MCP tool + UI panel for saved release investigations.
-- Receipt section with commands run.
+**Done-when (executed):**
+- [x] `npm test` includes release parse/compare/store and RED outage/empty controls
+      · ran `npm test` → 50 pass (8 ship-hunter tests)
+- [x] `npx tsx scripts/ship-hunter-eval.ts --offline` runs cold, prints both arms
+      · evidenceHits=5, naiveOverclaims=1 (tag-only trap)
+- [x] `npx tsx scripts/ship-hunter-eval.ts --live` hits real GitHub
+      · arc-node: 5 published, 4 with binaries; v0.6.0 tag-only refused;
+        agent-stack: 0 releases → insufficient-evidence (not green zero)
+- [x] HTTP create → observe → list → compare path
+      · ran `npx tsx scripts/test-ship-hunter-http.ts` against `npm run start`
+      · first attempt failed: Origin `127.0.0.1` ≠ allowed `localhost` (caught by control)
+- [x] `npm run typecheck` and `npm run build` pass
 
-**Done-when (must execute):**
-- [ ] `npm test` includes release parse/compare/store and RED outage/empty controls
-- [ ] `npx tsx scripts/ship-hunter-eval.ts --offline` runs cold, prints both arms
-- [ ] `npx tsx scripts/ship-hunter-eval.ts --live` hits real GitHub for arc-node and
-      agent-stack; empty releases stay RED/insufficient, never green-zero
-- [ ] HTTP create → observe → list → compare path exercised against local server
-- [ ] `npm run typecheck` and `npm run build` pass
-
-### Slice 2 — Hosted beta path without inventing a host
+### Slice 2 — Hosted beta path without inventing a host  ← NOW
 **Risk:** Claiming “ready to host” from compose.yaml alone.
-
-**Build:** concrete checklist; stand up whatever works without Oscar secrets
-(local production HTTP, restore probe, secret scan); honest BLOCKED list of missing
-keys/accounts.
 
 **Done-when:**
 - [ ] Written checklist with RUN evidence or BLOCKED + exact missing key
-- [ ] `npm run build` + production `npm start` smoke (or documented failure)
+- [ ] `npm run build` + production start smoke (or documented failure)
 
 ### Slice 3 — Account recovery / cross-device
-**Risk:** Implying cookie workspaces sync.
-
-**Build:** design note + first failing probe that proves clearing the cookie loses
-access; optional recovery-ticket sketch that does not invent Privy server auth.
-
 **Done-when:**
 - [ ] Probe script demonstrates loss-of-cookie = loss-of-workspace
 - [ ] Doc states what is implemented vs blocked on Privy server verification
 
 ### Slice 4 — Privy browser payment (or honest BLOCKED)
-**Risk:** Re-proving CLI and calling it browser payment.
-
-**Build:** browser path probe to the first concrete failure step; never claim CLI
-as browser verification.
-
 **Done-when:**
 - [ ] Either end-to-end browser fund path with receipt, or BLOCKED naming the exact
       step (missing Privy session / signature / origin / escrow config)
@@ -110,13 +89,16 @@ as browser verification.
 
 ## NOW
 
-**Slice 1 only:** Ship Hunter saved-release investigations (see Plan).
+**Slice 2:** Hosted beta path — checklist + whatever stands without Oscar secrets.
 
 ## LOG
 
 - 2026-09-05 — No `hack.md` in repo; wrote this contract before code.
-- Inventory: Ship Hunter = commit fetch only (`src/lib/providers/repository.ts`);
-  OVERNIGHT-BUILD checkpoint 06 still open; arc-node has live GitHub releases;
-  agent-stack returns **zero** releases (control case). Privy UI present; browser
-  payment unverified. No `.env.local`. Docker absent in this environment.
-- NOW = Slice 1. Slices 2–5 wait until Slice 1 done-whens are executed.
+- Inventory: Ship Hunter was commit-only; arc-node has live releases; agent-stack
+  returns zero releases; Privy UI present; no `.env.local`; Docker absent here.
+- Slice 1 shipped: release provider, claim arms, ShipStore, APIs, MCP tools, UI,
+  offline fixtures, eval + HTTP scripts. Naive arm over-claimed on tag-only fixture.
+- Live object finding: `circlefin/arc-node` release `v0.6.0` has **0 assets**; evidence
+  arm refuses “downloadable binaries” for it. `agent-stack-starter-kits` has **0** releases.
+- HTTP Origin control caught `127.0.0.1` vs `localhost` before a false green.
+- NOW → Slice 2.

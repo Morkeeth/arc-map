@@ -38,6 +38,15 @@ npm run typecheck
 npm run build
 ```
 
+Ship Hunter release investigations (cold clone, no key, offline fixtures):
+
+```sh
+npx tsx scripts/ship-hunter-eval.ts --offline
+```
+
+Live GitHub comparison (network): `npx tsx scripts/ship-hunter-eval.ts --live`
+Against a running app: `npx tsx scripts/test-ship-hunter-http.ts`
+
 ## Current build — 2026-09-05
 
 Radar → a sourced target → a Hunter report → a pinned thesis → scheduled evidence checks.
@@ -47,7 +56,10 @@ The first users are two people already watching Arc; the return visit should sho
 - `/theses`: private claims with locked criteria, live baselines, evidence timelines and finite
   read-only schedules. Cancellation fences in-flight checks. No probabilities or returns are invented.
 - Distribution and Activity Hunters inspect token transfers and contract calls. Ship Hunter
-  inspects the sourced Arc node and Circle Agent Stack repositories.
+  saves release investigations for the sourced Arc node and Circle Agent Stack repositories:
+  pinned shipping claim, observed GitHub releases (tag, publish time, assets), evidence vs
+  naive latest-tag arms, and immutable reruns. Commits remain a separate inspect tool.
+  A release is not a network upgrade. Empty release lists stay insufficient evidence.
 - The `arcmap` SUN transfer subgraph is published to Graph Studio and returned live indexed data.
   Broader radar targets require explicit explorer research; they are not Graph-indexed by implication.
 - Arc testnet research escrow was deployed and a capped live lifecycle completed: 0.05 funded,

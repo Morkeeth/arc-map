@@ -1,0 +1,114 @@
+[
+  {
+    "id": 378435829,
+    "tag_name": "v0.8.0",
+    "name": "v0.8.0",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-08-28T11:19:08Z",
+    "created_at": "2026-08-28T10:44:06Z",
+    "target_commitish": "main",
+    "html_url": "https://github.com/circlefin/arc-node/releases/tag/v0.8.0",
+    "body": "## 📖 [Changelog](https://github.com/circlefin/arc-node/blob/main/CHANGELOG.md#v080)\r\n\r\n## ⚠️  [Breaking changes](https://github.com/circlefin/arc-node/blob/main/BREAKING_CHANGES.md#v080)\r\n\r\n## New Contributors\r\n* @shanesavoie made their first contribution in https://github.com/circlefin/arc-node/pull/169\r\n* @mrnetwork0001 made their first contribution in https://github.com/circlefin/arc-node/pull",
+    "assets": [
+      {
+        "name": "arc-node-v0.8.0-aarch64-apple-darwin.tar.gz",
+        "size": 43799701,
+        "content_type": "application/x-gtar",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.8.0/arc-node-v0.8.0-aarch64-apple-darwin.tar.gz",
+        "digest": "sha256:33daa925c748a032a601921d4d7e6aa794f830868e6152d8ef91558c797eabb3"
+      },
+      {
+        "name": "arc-node-v0.8.0-aarch64-apple-darwin.tar.gz.sha256",
+        "size": 110,
+        "content_type": "application/octet-stream",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.8.0/arc-node-v0.8.0-aarch64-apple-darwin.tar.gz.sha256",
+        "digest": "sha256:01620ba445d135f6d02518c1156135c2b0119889256d5f135bb04d68cbef1086"
+      },
+      {
+        "name": "arc-node-v0.8.0-aarch64-unknown-linux-gnu.tar.gz",
+        "size": 53327218,
+        "content_type": "application/x-gtar",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.8.0/arc-node-v0.8.0-aarch64-unknown-linux-gnu.tar.gz",
+        "digest": "sha256:590675e527c7b39f245b1038301c737ad7001a32ab3d3ad36469aa662303a68f"
+      },
+      {
+        "name": "arc-node-v0.8.0-aarch64-unknown-linux-gnu.tar.gz.sha256",
+        "size": 115,
+        "content_type": "application/octet-stream",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.8.0/arc-node-v0.8.0-aarch64-unknown-linux-gnu.tar.gz.sha256",
+        "digest": "sha256:e8e1dac569b8030ad41448c528aaafc3aca9630dddbbbed349509a7a4b0103b1"
+      },
+      {
+        "name": "arc-node-v0.8.0-x86_64-unknown-linux-gnu.tar.gz",
+        "size": 55005260,
+        "content_type": "application/x-gtar",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.8.0/arc-node-v0.8.0-x86_64-unknown-linux-gnu.tar.gz",
+        "digest": "sha256:265441e478a91773ecabc293b9824bff27d20afd125d4413481c65613336c933"
+      },
+      {
+        "name": "arc-node-v0.8.0-x86_64-unknown-linux-gnu.tar.gz.sha256",
+        "size": 114,
+        "content_type": "application/octet-stream",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.8.0/arc-node-v0.8.0-x86_64-unknown-linux-gnu.tar.gz.sha256",
+        "digest": "sha256:e5141339acd72017dcaac61d35eaa1dfffdccc4b0d703208f8ca12f819929fb0"
+      }
+    ]
+  },
+  {
+    "id": 356933745,
+    "tag_name": "v0.7.3",
+    "name": "v0.7.3",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-07-20T18:53:10Z",
+    "created_at": "2026-07-20T18:23:48Z",
+    "target_commitish": "main",
+    "html_url": "https://github.com/circlefin/arc-node/releases/tag/v0.7.3",
+    "body": "## What's Changed\n* chore(ci): bump GitHub Actions to Node 24 by @shanesavoie in https://github.com/circlefin/arc-node/pull/169\n* ci: add public release finalizer by @sdaveas-circle in https://github.com/circlefin/arc-node/pull/179\n* chore: sync v0.7.3 to arc-node by @circle-github-action-bot in https://github.com/circlefin/arc-node/pull/211\n\n## New Contributors\n* @shanesavoie made their first con",
+    "assets": [
+      {
+        "name": "arc-node-v0.7.3-aarch64-apple-darwin.tar.gz",
+        "size": 37616922,
+        "content_type": "application/x-gtar",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.7.3/arc-node-v0.7.3-aarch64-apple-darwin.tar.gz",
+        "digest": "sha256:d3a31ff2c5544f48b9e6fa6cb682186942f393dd377d6cba7f229eb3745aade4"
+      },
+      {
+        "name": "arc-node-v0.7.3-aarch64-apple-darwin.tar.gz.sha256",
+        "size": 110,
+        "content_type": "application/octet-stream",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.7.3/arc-node-v0.7.3-aarch64-apple-darwin.tar.gz.sha256",
+        "digest": "sha256:150aa53507c99184f59e8376a87312d15522b90e4e10c412acdcc45586e93410"
+      },
+      {
+        "name": "arc-node-v0.7.3-aarch64-unknown-linux-gnu.tar.gz",
+        "size": 46522680,
+        "content_type": "application/x-gtar",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.7.3/arc-node-v0.7.3-aarch64-unknown-linux-gnu.tar.gz",
+        "digest": "sha256:66106949429c3072a9096263c6df189855ff11c96166fd198cc9fe0518f7e1bb"
+      },
+      {
+        "name": "arc-node-v0.7.3-aarch64-unknown-linux-gnu.tar.gz.sha256",
+        "size": 115,
+        "content_type": "application/octet-stream",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.7.3/arc-node-v0.7.3-aarch64-unknown-linux-gnu.tar.gz.sha256",
+        "digest": "sha256:2297c702914875f5d0667562d2bfaeafb3a6b35f67b81660d6cadfc5cc4c551d"
+      },
+      {
+        "name": "arc-node-v0.7.3-x86_64-unknown-linux-gnu.tar.gz",
+        "size": 47480334,
+        "content_type": "application/x-gtar",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.7.3/arc-node-v0.7.3-x86_64-unknown-linux-gnu.tar.gz",
+        "digest": "sha256:b4515575ea387ad37c74e2745972e4c8c781750136a8ed2d7e5fdb1393c1f9ef"
+      },
+      {
+        "name": "arc-node-v0.7.3-x86_64-unknown-linux-gnu.tar.gz.sha256",
+        "size": 114,
+        "content_type": "application/octet-stream",
+        "browser_download_url": "https://github.com/circlefin/arc-node/releases/download/v0.7.3/arc-node-v0.7.3-x86_64-unknown-linux-gnu.tar.gz.sha256",
+        "digest": "sha256:1dede08a5a30c0290fc00a8bbc27cfc35cbe20410da66ff8cdce4bfe7b09832d"
+      }
+    ]
+  }
+]

@@ -27,6 +27,27 @@ export const hunters = [
     tools: ["inspect_contract_transactions", "commit_research_report"],
     execution: "Rules-based research runner. No autonomous trading or model-generated investment advice.",
   },
+  {
+    id: "ship",
+    name: "Ship Hunter",
+    code: "H03",
+    mandate: "Separate repository releases and packaged assets from deployment or adoption.",
+    description:
+      "Inspects curated GitHub releases for tag, publish time, draft/prerelease state and assets. Compares a declared shipping claim to observed release objects, not commit titles.",
+    question:
+      "Does a published non-draft release with downloadable assets match the declared shipping claim?",
+    falsifier:
+      "An empty release list is insufficient evidence. A matching tag without binary assets, or a draft-only match, does not support a shipping claim. Releases are not network upgrades.",
+    tools: [
+      "inspect_repository",
+      "inspect_releases",
+      "create_ship_investigation",
+      "get_ship_investigation",
+      "observe_ship_investigation",
+    ],
+    execution:
+      "Rules-based research runner. No autonomous trading or model-generated investment advice.",
+  },
 ] as const;
 export type EvidenceProvider = "graph" | "explorer";
 export type MissionReport = {

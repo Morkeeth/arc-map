@@ -21,9 +21,15 @@ export default function Page() {
           </p>
           <pre>{`search_radar → discover_projects → list_hunters
 create_research_mission → run_research_mission → get_research_mission
+inspect_releases → create_ship_investigation → observe_ship_investigation
 inspect_repository
 create_thesis → check_thesis → get_thesis → cancel_thesis
 integration_readiness`}</pre>
+          <p>
+            Ship Hunter compares a declared shipping claim to observed GitHub
+            releases (tag, publish time, assets). Commits are a separate tool.
+            Empty release lists stay insufficient evidence.
+          </p>
           <p>Theses pin a live baseline and a fixed criterion. Creating one opts into
             a finite, read-only schedule. A running thesis worker is required;
             checks do not move funds. Cancellation stops remaining checks.</p>
