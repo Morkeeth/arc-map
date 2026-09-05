@@ -27,8 +27,8 @@ Agent overnight run against `hack.md`. Private branch only; no public publish.
 
 | Claim | Command | Result |
 |---|---|---|
-| Unit/integration tests | `npm test` | 51 pass (9 ship-hunter, including outage RED control) |
-| Offline eval both arms | `npx tsx scripts/ship-hunter-eval.ts --offline` | 5/5 evidenceHits; **1 naive overclaim** on tag-only trap |
+| Unit/integration tests | `npm test` | 52 pass (10 ship-hunter, including outage RED + live v0.6.0 object) |
+| Offline eval both arms | `npx tsx scripts/ship-hunter-eval.ts --offline` | 6/6 evidenceHits; **2 naive overclaims** (synthetic tag-only + real `v0.6.0` zero-asset object) |
 | Live GitHub object | `npx tsx scripts/ship-hunter-eval.ts --live` | arc-node 5 published / 4 with binaries; agent-stack **0** releases → insufficient-evidence |
 | Live tag≠package | same live run, claim `v0.6.0` binaries | evidence **not-supported** (0 assets on real `v0.6.0`) |
 | HTTP create/list/rerun/isolation | `npx tsx scripts/test-ship-hunter-http.ts` | ok; pinned hash immutable; cross-owner 404 |

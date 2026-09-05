@@ -46,7 +46,7 @@ coverage or mainnet spend to fill a gap.
 
 ### Slice 1 — Ship Hunter saved-release investigations
 **Done-when (executed):**
-- [x] `npm test` → 50 pass
+- [x] `npm test` → 51 pass
 - [x] `npx tsx scripts/ship-hunter-eval.ts --offline` → naiveOverclaims=1
 - [x] `npx tsx scripts/ship-hunter-eval.ts --live` → empty agent-stack RED; v0.6.0 no assets refused
 - [x] `npx tsx scripts/test-ship-hunter-http.ts`

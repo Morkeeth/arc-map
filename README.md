@@ -76,6 +76,9 @@ The first users are two people already watching Arc; the return visit should sho
 Run `npm run backup` for local SQLite snapshots with integrity checks. Private mission/thesis
 data and wallet-run records stay outside git. See [overnight build status](docs/OVERNIGHT-BUILD.md)
 and [launch operations](docs/LAUNCH-OPERATIONS.md) for live boundaries and recovery instructions.
+Hosted beta blockers: [hosted beta checklist](docs/HOSTED-BETA-CHECKLIST.md).
+Cookie workspaces are not cross-device accounts: [account recovery](docs/ACCOUNT-RECOVERY.md).
+Overnight evidence: [cloud receipt 2026-09-05](docs/CLOUD-RECEIPT-arc-map-2026-09-05.md).
 
 ## Earlier discovery slice (historical)
 

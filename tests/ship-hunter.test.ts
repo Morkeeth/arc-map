@@ -169,6 +169,24 @@ test("ship store rejects projects without sourced repos and bad claims", () => {
   }
 });
 
+test("real arc-node v0.6.0 object has zero assets — naive overclaims, evidence refuses", () => {
+  const obs = observationFrom(
+    "arc-node",
+    "circlefin/arc-node",
+    adversarial.liveV060NoAssets,
+  );
+  assert.equal(obs.releases[0]?.tag, "v0.6.0");
+  assert.equal(obs.releases[0]?.binaryAssets, 0);
+  const report = evaluateShipClaim(
+    obs,
+    "operators can download v0.6.0 binaries from the release page",
+  );
+  assert.equal(report.naive.stance, "limited-support");
+  assert.equal(report.evidence.stance, "not-supported");
+  assert.equal(report.disagreement, true);
+  assert.equal(report.winner, "evidence");
+});
+
 test("GitHub outage and non-OK responses stay RED — no invented releases", async () => {
   const { inspectReleases, clearReleaseCache } = await import(
     "../src/lib/providers/releases"

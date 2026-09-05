@@ -67,5 +67,20 @@
       ]
     }
   ],
-  "empty": []
+  "empty": [],
+  "liveV060NoAssets": [
+    {
+      "id": 306759439,
+      "tag_name": "v0.6.0",
+      "name": "v0.6.0",
+      "draft": false,
+      "prerelease": false,
+      "published_at": "2026-04-08T19:31:31Z",
+      "created_at": "2026-04-08T19:27:07Z",
+      "target_commitish": "main",
+      "html_url": "https://github.com/circlefin/arc-node/releases/tag/v0.6.0",
+      "body": "## Changelog\r\n\r\nOpen source `arc-node`. To build and run a node, refer to the docs [here](https://github.com/circlefin/arc-node/blob/main/docs/installation.md).\r\n\r\n**Full Changelog**: https://github.com/circlefin/arc-node/commits/v0.6.0",
+      "assets": []
+    }
+  ]
 }

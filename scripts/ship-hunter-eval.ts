@@ -103,6 +103,16 @@ async function offlineCases(): Promise<Case[]> {
       expectEvidence: "not-supported",
     },
     {
+      id: "live-object-v0.6.0-zero-assets",
+      projectId: "arc-node",
+      repository: "circlefin/arc-node",
+      claim: "operators can download v0.6.0 binaries from the release page",
+      observation: fromFixture("arc-node", "circlefin/arc-node", adv.liveV060NoAssets),
+      expectEvidence: "not-supported",
+      expectNaive: "limited-support",
+      expectDisagreement: true,
+    },
+    {
       id: "no-token-title-rank",
       projectId: "arc-node",
       repository: "circlefin/arc-node",
