@@ -53,8 +53,10 @@ The first users are two people already watching Arc; the return visit should sho
 - Arc testnet research escrow was deployed and a capped live lifecycle completed: 0.05 funded,
   0.01 fixed fee, 0.04 reclaimed. Total gas including deployment: 0.0262614 native testnet USDC.
   This was an operator-controlled CLI run, **not a verified Privy browser payment flow**.
-- `/api/mcp` exposes 13 research tools, including radar, repository inspection, theses and checks.
-  The official SDK integration test exercised those flows. It is not an independent LLM evaluation.
+- `/api/mcp` exposes 19 research tools, including durable follows, pinned report comparison,
+  research attachments and resolved thesis criteria. A separate Cursor agent used live Graph
+  research and created a finite thesis; its first threshold was wrong, then corrected after
+  the API exposed the executable rule. See the verification record below.
 - `contracts/sandbox` contains local-chain-only asset-backed strategy shares. Eleven local tests
   cover allocation limits, losses, share transfer, redemption and frozen-venue in-kind exits.
   No strategy token has been deployed publicly. This is unaudited research, not a live investment product.
@@ -97,8 +99,8 @@ protocol deployments. A current fetch may contain old events.
 
 ## Next product capabilities
 
-Public hosting; X ingestion; shared account watchlists; independently evaluated agent-selected
-investigations; verified Privy browser payments; and separately reviewed strategy backing.
+Public hosting; X ingestion; shared account watchlists; broader independent agent evaluation;
+verified Privy browser payments; and separately reviewed strategy backing.
 The research escrow is live on testnet. No public strategy token or mainnet readiness is claimed.
 
 The first customers are two people already watching Arc for useful projects and ideas. The

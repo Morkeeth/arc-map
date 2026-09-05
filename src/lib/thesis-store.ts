@@ -4,7 +4,9 @@ import { dirname, resolve } from "node:path";
 import { randomUUID, createHash } from "node:crypto";
 import { researchProject } from "./research-catalog";
 import { evaluateThesis, readThesisEvidence } from "./thesis-evidence";
-import type { Thesis, ThesisSample, ThesisCheck, ThesisMetric } from "./thesis-types";
+import type { Thesis, ThesisSample, ThesisCheck, ThesisMetric, ThesisResearch } from "./thesis-types";
+import { MissionStore } from "./mission-store";
+import { keccak256, toHex } from "viem";
 
 export function validateThesisInput(input: Record<string, unknown>) {
   const project = researchProject(input.projectId);
@@ -33,6 +35,7 @@ export class ThesisStore {
       CREATE TABLE IF NOT EXISTS theses (id TEXT PRIMARY KEY, owner TEXT NOT NULL, data TEXT NOT NULL, next_at INTEGER, lease_until INTEGER NOT NULL DEFAULT 0, lease_token TEXT);
       CREATE TABLE IF NOT EXISTS thesis_checks (id INTEGER PRIMARY KEY, thesis_id TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS thesis_attempts (owner TEXT NOT NULL, at INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS thesis_research(thesis_id TEXT NOT NULL,mission_id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(thesis_id,mission_id));
       CREATE INDEX IF NOT EXISTS theses_owner ON theses(owner);
       CREATE INDEX IF NOT EXISTS thesis_checks_target ON thesis_checks(thesis_id,id);`);
   }
@@ -57,10 +60,34 @@ export class ThesisStore {
       this.db.exec("COMMIT");
     } catch(e) { this.db.exec("ROLLBACK"); throw e; }
   }
+  research(owner:string,id:string):ThesisResearch[] {
+    if(!this.get(owner,id))throw new Error("Thesis not found.");
+    return this.db.prepare("SELECT data FROM thesis_research WHERE thesis_id=? ORDER BY rowid").all(id).map(r=>JSON.parse(String(r.data)));
+  }
+  attachResearch(owner:string,id:string,missionId:string,missionStore?:MissionStore) {
+    const store=missionStore || new MissionStore();
+    try {
+      const thesis=this.get(owner,id), mission=store.get(owner,missionId);
+      if(!thesis || !mission?.report || !mission.reportHash || mission.status!=="reported")throw new Error("Choose your completed research report and thesis.");
+      const project=researchProject(thesis.projectId);
+      if(!project?.contract || project.contract.toLowerCase()!==mission.address.toLowerCase())throw new Error("Research must concern the thesis's sourced contract.");
+      if(keccak256(toHex(JSON.stringify(mission.report)))!==mission.reportHash)throw new Error("Report commitment does not match its content.");
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        const links=this.research(owner,id);
+        if(links.length>=20&&!links.some(r=>r.missionId===missionId))throw new Error("Attach up to 20 reports to a thesis.");
+        const link:ThesisResearch={missionId,attachedAt:new Date().toISOString(),reportHash:mission.reportHash,report:mission.report};
+        this.db.prepare("INSERT OR IGNORE INTO thesis_research VALUES(?,?,?)").run(id,missionId,JSON.stringify(link));
+        this.db.exec("COMMIT");
+      }catch(e){this.db.exec("ROLLBACK");throw e;}
+      return this.research(owner,id);
+    }finally{if(!missionStore)store.close();}
+  }
   create(owner: string, input: Record<string, unknown>, baseline: ThesisSample, now = Date.now()): Thesis {
     const config = validateThesisInput(input);
     if (baseline.metric !== config.metric || !Number.isFinite(Date.parse(baseline.observedAt)) || Math.abs(now-Date.parse(baseline.observedAt)) > 120000) throw new Error("A fresh matching baseline is required.");
     if (config.metric === "repository-head" ? typeof baseline.value !== "string" || !/^[a-f0-9]{40}$/i.test(baseline.value) : typeof baseline.value !== "number" || !Number.isSafeInteger(baseline.value) || baseline.value < 0) throw new Error("Invalid baseline value.");
+    if(typeof baseline.value==="number"&&!Number.isSafeInteger(baseline.value+config.threshold))throw new Error("The resulting counter target exceeds supported precision.");
     this.db.exec("BEGIN IMMEDIATE");
     try {
       if (this.list(owner).length >= 50) throw new Error("This workspace has reached its 50-thesis limit.");

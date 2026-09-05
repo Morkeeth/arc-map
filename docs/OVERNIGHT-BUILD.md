@@ -183,3 +183,32 @@ tools, including rerun/compare and follow/review; no separate model result is cl
 41 application tests, typecheck and build passed. Browser connection repeatedly timed out;
 the new interface is implemented but its visual flow is not yet verified. Next: restore browser
 verification, link saved Hunter evidence into theses, and run an independent bounded agent client.
+
+## Evidence attachments and independent agent — 2026-09-05 00:10 UTC
+
+Theses now retain owned, same-contract Hunter reports with their original content commitments.
+Attaching research does not change the locked rule, schedule or outcome. The browser attached
+a real Graph report to its existing SUN thesis. Its automatic 00:07 UTC check recorded an
+unchanged counter of 100,001, preserving the baseline and consuming one scheduled check.
+
+A separate signed-in Cursor agent ran the discovered MCP tools through an isolated local bridge:
+discover → choose SUN/Graph → research → retrieve → create a finite thesis → retrieve. Its first
+thesis confused an absolute counter target with the required increase. This was a semantic
+failure despite successful tool responses. The API/tool schema now states the increase semantics
+and returns the resolved absolute target. The same agent detected the mismatch, cancelled the
+original without rewriting it, and created/retrieved a correct one-check replacement. Twelve
+bounded tool calls in total; no wallet action. A separate read-only-mode attempt refused the
+local mutation and did not call the bridge. This is a narrow workflow evaluation, not a general
+claim of reliable autonomous reasoning. The bridge trace and model metadata remain private.
+
+Browser checks: persistent SUN follow and fixed Changes baseline; attach report; rerun Graph
+report and inspect before/after commitments. The conclusion remained unchanged even though the
+retained transaction example changed as the index advanced. This is not new September activity:
+both event samples are historical. Actual 390-CSS-pixel Changes layout has no horizontal overflow;
+desktop report comparison inspected. The browser viewport override was reset.
+
+42 application tests, TypeScript, production build and the 19-tool official SDK flow pass.
+`scripts/test-restore.ts` restored all four actual database snapshots into a separate standalone
+production process. Saved follows and review baseline matched; the generated static asset and
+private thesis route returned 200. This is local process/restore evidence, not a container or
+public-host test. User acceptance and Privy browser payments remain unverified.

@@ -6,9 +6,32 @@ import type { ThesisSample } from "../src/lib/thesis-types";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { MissionStore } from "../src/lib/mission-store";
+import type { MissionReport } from "../src/lib/hunters";
+import { describeThesisCriterion } from "../src/lib/thesis-types";
 const now=Date.parse("2026-09-05T00:00:00Z");
 const baseline:ThesisSample={metric:"transfer-counter",observedAt:new Date(now).toISOString(),sourceUrl:"https://testnet.arcscan.app",value:100,sourceEventAt:null};
 const input={projectId:"sun-token",claim:"The transfer counter will rise by ten.",metric:"transfer-counter",threshold:10,hours:8,checks:3,intervalMinutes:30};
+test("research attachments preserve criterion and report commitment with owner and target checks",()=>{
+  const store=new ThesisStore(":memory:"),missions=new MissionStore(":memory:");
+  try {
+    const t=store.create("a",input,baseline,now);
+    const m=missions.create("a",{projectId:"sun-token",provider:"explorer",budget:"0.05"});missions.claim("a",m.id);
+    const report:MissionReport={version:1,hunter:m.hunterId,thesis:m.thesis,conclusion:"Bounded research fixture.",stance:"not-supported",provider:"explorer",source:"test",observedAt:new Date(now).toISOString(),indexedBlock:null,sampleSize:1,transactions:1,firstEventAt:null,lastEventAt:null,evidence:[],observations:[],limitations:[],steps:[]};
+    const complete=missions.finish("a",m.id,report,null);
+    const attached=store.attachResearch("a",t.id,m.id,missions);
+    assert.equal(attached[0].reportHash,complete.reportHash);
+    assert.equal(store.attachResearch("a",t.id,m.id,missions).length,1);
+    assert.equal(store.get("a",t.id)?.commitment,t.commitment);
+    assert.equal(store.get("a",t.id)?.status,"tracking");
+    assert.equal(store.get("a",t.id)?.remainingChecks,3);
+    const other=store.create("b",input,baseline,now);
+    assert.throws(()=>store.attachResearch("b",other.id,m.id,missions),/your completed/);
+    assert.throws(()=>store.research("b",t.id),/not found/);
+    const repo=store.create("a",{...input,projectId:"arc-node",metric:"repository-head"},{...baseline,metric:"repository-head",value:"a".repeat(40)},now);
+    assert.throws(()=>store.attachResearch("a",repo.id,m.id,missions),/sourced contract/);
+  }finally{store.close();missions.close();}
+});
 test("two worker connections fence completion across a process restart",()=>{
   const dir=mkdtempSync(join(tmpdir(),"arcmap-thesis-test-")), path=join(dir,"theses.sqlite");
   let first=new ThesisStore(path), second=new ThesisStore(path);
@@ -31,6 +54,9 @@ test("thesis pins baseline, criterion and commitment across new observations",()
   const store=new ThesisStore(":memory:");
   try {
     const thesis=store.create("owner",input,baseline,now);
+    const criterion=describeThesisCriterion(thesis);
+    assert.equal(criterion.kind,"increase-from-baseline");
+    assert.equal(criterion.absoluteTarget,110);assert.equal(criterion.minimumIncrease,10);
     assert.equal(store.get("stranger",thesis.id),null);
     assert.throws(()=>store.checks("stranger",thesis.id));
     const lease=store.claim("owner",thesis.id,now+60000);
