@@ -13,3 +13,4 @@ tests
 scripts/test-*
 scripts/settle-hunter.ts
 scripts/check-integrations.ts
+.internal/

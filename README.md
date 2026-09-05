@@ -1,21 +1,39 @@
 # ARC MAP
+## Know what’s moving on Arc.
 
-**Know what’s moving on Arc.**
+ARC MAP is an evidence-backed research workspace for Arc. Discover a contract or project,
+ask a precise question, send a Hunter, and return to see what changed.
 
-Explore what's happening on Arc, follow the stories, and send a hunter after the questions
-that matter. The map creates questions; hunters bring back evidence.
+**Explore → investigate → inspect the evidence → follow the thesis.**
 
-## Run locally
+No wallet is needed to explore or run read-only research. This is an independent project,
+not an official Circle ecosystem directory.
+
+## What you can do
+
+- **Discover:** browse a live, bounded radar of token listings, verified-source contracts and
+  sampled transactions, alongside sourced project profiles.
+- **Investigate:** Distribution Hunter inspects transfers; Activity Hunter checks contract
+  calls; Ship Hunter checks repository activity and exact release-publication claims.
+- **Compare:** run a new investigation against a pinned report. Both original reports remain
+  intact. Different sample counts are not presented as growth rates.
+- **Follow:** save projects and review changes since your last explicit acknowledgment.
+  Refreshing does not reset that baseline.
+- **Track a thesis:** lock a claim, measurable criterion and deadline; schedule a finite number
+  of read-only checks; inspect history, failures and attached Hunter evidence.
+- **Use your agent:** the MCP interface exposes the same bounded research operations.
+  It cannot sign, fund, trade or expand wallet permissions.
+
+## Start locally
+
+Requires Node 22. Use the checked-in lockfile.
 
 ```sh
-nvm use
-npm install
+npm ci
 npm run dev
 ```
 
-Requires Node 22 (see .nvmrc). Open http://localhost:3107. No keys or wallet connection are needed for this first slice.
-
-In a second terminal, start the source collector:
+Open http://localhost:3107. In **three separate terminals**, run:
 
 ```sh
 npm run ingest:watch
@@ -23,129 +41,119 @@ npm run radar:watch
 npm run theses:watch
 ```
 
-It checks the curated GitHub/Arcscan sources every five minutes. `npm run ingest` performs one
-check. A database lease limits ingestion to once per minute across local processes. The feed API
-only reads stored data; refreshing the page does not trigger upstream calls. The worker must
-remain running; this is not yet a hosted scheduler that works with the laptop closed.
+These commands are long-running workers, not three commands to paste into one foreground
+terminal. The app reads persisted observations; refreshing the feed does not fetch every
+provider again. Workers stop when their host stops.
 
-Public source observations persist in `.data/arcmap.sqlite` (ignored by git). Override the path
-with `ARCMAP_DB_PATH` for a persistent host volume. This uses Node 22's experimental built-in
-SQLite support. Do not deploy it on ephemeral storage or copy wallet credentials into this database.
+Public-source discovery and explorer research need no API key. Copy `.env.example` to
+`.env.local` only when configuring optional integrations. Never put a private key or server
+secret in a `NEXT_PUBLIC_` variable.
+
+For Graph research, configure `GRAPH_TRANSFERS_URL` for the schema in
+[subgraphs/arcmap](subgraphs/arcmap/README.md). The deployed index covers SUN transfers;
+it does **not** index every radar contract. Missing Graph access stays an explicit error,
+never an explorer result relabeled as Graph.
+
+## Try the product
+
+1. Open Discover and select a sourced target.
+2. Run a read-only Hunter and inspect its sample, event dates and original source links.
+3. Follow the project. Open Changes later to inspect newly recorded observations.
+4. Create a thesis with a specific rule. For counters, “increase by 1” means baseline + 1,
+   not an absolute target of 1.
+5. Return to its evidence history, or rerun a Hunter against its original report.
+
+For code projects, inspect the repository, choose an actual release tag and check whether it
+has a published stable release. Publication is not proof that the network runs that version.
+
+## Agents and reviewers
+
+Start with [the agent and reviewer guide](docs/AGENT-GUIDE.md). It contains the tool map,
+recommended research workflow, evidence rules and a code-reading path for judges and agents.
+[AGENTS.md](AGENTS.md) is the separate contributor instruction file.
+
+MCP endpoint: `POST /api/mcp` (Streamable HTTP, JSON responses).
+Use a client's secure header configuration for the server's `ARCMAP_AGENT_TOKEN`.
+Browser and bearer-token workspaces are separate. Do not publish bearer tokens in URLs,
+examples, screenshots or checked-in client configuration.
+
+## Verification
 
 ```sh
 npm test
 npm run typecheck
 npm run build
+npm run test:agent
+npm run check:integrations
 ```
 
-## Current build — 2026-09-05
+The live agent protocol test requires the app on port 3107 and access to its public providers.
+It creates isolated research records, not financial transactions.
 
-Radar → a sourced target → a Hunter report → a pinned thesis → scheduled evidence checks.
-The first users are two people already watching Arc; the return visit should show what changed.
+With Foundry installed:
 
-- `/`: live, bounded contract/token radar plus curated projects. Unknown names remain untrusted.
-- `/theses`: private claims with locked criteria, live baselines, evidence timelines and finite
-  read-only schedules. Cancellation fences in-flight checks. No probabilities or returns are invented.
-- Distribution and Activity Hunters inspect token transfers and contract calls. Ship Hunter
-  inspects the sourced Arc node and Circle Agent Stack repositories.
-- The `arcmap` SUN transfer subgraph is published to Graph Studio and returned live indexed data.
-  Broader radar targets require explicit explorer research; they are not Graph-indexed by implication.
-- Arc testnet research escrow was deployed and a capped live lifecycle completed: 0.05 funded,
-  0.01 fixed fee, 0.04 reclaimed. Total gas including deployment: 0.0262614 native testnet USDC.
-  This was an operator-controlled CLI run, **not a verified Privy browser payment flow**.
-- `/api/mcp` exposes 19 research tools, including durable follows, pinned report comparison,
-  research attachments and resolved thesis criteria. A separate Cursor agent used live Graph
-  research and created a finite thesis; its first threshold was wrong, then corrected after
-  the API exposed the executable rule. See the verification record below.
-- `contracts/sandbox` contains local-chain-only asset-backed strategy shares. Eleven local tests
-  cover allocation limits, losses, share transfer, redemption and frozen-venue in-kind exits.
-  No strategy token has been deployed publicly. This is unaudited research, not a live investment product.
+```sh
+npm run test:contracts
+npm run test:strategy
+npm run test:lifecycle
+```
 
-Run `npm run backup` for local SQLite snapshots with integrity checks. Private mission/thesis
-data and wallet-run records stay outside git. See [overnight build status](docs/OVERNIGHT-BUILD.md)
-and [launch operations](docs/LAUNCH-OPERATIONS.md) for live boundaries and recovery instructions.
+The lifecycle command runs a separate **local Anvil chain**. It does not authorize or execute
+an Arc transaction. `ANVIL_BIN` can override the executable path.
 
-## Earlier discovery slice (historical)
+A local production restore test is available after a build:
 
-- **Discovery workspace** at `/`: source observations, project selection, filters and local follows.
-- **Hunters** at `/hunters`: saved private research missions, explicit Graph/explorer provider selection,
-  evidence-backed conclusions and immutable report commitments.
-- Privy wallet connection UI and simulated, wallet-approved Arc testnet funding/withdrawal preparation.
-  Browser authentication/payment verification remains open; the CLI testnet path is verified above.
-- A fixed-fee research escrow with executor, payee, expected report hash, deadline, budget cap,
-  cancellation and surplus withdrawal. Tested locally and now deployed on Arc testnet.
-- MCP Streamable HTTP at `/api/mcp`: project discovery, Hunter catalog, mission creation, live
-  research and report retrieval. Verified with the official SDK client.
-- Four curated project profiles at `/projects/:id`, with explicit evidence for source associations.
-- Real GitHub default-branch commit observations for Arc node and Circle Agent Stack; SUN counter
-  baselines and changes from Arcscan. Source event time and retrieval time remain distinct.
-- Persistent SQLite observations, duplicate protection, source-health checks and outage recovery.
-- Per-browser project follows and a Following feed. No shared accounts or cross-device sync yet.
-- Read-only agent routes: `/api/feed`, `/api/feed?since=<ISO timestamp>`, `/api/projects/:id`.
-  Usage and limitations are visible at `/agents`. Mission tools also have an MCP endpoint.
-- A token atlas fetched from the Arc testnet explorer, with search and metadata-based districts.
-- Field notes that distinguish observed counts from open investigation questions.
-- A per-browser token watchlist. There is no account sync or background monitoring yet.
-- **Hunt this** runs a fixed, read-only scout against the latest returned transfer page. It reports
-  sender/recipient counts, repeated senders, event time and source transactions, with sample limits.
-- A read-only JSON scout endpoint for agents: `/api/hunt?address=0x...`.
-- An optional Graph token-discovery adapter with an explicit schema contract remains separate.
-- A separate [Graph transfer index](subgraphs/arcmap/README.md), initialized for Studio slug
-  `arcmap` on Arc Testnet is deployed and connected to the Distribution Hunter.
+```sh
+node --import tsx scripts/test-restore.ts
+```
 
-The atlas is a discovery layout, not a geographic map or a measured wallet relationship graph.
-Only a bounded set of tokens is shown. Token labels and category names do not establish official
-protocol deployments. A current fetch may contain old events.
+See [verification evidence](docs/VERIFICATION.md) for the tested revision scope and limitations.
 
-## Next product capabilities
+## Integration status
 
-Public hosting; X ingestion; shared account watchlists; broader independent agent evaluation;
-verified Privy browser payments; and separately reviewed strategy backing.
-The research escrow is live on testnet. No public strategy token or mainnet readiness is claimed.
+| Integration | Implemented evidence | Remaining |
+| --- | --- | --- |
+| Arc | Testnet escrow runtime verified; operator-controlled 0.05 USDC research lifecycle completed, 0.01 fee and 0.04 refund | Privy browser payment verification; separately reviewed mainnet deployment |
+| The Graph | Published SUN transfer subgraph and live Hunter queries, index freshness checks | Broader indexed contract coverage |
+| Privy | Wallet connection UI and wallet-approved payment preparation | Authenticated browser funding, cancellation and refund verification |
+| GitHub | Sourced repository commits, exact release investigations and pinned comparisons | Wider verified project associations |
+| X | Not connected | Verified read access and an approved request budget |
 
-The first customers are two people already watching Arc for useful projects and ideas. The
-product should help them answer: what changed, why might it matter, and what should we investigate?
+A separate Cursor agent used live Graph research and requested a finite thesis check. Its
+first counter rule was wrong; after the interface exposed the resolved criterion, it detected
+the mismatch and replaced the thesis without rewriting history. The later check ran.
+This is a narrow, recorded evaluation—not proof of general autonomous-agent reliability.
 
-## Product and engineering record
+## Data, privacy and limits
 
-- [Brand direction](docs/BRAND.md)
-- [Hunter execution, agent tools and launch checkpoints](docs/HUNTER-EXECUTION.md)
-- [Architecture and next proofs](docs/ARCHITECTURE.md)
-- [Sponsor decision](docs/SPONSORS.md)
-- [Decision and origin record](docs/DECISIONS.md)
+- Radar retains at most 1,000 observed contracts from bounded source pages. They are not
+  1,000 verified projects or launches.
+- Holder addresses are not people. First observed is not first launched. Repository commits
+  and releases are not network deployments.
+- Event timestamps, source-query timestamps and index freshness are distinct.
+- Research analysis is rules-based. An external agent can select and interpret tools; the
+  app is not an autonomous investment manager.
+- Private follows, missions and theses use a browser-workspace cookie. Clearing it loses
+  access; there is no account recovery or cross-device sync yet.
+- SQLite state lives in ignored `.data/`. Use persistent storage, not an ephemeral filesystem.
+  `npm run backup` creates local snapshots. Do not publish these databases.
+- Research fees are not investment shares. Strategy contracts are **local-only, unaudited
+  sandbox code**. No investment token or mainnet strategy is live.
 
-## Data and secrets
+## What comes next
 
-The default source is https://testnet.arcscan.app/api/v2. No personal wallet data is imported.
-Do not commit API keys or provider URLs containing keys. Copy `.env.example` to `.env.local` for
-local configuration. Configuring the Graph adapter replaces discovery; it never silently falls
-back to explorer data under a Graph label. Scouts currently always use the explorer.
+Persistent public beta and domain; authenticated account recovery and shared research;
+verified Privy payments; richer sourced project narratives and X ingestion; broader Graph
+coverage; and mainnet security/operational readiness. See
+[launch operations](docs/LAUNCH-OPERATIONS.md) for current deployment boundaries.
 
-This kickoff is a local development application. Public hosting needs persistent rate limiting,
-authentication and worker isolation for agent workloads before paid or autonomous hunts are enabled.
+## Architecture and provenance
 
-## Verification — 2026-09-04
+- [Architecture](docs/ARCHITECTURE.md)
+- [Hunter execution and payment boundaries](docs/HUNTER-EXECUTION.md)
+- [Decisions and code origin](docs/DECISIONS.md)
+- [Sponsor implementation requirements](docs/SPONSORS.md)
 
-Eleven evidence/store tests, TypeScript and the production build pass. A live ingestion run
-successfully checked all three configured sources and stored three initial feed entries. HTTP
-checks exercised Today, map, project and agent pages; unknown projects returned 404, invalid
-feed timestamps returned 400. The feed → project → advertised scout route returned 50 SUN
-transfer events across one sampled transaction. This was a direct API check, not an autonomous
-agent evaluation. That initial slice was API-tested only; see the newer Hunter build verification below.
-
-## Hunter verification — 2026-09-05
-
-The initial Hunter unit tests and production build were supplemented by Foundry contract tests,
-a local-EVM payment lifecycle and an official MCP SDK client flow. The browser research flow
-returned a real explorer sample, showed the missing-Graph failure, and opened Privy's login
-modal. No login credentials or wallet signature were supplied. Desktop and narrow layouts
-were inspected; the full phone wallet/transaction flow remains unverified.
-
-Initial Hunter run: 19 application tests and 12 contract tests passed. The standalone production server
-returned 200 for discovery, Hunters, agent docs, Hunter capabilities and private mission listing.
-Graph code generation and WASM compilation passed. At 390 CSS pixels the workspace had no
-horizontal overflow and project selection scrolled to the Hunter controls.
-
-Run `npm run check:integrations` to probe actual live readiness. Configuration presence is not
-successful authentication or deployment. The payment contract is testnet-only. Investment
-shares are local-sandbox-only; autonomous trading and mainnet support are not implemented.
+Application implementation was AI-assisted from the participant's product direction.
+Dependencies are recorded in lockfiles. No competition eligibility, prize qualification,
+security audit or public-host deployment is implied by this repository.

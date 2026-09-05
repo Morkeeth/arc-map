@@ -1,5 +1,8 @@
 # Hunter execution — implemented boundaries
 
+Current verification is in [VERIFICATION.md](VERIFICATION.md); the full live tool map is in
+[AGENT-GUIDE.md](AGENT-GUIDE.md). Earlier verification counts below are historical checkpoints.
+
 ## Product
 
 ARC MAP discovers projects. Hunters investigate explicit theses using indexed evidence.
@@ -121,10 +124,11 @@ critical advisories after targeted transitive updates. The separate Graph develo
 package still has 5 moderate, 10 high and 1 critical advisory from the earlier setup. These
 are unresolved release risks, not a security clearance; no forced downgrade was applied.
 
-- Authorize and deploy the subgraph to Studio; query its hosted endpoint and verify coverage.
-- Authorize the capped Arc testnet contract deployment and complete the real payment lifecycle.
+- Expand Graph coverage beyond the published SUN transfer index; preserve source and freshness checks.
+- Preserve the verified capped Arc testnet lifecycle; additional broadcasts need their own authority.
 - Authenticate a Privy wallet and verify funding/cancellation through the actual browser flow.
-- Run a separate AI client against the MCP tools and inspect its reasoning and misuse cases.
+- Expand the separate AI-client evaluation beyond the completed bounded SUN investigation and
+  threshold-correction case; test other targets and adversarial source content.
 - Set up a persistent host, database backups and source worker. No public deployment exists.
 - Replace browser-only mission identity with verified account ownership and scoped agent access
   before shared user/agent workflows; add abuse controls suitable for a public multiuser service.

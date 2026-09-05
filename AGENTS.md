@@ -20,7 +20,8 @@ Do not reopen the idea slate. Keep the map and hunter in one product.
   a complete history or infer ownership, motive or airdrop eligibility from counters.
 - API/provider failures remain visible. Do not silently switch providers and retain the old label.
 - Present planned integrations as planned. Explorer data does not satisfy Graph prize requirements.
-- Browser watchlists are local only; do not imply sharing or background monitoring before it exists.
+- Follows persist in a private server workspace identified by a browser cookie. Finite thesis
+  checks require a running worker. Do not imply account recovery, cross-device sync or shared access.
 - No wallet transactions, public pushes, deployment or publishing are part of the repo kickoff.
 - Run npm test, npm run typecheck, npm run build for changes to core evidence handling.
 - Check the actual screen at desktop and phone widths for interface changes.
@@ -37,7 +38,9 @@ Do not reopen the idea slate. Keep the map and hunter in one product.
 
 ## Readiness
 
-See docs/ARCHITECTURE.md for current boundaries and next verification checkpoints.
+Start with README.md, docs/AGENT-GUIDE.md and docs/VERIFICATION.md for current behavior and evidence.
+Historical planning sections are not present-tense deployment claims. If a local .internal/
+agent plan exists, keep it out of Git, containers and public review prompts.
 Sponsor choice is Arc + The Graph + Privy, contingent on live evidence and an actual funded-hunt
 wallet flow. Do not add token speculation or airdrop farming to create sponsor fit.
 
