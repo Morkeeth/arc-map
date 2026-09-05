@@ -9,7 +9,7 @@ or an independent security audit. User acceptance remains separate from automate
 
 | Check | Observed result |
 | --- | --- |
-| `npm test` | 52 application tests passed |
+| `npm test` | 54 application tests passed |
 | `npm run typecheck` | Passed |
 | `npm run build` | Production build passed |
 | `npm run test:agent` | Official MCP SDK discovered 25 tools and exercised live brief, isolated inbox, foreign-update rejection, contract, release, thesis, follow and comparison flows |
@@ -24,6 +24,16 @@ Foundry also reported timestamp-comparison lint warnings in the escrow's deadlin
 These tests do not resolve all dependency, custody, operational or security risks.
 
 ## Today and return visits
+
+Following slice after `bc3da43`: at 09:50:31 UTC, a fresh isolated workspace followed an
+actual returned contract lead. The followed HTTP brief contained only that target and used
+private/no-store headers. A second workspace returned no followed leads. The official MCP
+client returned the same lead IDs for `daily_brief` with scope `following`. Unfollowing
+removed the leads. Repeat with `node --import tsx scripts/test-followed-brief.ts`.
+The full suite, typecheck and production build passed. Browser My following showed the existing
+SUN follow; a non-matching search produced the explicit empty state without marking its inbox
+reviewed. Desktop and 390-CSS-pixel phone layouts were inspected with no horizontal overflow.
+Unit tests pin exact address aliasing and reject name-based or other-chain matches.
 
 At 09:12:13 UTC, the live local HTTP check returned 81 grouped leads from retained observations.
 An isolated SUN thesis used a real Arcscan counter baseline of 100,001, completed its single

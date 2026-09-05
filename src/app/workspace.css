@@ -7,6 +7,8 @@
   background: #f8fbff;
   font-size: 14px;
 }
+.brief-search { display: grid; gap: 8px; margin: 16px 0; color: var(--work-muted); }
+.brief-search input { width: 100%; min-width: 0; box-sizing: border-box; padding: 12px; border: 1px solid var(--work-line); border-radius: 8px; background: white; color: var(--work-ink); }
 .workbench button,
 .workbench input,
 .workbench select {

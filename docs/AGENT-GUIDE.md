@@ -41,6 +41,12 @@ call `create_thesis` with `previousThesisId`, preserving the ended round's proje
 metric and threshold. Choose newly authorized monitoring bounds. The new commitment pins
 the prior commitment and a fresh baseline; it never extends the old schedule silently.
 
+Use `daily_brief` with `scope: "following"` for the current workspace's followed projects;
+omit scope or use `"all"` for public discovery. The equivalent HTTP read is
+`GET /api/brief?scope=following`, with a private, no-store response. This includes retained
+observations from before following, unlike the unread Changes window. It never marks a
+review complete. Curated and discovered IDs match only through an exact sourced Arc address.
+
 ## Tool map
 
 The server currently advertises 25 tools; discover the live catalog rather than assuming this

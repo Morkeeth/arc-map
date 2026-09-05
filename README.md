@@ -12,7 +12,8 @@ not an official Circle ecosystem directory.
 ## What you can do
 
 - **Today:** read grouped, source-linked leads with reasons to investigate, counterevidence
-  and distinct event/observation dates. The ordering is explicit and rules-based.
+  and distinct event/observation dates. Switch between Across Arc and My following, or search
+  by project, contract address or evidence. The ordering is explicit and rules-based.
 - **Research inbox:** return to changed evidence, source failures/recoveries and ended monitoring.
   Quiet checks stay in history. Reading an update does not mark it reviewed.
 - **Discover:** browse a live, bounded radar of token listings, verified-source contracts and

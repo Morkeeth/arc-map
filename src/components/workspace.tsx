@@ -457,7 +457,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="today" ? <DailyBrief data={brief} updates={updates} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief data={brief} updates={updates} following={following} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
