@@ -39,6 +39,16 @@ async function main() {
     const ship = await call("inspect_repository", { projectId: "arc-node" });
     assert.equal(ship.error, false);
     assert.ok(ship.data.repository.commits.length > 0);
+    const releaseTag=ship.data.releases?.index?.releases?.[0]?.tag;
+    assert.ok(releaseTag,"A real returned release tag is required for this live test");
+    const release=await call("investigate_release",{projectId:"arc-node",tag:releaseTag,requireStable:false});
+    assert.equal(release.error,false);assert.equal(release.data.investigation.verdict,"supported");
+    const laterRelease=await call("investigate_release",{projectId:"arc-node",tag:releaseTag,requireStable:false,previousId:release.data.investigation.id});
+    assert.equal(laterRelease.error,false);
+    const releaseRead=await call("get_release_investigation",{id:laterRelease.data.investigation.id});
+    assert.equal(releaseRead.error,false);assert.equal(releaseRead.data.comparison.previousCommitment,release.data.investigation.commitment);
+    const releaseHistory=await call("list_release_investigations",{projectId:"arc-node"});
+    assert.equal(releaseHistory.error,false);assert.equal(releaseHistory.data.investigations.length,2);
     const thesis = await call("create_thesis", { projectId: "arc-node", claim: "The default branch head will change within eight hours.", metric: "repository-head", threshold: 1, hours: 8, intervalMinutes: 30, checks: 2 });
     assert.equal(thesis.error, false);
     try {
@@ -100,6 +110,7 @@ async function main() {
             "live research execution",
             "persisted report retrieval",
             "live radar search and repository inspection",
+            "live exact-tag release investigation, persisted rerun and pinned comparison",
             "thesis baseline, check, retrieval and cancellation",
             "immutable report rerun and pinned comparison",
             "durable project follow and ticket-scoped review",

@@ -24,7 +24,7 @@ async function main() {
   const port = 18547;
   const rpc = `http://127.0.0.1:${port}`;
   const node = spawn(
-    process.env.ANVIL_BIN || "/Users/morkeeth/.foundry/bin/anvil",
+    process.env.ANVIL_BIN || "anvil",
     ["--host", "127.0.0.1", "--port", String(port), "--silent"],
     { stdio: "ignore" },
   );
