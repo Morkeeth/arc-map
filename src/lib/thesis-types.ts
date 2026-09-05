@@ -4,6 +4,7 @@ export type ThesisSample = {
   value: number | string; sourceEventAt: string | null;
 };
 export type Thesis = {
+  previousThesisId?:string; previousCommitment?:string;
   id: string; projectId: string; projectName: string; claim: string; metric: ThesisMetric;
   threshold: number; createdAt: string; deadline: string; commitment: string;
   baseline: ThesisSample; status: "tracking" | "observed" | "not-observed" | "inconclusive" | "cancelled";

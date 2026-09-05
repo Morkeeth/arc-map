@@ -1,17 +1,18 @@
 # Verification record — 5 September 2026
 
-Application revision: `3c46bf8` (Ship Hunter release slice). Documentation-only updates may
-follow this revision. Checks below ran locally on Node 22; they are not a public deployment
+Application scope: Today, research inbox and renewable monitoring slice, following `0e553fa`.
+Earlier contract and restore results below were run at `3c46bf8`, not rerun for this UI slice.
+Checks ran locally on Node 22; they are not a public deployment
 or an independent security audit. User acceptance remains separate from automated verification.
 
 ## Current check results
 
 | Check | Observed result |
 | --- | --- |
-| `npm test` | 46 application tests passed |
+| `npm test` | 52 application tests passed |
 | `npm run typecheck` | Passed |
 | `npm run build` | Production build passed |
-| `npm run test:agent` | Official MCP SDK discovered 22 tools and exercised live contract, release, thesis, follow and comparison flows |
+| `npm run test:agent` | Official MCP SDK discovered 25 tools and exercised live brief, isolated inbox, foreign-update rejection, contract, release, thesis, follow and comparison flows |
 | `npm run test:contracts` | 12 escrow tests passed |
 | `npm run test:strategy` | 11 local-only strategy tests passed |
 | `npm run test:lifecycle` | Isolated local Anvil funding, fixed fee, commitment, duplicate/unauthorized rejection and refund passed |
@@ -21,6 +22,27 @@ or an independent security audit. User acceptance remains separate from automate
 The restore run completed at 08:27:46 UTC. It is not a Docker lifecycle or public-host test.
 Foundry also reported timestamp-comparison lint warnings in the escrow's deadline checks.
 These tests do not resolve all dependency, custody, operational or security risks.
+
+## Today and return visits
+
+At 09:12:13 UTC, the live local HTTP check returned 81 grouped leads from retained observations.
+An isolated SUN thesis used a real Arcscan counter baseline of 100,001, completed its single
+check and remained inconclusive. Its monitoring-ended update survived reads until explicit
+acknowledgment. Another workspace could not acknowledge it. A new round pinned the original
+commitment and a fresh baseline; the original stayed unchanged. The new round was cancelled.
+Run `node --import tsx scripts/test-daily-flow.ts` to repeat this non-financial flow.
+
+The browser opened the exact existing thesis from its inbox update and displayed its 16
+completed checks. The new-round form locked the original claim and criterion. Today and the
+form were inspected at 390 CSS pixels with document width 390; the viewport override was reset.
+The new-round creation was exercised through HTTP, not submitted again through the browser.
+
+Tests cover duplicate transaction identities, same-name/different-address separation, original
+event dates, source failures, invalid/future health timestamps, quiet-check suppression,
+failure/recovery events, owner isolation, explicit review and immutable new-round links.
+The first extended MCP test hit a test-client JSON parsing assumption on a valid plain-text
+error response. The client now handles MCP error text; the full live protocol test then passed.
+These are rules-based research leads, not AI-generated investment rankings or a full-chain census.
 
 ## Browser release investigation
 

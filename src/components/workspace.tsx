@@ -24,6 +24,9 @@ import { useHunterWallet } from "./wallet-provider";
 import { RepositoryPanel } from "./repository-panel";
 import { FollowedChanges, type FollowedData } from "./followed-changes";
 import { ReportComparison } from "./report-comparison";
+import { DailyBrief } from "./daily-brief";
+import type { DailyBrief as BriefData } from "@/lib/daily-brief";
+import type { ResearchUpdate } from "@/lib/research-updates";
 
 const time = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -60,11 +63,12 @@ async function api(url: string, body?: unknown) {
   return result;
 }
 export function Workspace({
-  initialView = "discover",
+  initialView = "today",
 }: {
-  initialView?: "discover" | "hunters";
+  initialView?: "today" | "discover" | "hunters";
 }) {
-  const [view, setView] = useState<"discover"|"hunters"|"changes">(initialView);
+  const [view, setView] = useState<"today"|"discover"|"hunters"|"changes">(initialView);
+  const [brief,setBrief]=useState<BriefData|null>(null),[updates,setUpdates]=useState<ResearchUpdate[]|null>(null),[briefError,setBriefError]=useState<string|null>(null);
   const [feed, setFeed] = useState<FeedData | null>(null);
   const [radar, setRadar] = useState<RadarData | null>(null);
   const [catalogView, setCatalogView] = useState<"radar" | "curated">("radar");
@@ -112,13 +116,13 @@ export function Workspace({
     // Establish the private cookie before any other owner-scoped route starts.
     try {
       let data=await api("/api/follows");
-      if(!localStorage.getItem("arcmap.follows.migrated.v2")) {
+      try { if(!localStorage.getItem("arcmap.follows.migrated.v2")) {
         const legacy=JSON.parse(localStorage.getItem("arcmap.projects.v1")||"[]");
         if(Array.isArray(legacy)) for(const id of legacy.slice(0,100)) {
           if(typeof id==="string" && (projects.some(p=>p.id===id)||/^arc:0x[0-9a-f]{40}$/.test(id))) data=await api("/api/follows",{action:"follow",projectId:id});
         }
         localStorage.setItem("arcmap.follows.migrated.v2","true");
-      }
+      } } catch { setError("Old local follows could not be imported. Server-saved follows remain available."); }
       setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));setStorageReady(true);
     }
     catch { setError("Saved follows unavailable. Existing data remains visible."); }
@@ -128,6 +132,8 @@ export function Workspace({
       api("/api/hunters"),
       api("/api/missions"),
       api("/api/radar"),
+      api("/api/brief"),
+      api("/api/research-updates"),
     ]);
     if (results[0].status === "fulfilled") setFeed(results[0].value);
     else setError("Feed unavailable. Existing evidence remains visible.");
@@ -140,7 +146,11 @@ export function Workspace({
       setRadar(updated);
       setSelected(previous => updated.projects.find(p => p.id === previous.id) || previous);
     }
+    if(results[4].status==="fulfilled")setBrief(results[4].value);
+    if(results[5].status==="fulfilled")setUpdates(results[5].value.updates);
+    setBriefError(results[4].status==="rejected"||results[5].status==="rejected"?"Some brief or research updates are unavailable. Saved evidence has not been replaced.":null);
   }
+  async function reviewUpdate(id:string){try{const result=await api("/api/research-updates",{ids:[id]});setUpdates(result.updates);setBriefError(null);}catch{setBriefError("Update could not be marked reviewed. Try again.");}}
   useEffect(() => {
     void load();
   }, []);
@@ -253,6 +263,7 @@ export function Workspace({
           <Compass size={25} /> ARC MAP
         </Link>
         <nav aria-label="Main navigation">
+          <button className={view==="today"?"active":""} onClick={()=>setView("today")}>Today{updates?.some(u=>!u.read)?` (${updates.filter(u=>!u.read).length})`:""}</button>
           <button
             className={view === "discover" ? "active" : ""}
             onClick={() => setView("discover")}
@@ -296,7 +307,7 @@ export function Workspace({
               ARC TESTNET / RESEARCH WORKSPACE
             </span>
             <h1>
-              {view === "discover"
+              {view==="today"?"What’s worth a closer look.":view === "discover"
                 ? "What’s taking shape."
                 : view==="changes"?"What changed while you were away.":"Put a thesis to work."}
             </h1>
@@ -446,7 +457,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief data={brief} updates={updates} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">

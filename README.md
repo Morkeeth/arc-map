@@ -11,6 +11,10 @@ not an official Circle ecosystem directory.
 
 ## What you can do
 
+- **Today:** read grouped, source-linked leads with reasons to investigate, counterevidence
+  and distinct event/observation dates. The ordering is explicit and rules-based.
+- **Research inbox:** return to changed evidence, source failures/recoveries and ended monitoring.
+  Quiet checks stay in history. Reading an update does not mark it reviewed.
 - **Discover:** browse a live, bounded radar of token listings, verified-source contracts and
   sampled transactions, alongside sourced project profiles.
 - **Investigate:** Distribution Hunter inspects transfers; Activity Hunter checks contract
@@ -20,7 +24,8 @@ not an official Circle ecosystem directory.
 - **Follow:** save projects and review changes since your last explicit acknowledgment.
   Refreshing does not reset that baseline.
 - **Track a thesis:** lock a claim, measurable criterion and deadline; schedule a finite number
-  of read-only checks; inspect history, failures and attached Hunter evidence.
+  of read-only checks; inspect history, failures and attached Hunter evidence. Start an explicit
+  new round with a fresh baseline pinned to the ended round; the original stays unchanged.
 - **Use your agent:** the MCP interface exposes the same bounded research operations.
   It cannot sign, fund, trade or expand wallet permissions.
 
@@ -56,12 +61,13 @@ never an explorer result relabeled as Graph.
 
 ## Try the product
 
-1. Open Discover and select a sourced target.
+1. Open Today, inspect a lead and choose Hunt this, or browse Discover for a sourced target.
 2. Run a read-only Hunter and inspect its sample, event dates and original source links.
 3. Follow the project. Open Changes later to inspect newly recorded observations.
 4. Create a thesis with a specific rule. For counters, “increase by 1” means baseline + 1,
    not an absolute target of 1.
-5. Return to its evidence history, or rerun a Hunter against its original report.
+5. Return to the research inbox and open the exact thesis. Review its evidence history,
+   start a new finite round, or rerun a Hunter against its original report.
 
 For code projects, inspect the repository, choose an actual release tag and check whether it
 has a published stable release. Publication is not proof that the network runs that version.
@@ -85,6 +91,7 @@ npm run typecheck
 npm run build
 npm run test:agent
 npm run check:integrations
+node --import tsx scripts/test-daily-flow.ts
 ```
 
 The live agent protocol test requires the app on port 3107 and access to its public providers.

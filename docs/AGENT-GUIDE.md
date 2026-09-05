@@ -8,7 +8,8 @@ It does not rank investments or manufacture a probability that a project succeed
 
 ## Recommended agent workflow
 
-1. Discover supported tools using MCP `tools/list`. Read `discover_projects` and `search_radar`
+1. Discover supported tools using MCP `tools/list`. Read `daily_brief` for sourced leads,
+   then `discover_projects` and `search_radar`
    for sourced targets. Do not invent an association from a token name.
 2. Use `list_hunters` to choose a supported question. For Graph research, confirm actual
    coverage and `integration_readiness`. Only SUN is currently indexed by this deployment.
@@ -33,13 +34,21 @@ For returning-user discovery, `follow_project` starts a saved follow. `followed_
 returns a fixed review window. Only call `review_followed_changes` when the user intends to
 acknowledge that window. Reading data is not consent to mark it reviewed.
 
+`research_updates` returns owned evidence changes, source outages/recoveries and monitoring
+limits. Quiet samples are retained in thesis history without creating news. Only acknowledge
+specific IDs with `review_research_updates` when requested. To start a new finite round,
+call `create_thesis` with `previousThesisId`, preserving the ended round's project, claim,
+metric and threshold. Choose newly authorized monitoring bounds. The new commitment pins
+the prior commitment and a fresh baseline; it never extends the old schedule silently.
+
 ## Tool map
 
-The server currently advertises 22 tools; discover the live catalog rather than assuming this
+The server currently advertises 25 tools; discover the live catalog rather than assuming this
 number is permanent. The implementation source is `src/lib/hunter-tools.ts`.
 
 | Task | Tools |
 | --- | --- |
+| Daily research | `daily_brief`, `research_updates`, `review_research_updates` |
 | Discover | `discover_projects`, `search_radar`, `list_hunters`, `integration_readiness` |
 | Investigate contracts | `create_research_mission`, `run_research_mission`, `get_research_mission`, `compare_research_reports` |
 | Investigate releases | `inspect_repository`, `investigate_release`, `get_release_investigation`, `list_release_investigations` |

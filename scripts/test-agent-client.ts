@@ -28,12 +28,19 @@ async function main() {
     async function call(name: string, args: Record<string, unknown> = {}) {
       const result = await client.callTool({ name, arguments: args });
       const content = result.content as { type: string; text?: string }[];
+      const body=content.find((c)=>c.type==="text")!.text!;
       return {
         error: result.isError === true,
-        data: JSON.parse(content.find((c) => c.type === "text")!.text!),
+        data: result.isError===true?body:JSON.parse(body),
       };
     }
     const discovery = await call("discover_projects");
+    const brief = await call("daily_brief");
+    assert.equal(brief.error,false);assert.ok(brief.data.cards.length>0);
+    const inbox = await call("research_updates");
+    assert.equal(inbox.error,false);assert.equal(inbox.data.unread,0);
+    const invalidReview = await call("review_research_updates",{ids:["not-owned"]});
+    assert.equal(invalidReview.error,true);
     const radar = await call("search_radar", { kind: "contract" });
     assert.equal(radar.error, false);
     const ship = await call("inspect_repository", { projectId: "arc-node" });
@@ -105,6 +112,7 @@ async function main() {
           proofs: [
             "official SDK handshake",
             "tool discovery",
+            "live daily brief, isolated research inbox and foreign update rejection",
             "curated project discovery",
             "mission creation",
             "live research execution",

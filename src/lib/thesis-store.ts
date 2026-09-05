@@ -7,6 +7,7 @@ import { evaluateThesis, readThesisEvidence } from "./thesis-evidence";
 import type { Thesis, ThesisSample, ThesisCheck, ThesisMetric, ThesisResearch } from "./thesis-types";
 import { MissionStore } from "./mission-store";
 import { keccak256, toHex } from "viem";
+import { deriveResearchUpdates } from "./research-updates";
 
 export function validateThesisInput(input: Record<string, unknown>) {
   const project = researchProject(input.projectId);
@@ -36,10 +37,24 @@ export class ThesisStore {
       CREATE TABLE IF NOT EXISTS thesis_checks (id INTEGER PRIMARY KEY, thesis_id TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS thesis_attempts (owner TEXT NOT NULL, at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS thesis_research(thesis_id TEXT NOT NULL,mission_id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(thesis_id,mission_id));
+      CREATE TABLE IF NOT EXISTS thesis_update_reads(owner TEXT NOT NULL,id TEXT NOT NULL,read_at TEXT NOT NULL,PRIMARY KEY(owner,id));
       CREATE INDEX IF NOT EXISTS theses_owner ON theses(owner);
       CREATE INDEX IF NOT EXISTS thesis_checks_target ON thesis_checks(thesis_id,id);`);
   }
   close() { this.db.close(); }
+  updates(owner:string) {
+    const read=new Set(this.db.prepare("SELECT id FROM thesis_update_reads WHERE owner=?").all(owner).map(r=>String(r.id)));
+    return this.list(owner).flatMap(t=>deriveResearchUpdates(t,this.checks(owner,t.id))).map(u=>({...u,read:read.has(u.id)})).sort((a,b)=>b.at.localeCompare(a.at)||a.id.localeCompare(b.id));
+  }
+  reviewUpdates(owner:string,ids:unknown) {
+    if(!Array.isArray(ids)||!ids.length||ids.length>100||ids.some(id=>typeof id!=="string"))throw new Error("Choose 1–100 saved update IDs.");
+    this.db.exec("BEGIN IMMEDIATE");try{
+      const available=new Set(this.updates(owner).map(u=>u.id));
+      if(ids.some(id=>!available.has(id)))throw new Error("Update not found in this workspace.");
+      for(const id of new Set(ids))this.db.prepare("INSERT OR IGNORE INTO thesis_update_reads VALUES(?,?,?)").run(owner,id,new Date().toISOString());
+      this.db.exec("COMMIT");
+    }catch(e){this.db.exec("ROLLBACK");throw e;}
+  }
   get(owner: string, id: string): Thesis | null {
     const row = this.db.prepare("SELECT data FROM theses WHERE owner=? AND id=?").get(owner,id);
     return row ? JSON.parse(String(row.data)) : null;
@@ -91,8 +106,10 @@ export class ThesisStore {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       if (this.list(owner).length >= 50) throw new Error("This workspace has reached its 50-thesis limit.");
+      const previous=input.previousThesisId===undefined?null:typeof input.previousThesisId==="string"?this.get(owner,input.previousThesisId):null;
+      if(input.previousThesisId!==undefined&&(!previous||previous.status==="tracking"||previous.projectId!==config.project.id||previous.metric!==config.metric||previous.threshold!==config.threshold||previous.claim!==config.claim))throw new Error("A new round must reference your ended thesis and preserve its project, claim and criterion.");
       const id = randomUUID(), createdAt = new Date(now).toISOString(), deadline = new Date(now + config.hours*3600000).toISOString();
-      const committed = { id, projectId: config.project.id, claim: config.claim, metric: config.metric, threshold: config.threshold, createdAt, deadline, baseline };
+      const committed = { id, projectId: config.project.id, claim: config.claim, metric: config.metric, threshold: config.threshold, createdAt, deadline, baseline,...(previous?{previousThesisId:previous.id,previousCommitment:previous.commitment}:{}) };
       const thesis: Thesis = { ...committed, projectName: config.project.name, commitment: createHash("sha256").update(JSON.stringify(committed)).digest("hex"), status: "tracking", intervalMinutes: config.interval, remainingChecks: config.checks, nextCheckAt: new Date(Math.min(now+config.interval*60000,Date.parse(deadline))).toISOString(), lastCheckAt: null };
       this.db.prepare("INSERT INTO theses(id,owner,data,next_at) VALUES(?,?,?,?)").run(id,owner,JSON.stringify(thesis),Date.parse(thesis.nextCheckAt!));
       this.db.exec("COMMIT"); return thesis;

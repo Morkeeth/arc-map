@@ -834,3 +834,24 @@
 .thesis-detail .report-heading { align-items: flex-start; margin-bottom: 16px; }
 .thesis-detail .report-heading h2 { margin-bottom: 8px; }
 @media (max-width: 760px) { .thesis-layout { grid-template-columns: 1fr; } .thesis-detail { padding: 20px; } .thesis-list { max-height: 260px; overflow-y: auto; } .thesis-detail h2 { font-size: 23px; } .thesis-form-grid { gap: 0 12px; } }
+.daily-brief { display: grid; gap: 20px; }
+.research-inbox { padding: 20px; border: 1px solid #dce7f7; border-radius: 12px; background: #edf5ff; }
+.research-update { padding: 18px 0; border-top: 1px solid #d4e1f3; }
+.research-update h3 { margin: 8px 0; font-size: 18px; }
+.research-update p { font-size: 14px; line-height: 1.6; }
+.brief-intro { color: #627998; margin: -10px 0 0; }
+.brief-card { padding: 24px; background: white; border: 1px solid #dce7f7; border-radius: 12px; min-width: 0; overflow-wrap: anywhere; }
+.brief-card h2 { font-size: 24px; line-height: 1.25; letter-spacing: -.6px; margin: 14px 0; }
+.brief-meta, .brief-actions { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.brief-source { font-size: 11px; color: #627998; }
+.brief-source.stale, .brief-source.unavailable { color: #925828; }
+.brief-finding { line-height: 1.6; font-size: 15px; }
+.brief-why, .brief-counter { font-size: 13px; line-height: 1.6; }
+.brief-why strong, .brief-counter strong { display: block; margin-bottom: 3px; font-weight: 600; }
+.brief-counter { color: #627998; }
+.brief-actions { justify-content: flex-start; margin: 18px 0; }
+.brief-card details { border-top: 1px solid #edf2fa; padding-top: 12px; }
+.brief-card details .evidence-link { display: block; margin: 8px 0; font-size: 12px; }
+.brief-card summary, .brief-coverage summary { cursor: pointer; font-size: 12px; color: #627998; }
+.brief-coverage { font-size: 12px; line-height: 1.7; color: #627998; }
+@media(max-width:760px) { .brief-card { padding: 20px; } .brief-card h2 { font-size: 22px; } }
