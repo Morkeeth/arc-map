@@ -47,7 +47,7 @@ Agent overnight run against `hack.md`. Private branch only; no public publish.
 3. **No public host was stood up.** Docker daemon absent; no hosting account/domain/spend. Checklist is honest BLOCKED, not a URL.
 4. **Account recovery was not implemented** — only the failing probe + design choices. Guessing a Privy server auth design would violate open questions.
 5. **Ship investigations do not yet attach to theses** (explicitly left open).
-6. **Naive arm can still miss older tag-only releases** when they are not latest (live `v0.6.0`): both arms said not-supported for different reasons. The offline tag-only fixture is the clean embarrassment case where naive over-claims.
+6. **Naive arm over-claims on real objects when they are latest:** offline fixture of live `v0.6.0` (0 assets) → naive limited-support, evidence not-supported. When `v0.6.0` is not latest in a full live list, naive can miss for a different reason (latest-tag only).
 7. **`next start` warns** that standalone output should use `node .next/standalone/server.js`; smoke used the standalone entry. `npm run start` still works enough for local HTTP tests but is not the Docker/web image path.
 8. **Visual QA of the new Ship Hunter claim UI at 390px was not completed in a browser session before this receipt** — follow-up screenshot pass may still be needed.
 9. **Graph coverage was not invented** and remains unconfigured in this cloud agent (`GRAPH_TRANSFERS_URL` absent).
