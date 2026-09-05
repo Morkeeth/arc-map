@@ -39,6 +39,7 @@ Agent overnight run against `hack.md`. Private branch only; no public publish.
 | Privy browser payment | `npx tsx scripts/probe-privy-browser-payment.ts` | **BLOCKED** at `2.escrow-env` (then would block on interactive Privy login). Exit 2 |
 | Integrations without secrets | `npm run check:integrations` | RPC verified; graph/escrow **not configured**; fundingPrerequisitesMet false |
 | MCP advertises Ship tools | `POST /api/mcp` tools/list with Origin | **24** tools including `inspect_releases`, `create_ship_investigation`, `observe_ship_investigation` |
+| Desktop + 390px Ship Hunter UI | browser session on `localhost:3107` | LIMITED SUPPORT for v0.8.0 claim; release list includes live `v0.6.0 · no binaries`; no horizontal overflow at ~390px. Screenshots: `/opt/cursor/artifacts/screenshots/ship-hunter-desktop.png`, `ship-hunter-phone.png` |
 
 ## WRONG
 
