@@ -50,5 +50,5 @@ Agent overnight run against `hack.md`. Private branch only; no public publish.
 5. **Ship investigations do not yet attach to theses** (explicitly left open).
 6. **Naive arm over-claims on real objects when they are latest:** offline fixture of live `v0.6.0` (0 assets) → naive limited-support, evidence not-supported. When `v0.6.0` is not latest in a full live list, naive can miss for a different reason (latest-tag only).
 7. **`next start` warns** that standalone output should use `node .next/standalone/server.js`; smoke used the standalone entry. `npm run start` still works enough for local HTTP tests but is not the Docker/web image path.
-8. **Visual QA of the new Ship Hunter claim UI at 390px was not completed in a browser session before this receipt** — follow-up screenshot pass may still be needed.
-9. **Graph coverage was not invented** and remains unconfigured in this cloud agent (`GRAPH_TRANSFERS_URL` absent).
+8. **Graph coverage was not invented** and remains unconfigured in this cloud agent (`GRAPH_TRANSFERS_URL` absent).
+9. Subagent summary briefly mislabeled the fifth release row as `v0.8.0 · no binaries`; the on-screen object and screenshot show **`v0.6.0 · no binaries`** (re-checked against the artifact).

@@ -73,8 +73,9 @@ coverage or mainnet spend to fill a gap.
 
 ## NOW
 
-All planned slices have executed done-whens. Follow-ups only: browser visual QA of
-Ship Hunter claim UI; thesis attachment for ship reports (open question).
+All planned slices have executed done-whens, including desktop/390px Ship Hunter UI
+inspection (screenshots under `/opt/cursor/artifacts/screenshots/`). Remaining open:
+thesis attachment for ship reports (product choice).
 
 ## LOG
 
@@ -86,3 +87,4 @@ Ship Hunter claim UI; thesis attachment for ship reports (open question).
 - Slice 4: Privy browser payment BLOCKED at escrow env, then login.
 - Slice 5: cloud receipt written.
 - `npm run check:integrations`: RPC ok; graph/escrow unconfigured in this agent.
+- Browser QA: Arc node → Investigate releases → LIMITED SUPPORT; phone width OK.
