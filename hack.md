@@ -18,17 +18,13 @@ coverage or mainnet spend to fill a gap.
 
 ## OPEN QUESTIONS
 
-- **BLOCKING for Privy browser payment:** Does Oscar authorize a live Privy login +
-  Arc testnet wallet signature in this environment tonight? Without that click, the
-  browser fund/settle path stays BLOCKED at the auth step. CLI lifecycle is already
-  proven and is not a substitute.
-- **BLOCKING for public hosted beta:** Which host account/domain/spend may we use?
-  Compose and a local production Node path exist; no public URL may be invented.
-- **OPEN (non-blocking):** Cross-device account recovery identity provider — Privy
-  subject vs email-linked recovery ticket vs exportable workspace secret. Design and
-  first failing probe tonight; product choice remains Oscar's.
-- **OPEN (non-blocking):** Whether release investigations should later attach into
-  theses the same way Graph reports do. Not this NOW slice.
+- **BLOCKING for Privy browser payment:** Oscar interactive Privy login + signature.
+  Probe stopped earlier at missing escrow env in this agent; login would still block.
+- **BLOCKING for public hosted beta:** Oscar hosting account/domain/spend. Docker
+  absent here. Standalone local smoke is not a public URL.
+- **OPEN (non-blocking):** Recovery identity provider choice (Privy subject vs export
+  secret vs email). Failing probe documented; not implemented.
+- **OPEN (non-blocking):** Attach Ship investigations into theses like Graph reports.
 
 ## CONSTITUTION
 
@@ -49,56 +45,44 @@ coverage or mainnet spend to fill a gap.
 ## PLAN (risk-first)
 
 ### Slice 1 — Ship Hunter saved-release investigations
-**Risk:** We have been calling commit lists “Ship Hunter”. The product gap and the
-hackathon loss mode are the same: nearer proxy (commit title / tag name) instead of
-the release object.
-
 **Done-when (executed):**
-- [x] `npm test` includes release parse/compare/store and RED outage/empty controls
-      · ran `npm test` → 50 pass (8 ship-hunter tests)
-- [x] `npx tsx scripts/ship-hunter-eval.ts --offline` runs cold, prints both arms
-      · evidenceHits=5, naiveOverclaims=1 (tag-only trap)
-- [x] `npx tsx scripts/ship-hunter-eval.ts --live` hits real GitHub
-      · arc-node: 5 published, 4 with binaries; v0.6.0 tag-only refused;
-        agent-stack: 0 releases → insufficient-evidence (not green zero)
-- [x] HTTP create → observe → list → compare path
-      · ran `npx tsx scripts/test-ship-hunter-http.ts` against `npm run start`
-      · first attempt failed: Origin `127.0.0.1` ≠ allowed `localhost` (caught by control)
-- [x] `npm run typecheck` and `npm run build` pass
+- [x] `npm test` → 50 pass
+- [x] `npx tsx scripts/ship-hunter-eval.ts --offline` → naiveOverclaims=1
+- [x] `npx tsx scripts/ship-hunter-eval.ts --live` → empty agent-stack RED; v0.6.0 no assets refused
+- [x] `npx tsx scripts/test-ship-hunter-http.ts`
+- [x] `npm run typecheck` && `npm run build`
 
-### Slice 2 — Hosted beta path without inventing a host  ← NOW
-**Risk:** Claiming “ready to host” from compose.yaml alone.
-
-**Done-when:**
-- [ ] Written checklist with RUN evidence or BLOCKED + exact missing key
-- [ ] `npm run build` + production start smoke (or documented failure)
+### Slice 2 — Hosted beta path without inventing a host
+**Done-when (executed):**
+- [x] `docs/HOSTED-BETA-CHECKLIST.md` written with PASS/BLOCKED
+- [x] `npx tsx scripts/probe-hosted-beta.ts` → standalone HTTP 200s; docker BLOCKED; secrets BLOCKED
 
 ### Slice 3 — Account recovery / cross-device
-**Done-when:**
-- [ ] Probe script demonstrates loss-of-cookie = loss-of-workspace
-- [ ] Doc states what is implemented vs blocked on Privy server verification
+**Done-when (executed):**
+- [x] `npx tsx scripts/probe-workspace-recovery.ts` → other/cleared cookie 404; no recover route
+- [x] `docs/ACCOUNT-RECOVERY.md` design choices without guessing implementation
 
 ### Slice 4 — Privy browser payment (or honest BLOCKED)
-**Done-when:**
-- [ ] Either end-to-end browser fund path with receipt, or BLOCKED naming the exact
-      step (missing Privy session / signature / origin / escrow config)
+**Done-when (executed):**
+- [x] `npx tsx scripts/probe-privy-browser-payment.ts` → BLOCKED at `2.escrow-env`
+      (would next block at interactive Privy login). CLI path not counted.
 
 ### Slice 5 — Cloud receipt
-**Done-when:**
-- [ ] `docs/CLOUD-RECEIPT-arc-map-2026-09-05.md` exists with SHIPPED / VERIFIED / WRONG
+**Done-when (executed):**
+- [x] `docs/CLOUD-RECEIPT-arc-map-2026-09-05.md` with SHIPPED / VERIFIED / WRONG
 
 ## NOW
 
-**Slice 2:** Hosted beta path — checklist + whatever stands without Oscar secrets.
+All planned slices have executed done-whens. Follow-ups only: browser visual QA of
+Ship Hunter claim UI; thesis attachment for ship reports (open question).
 
 ## LOG
 
-- 2026-09-05 — No `hack.md` in repo; wrote this contract before code.
-- Inventory: Ship Hunter was commit-only; arc-node has live releases; agent-stack
-  returns zero releases; Privy UI present; no `.env.local`; Docker absent here.
-- Slice 1 shipped: release provider, claim arms, ShipStore, APIs, MCP tools, UI,
-  offline fixtures, eval + HTTP scripts. Naive arm over-claimed on tag-only fixture.
-- Live object finding: `circlefin/arc-node` release `v0.6.0` has **0 assets**; evidence
-  arm refuses “downloadable binaries” for it. `agent-stack-starter-kits` has **0** releases.
-- HTTP Origin control caught `127.0.0.1` vs `localhost` before a false green.
-- NOW → Slice 2.
+- Slice 1: Ship Hunter releases + evidence/naive arms + saved store + evals.
+  Live: arc-node v0.6.0 has 0 assets; agent-stack 0 releases.
+  HTTP Origin localhost vs 127.0.0.1 control caught a false setup.
+- Slice 2: hosted checklist + probe; standalone PASS; docker/public host BLOCKED.
+- Slice 3: recovery probe FAIL as expected (gap documented).
+- Slice 4: Privy browser payment BLOCKED at escrow env, then login.
+- Slice 5: cloud receipt written.
+- `npm run check:integrations`: RPC ok; graph/escrow unconfigured in this agent.

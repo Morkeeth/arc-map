@@ -168,3 +168,24 @@ test("ship store rejects projects without sourced repos and bad claims", () => {
     store.close();
   }
 });
+
+test("GitHub outage and non-OK responses stay RED — no invented releases", async () => {
+  const { inspectReleases, clearReleaseCache } = await import(
+    "../src/lib/providers/releases"
+  );
+  const original = globalThis.fetch;
+  clearReleaseCache();
+  try {
+    globalThis.fetch = async () => {
+      throw new Error("offline");
+    };
+    await assert.rejects(() => inspectReleases("arc-node"), /failed|substitute/i);
+    clearReleaseCache();
+    globalThis.fetch = async () =>
+      new Response("{}", { status: 503, statusText: "Unavailable" });
+    await assert.rejects(() => inspectReleases("arc-node"), /HTTP 503/);
+  } finally {
+    globalThis.fetch = original;
+    clearReleaseCache();
+  }
+});

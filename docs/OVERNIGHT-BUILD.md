@@ -70,13 +70,16 @@ project directory, a raw transaction feed, an unexplained score or a token badge
   unknown/error is not failure; outcome measures the stated criterion, not project success.
   Verify: restart/retrieval, ownership isolation, pinned baseline and due-resolution tests.
 
-- [ ] **06. Add the Ship Hunter and comparison tools**
+- [x] **06. Add the Ship Hunter and comparison tools**
   Spec ref: Product promise > Hunters
   What to build: inspect linked repository changes and releases; compare a declared shipping
   claim with observed source evidence. Keep code activity separate from deployment and adoption.
   Acceptance: a user can investigate both a contract and a verified repository with a clear
   mandate, source dates and useful findings. No arbitrary URL fetching or invented X access.
-  Verify: live GitHub response, malformed timestamps, source mismatch and API outage checks.
+  Verify: `npm test` (ship-hunter suite); `npx tsx scripts/ship-hunter-eval.ts --offline`;
+  `npx tsx scripts/ship-hunter-eval.ts --live`; `npx tsx scripts/test-ship-hunter-http.ts`.
+  Live objects: arc-node releases with assets; agent-stack empty list stays insufficient;
+  v0.6.0 tag with zero assets refused by evidence arm.
 
 - [ ] **07. Give agents the entire research workflow**
   Spec ref: `HUNTER-EXECUTION.md > Agent access`

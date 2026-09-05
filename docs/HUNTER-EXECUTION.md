@@ -5,7 +5,11 @@
 ARC MAP discovers projects. Hunters investigate explicit theses using indexed evidence.
 The target is a funded, accountable agent loop; strategy backing comes after paid research.
 This build implements rules-based Distribution and Activity Hunters plus sourced repository
-inspection (Ship Hunter), not an LLM portfolio manager.
+inspection (Ship Hunter), not an LLM portfolio manager. Ship Hunter now observes GitHub
+**Releases** (tag, publish time, draft/prerelease, assets) for curated repos, saves a private
+investigation with an immutable shipping claim, and scores an evidence arm against a naive
+latest-tag baseline. Commits remain available as a separate inspect tool. Releases are not
+network upgrades.
 
 The working app starts with projects and source observations, not a marketing hero. Select
 a project, inspect its evidence, run a research mission, and review the result. The chosen
@@ -77,6 +81,9 @@ never put the token in a URL or checked-in config. Available tools:
 
 - `discover_projects`: curated profiles, observations and source health.
 - `list_hunters`: the actual mandate and limitations.
+- `inspect_repository`: recent default-branch commits (not releases or deployment).
+- `inspect_releases` / `create_ship_investigation` / `observe_ship_investigation`:
+  GitHub release objects and saved claim comparisons for curated repos only.
 - `create_research_mission`: private record and proposed budget; no payment.
 - `run_research_mission`: live provider query, analysis and content commitment.
 - `get_research_mission`: retrieve the saved result.
