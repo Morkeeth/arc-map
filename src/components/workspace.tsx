@@ -19,6 +19,7 @@ import {
 import { projects, type Project } from "@/lib/projects";
 import { hunters, type Mission } from "@/lib/hunters";
 import { missionForReturn } from "@/lib/mission-return";
+import { lastHuntReturn } from "@/lib/last-hunt-return";
 import type { FeedData } from "@/lib/feed-types";
 import type { RadarData } from "@/lib/radar-types";
 import { useHunterWallet } from "./wallet-provider";
@@ -485,7 +486,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
