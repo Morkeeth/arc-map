@@ -20,6 +20,7 @@
     "hunter:settle": "tsx scripts/settle-hunter.ts",
     "test:agent": "tsx scripts/test-agent-client.ts",
     "check:integrations": "tsx scripts/check-integrations.ts",
+    "check:hosting": "tsx scripts/check-hosting-readiness.ts",
     "workers": "tsx scripts/workers.ts"
   },
   "dependencies": {

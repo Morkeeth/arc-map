@@ -55,6 +55,9 @@ Public-source discovery and explorer research need no API key. Copy `.env.exampl
 `.env.local` only when configuring optional integrations. Never put a private key or server
 secret in a `NEXT_PUBLIC_` variable.
 
+Hosting / local production restore: see [docs/HOSTING-READINESS.md](docs/HOSTING-READINESS.md)
+and `npm run check:hosting`. That checklist does not authorize paid hosting or public deploy.
+
 For Graph research, configure `GRAPH_TRANSFERS_URL` for the schema in
 [subgraphs/arcmap](subgraphs/arcmap/README.md). The deployed index covers SUN transfers;
 it does **not** index every radar contract. Missing Graph access stays an explicit error,
