@@ -4,7 +4,8 @@ import { resolve, join } from "node:path";
 
 // Local snapshots only. No secret files, release records, wallet exports or uploads.
 // VACUUM INTO includes committed WAL contents; copying only a live .sqlite file does not.
-const sources = ["arcmap.sqlite", "radar.sqlite", "missions.sqlite", "theses.sqlite"];
+// Include worker-status so restore never invents an empty "all live" panel.
+const sources = ["arcmap.sqlite", "radar.sqlite", "missions.sqlite", "theses.sqlite", "worker-status.sqlite"];
 const destination = resolve(".data/backups", new Date().toISOString().replaceAll(":", "-"));
 mkdirSync(destination, { recursive: true, mode: 0o700 });
 for (const name of sources) {

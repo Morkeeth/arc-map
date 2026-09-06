@@ -6,13 +6,22 @@ import type { ResearchUpdate } from "@/lib/research-updates";
 import type { Project } from "@/lib/projects";
 import { selectFollowedBrief } from "@/lib/brief-selection";
 const time=(at:string)=>new Date(at).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
-export function DailyBrief({data,updates,following,onSelect,onReview,error}:{data:BriefData|null;updates:ResearchUpdate[]|null;following:string[];onSelect:(p:Project)=>void;onReview:(id:string)=>Promise<void>;error:string|null}){
+type WorkerData={name:string;lastSuccess:string|null;lastError:string|null;cycles:number;freshness:"running"|"stale"|"failed"|"stopped"|"missing";summary?:string};
+const workerTime=(at:string|null)=>at?new Date(at).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"no completed cycle";
+function workerSummary(workers:WorkerData[]|null){
+  if(workers===null) return "Status unavailable";
+  if(!workers.length||workers.some(w=>w.freshness==="missing")) return "Missing expected workers";
+  if(workers.every(w=>w.freshness==="running")) return "All source cycles live";
+  return "Inspect freshness";
+}
+export function DailyBrief({data,updates,workers,following,onSelect,onReview,error}:{data:BriefData|null;updates:ResearchUpdate[]|null;workers:WorkerData[]|null;following:string[];onSelect:(p:Project)=>void;onReview:(id:string)=>Promise<void>;error:string|null}){
   const [filter,setFilter]=useState("All leads"),[limit,setLimit]=useState(6),[pending,setPending]=useState("");
   const [scope,setScope]=useState("all"),[query,setQuery]=useState(""),[updateLimit,setUpdateLimit]=useState(5);
   const scoped=data&&scope==="following"?selectFollowedBrief(data,following):data;
   const unread=updates?.filter(u=>!u.read)||[];
   const cards=scoped?.cards.filter(c=>(filter==="All leads"||filter==="Onchain"&&["activity","counter-change"].includes(c.kind)||filter==="Code"&&c.kind==="code"||filter==="Discovery"&&["listing","baseline"].includes(c.kind))&&`${c.project.name} ${c.project.contract||""} ${c.headline} ${c.finding}`.toLowerCase().includes(query.trim().toLowerCase()))||[];
   return <div className="daily-brief">
+    <section className="worker-pulse" aria-label="Local source workers"><div className="list-caption"><span>RETURN PATH</span><span>{workerSummary(workers)}</span></div><p className="report-time">Persisted evidence survives app restarts. This status is based on completed local cycles, not a running-process claim. Missing workers never read as live.</p><div className="worker-grid">{(workers||[]).map(w=><div className="worker-chip" key={w.name}><span className={`worker-dot ${w.freshness}`} /> <strong>{w.name}</strong><span>{w.freshness}</span><small>Last success: {workerTime(w.lastSuccess)} · {w.cycles} cycle{w.cycles===1?"":"s"}{w.lastError&&` · ${w.lastError}`}</small></div>)}</div>{workers===null&&<p className="work-error">Worker lifecycle status could not be read. Source stories are not relabeled fresh.</p>}</section>
     <section className="research-inbox" aria-label="Research inbox"><div className="list-caption"><span>YOUR RESEARCH INBOX</span><span>{updates===null?"Loading…":`${unread.length} unread`}</span></div>
       {error&&<p className="work-error" role="alert">{error}</p>}
       {updates!==null&&!unread.length&&<p className="report-time">No unread research updates. Unchanged checks stay in each thesis’s history.</p>}
