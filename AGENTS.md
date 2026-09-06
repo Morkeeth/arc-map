@@ -26,6 +26,17 @@ Do not reopen the idea slate. Keep the map and hunter in one product.
 - Run npm test, npm run typecheck, npm run build for changes to core evidence handling.
 - Check the actual screen at desktop and phone widths for interface changes.
 
+## Small PR cadence — user requirement, 6 September 2026
+
+- Ship small, frequent, independently reviewable PRs during the hackathon; do not collect
+  unrelated work into one large batch. This is the user's workflow, not an organizer rule.
+- Pin each PR to the current default branch; check open PRs and concurrent owners first.
+- State the concrete behavior change and checks. Draft PR creation is authorized; root review
+  remains required before merge. This does not authorize deployment, spending or wallet actions.
+- Next separate slices: thesis failure/quiet-cycle status; worker restart/status integration;
+  returning evidence through restarted workers; desktop/phone acceptance of any changed interface.
+  Recheck current branches before starting each slice; this list does not assign its owner.
+
 ## Hunter build boundaries
 
 - Read docs/HUNTER-EXECUTION.md before changing missions, payments or agent tools.
