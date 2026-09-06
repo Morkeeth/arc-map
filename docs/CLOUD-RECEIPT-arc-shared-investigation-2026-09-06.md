@@ -24,10 +24,10 @@ while their prior counterevidence remains in the owner's persisted record.
 
 | Check | Result |
 | --- | --- |
-| `npm test` | 72 tests passed, including invite isolation, stranger denial, append-only counterevidence, restart persistence and revocation |
+| `npm test` | 73 tests passed, including store and HTTP invite isolation, stranger denial, append-only counterevidence, restart persistence and revocation |
 | `npm run typecheck` | Passed |
 | `npm run build` | Passed with Next.js 16.3.4 |
-| `git diff --check` | Passed before the implementation commit |
+| `git diff --check` | Passed |
 | live local three-session HTTP flow | Owner, contributor and stranger had distinct cookies; invitee saw exactly one shared Hunt; owner's second Hunt stayed hidden; stranger saw none |
 | live Arcscan report | 50 sampled transfer rows, one distinct transaction, explicit `explorer` provider |
 | original commitment | Report hash remained identical after contribution |
@@ -56,7 +56,8 @@ npm run dev
 
 The isolated-session proof called the local same-origin routes for follows, mission creation and
 execution, `/api/investigation-share`, mission listing and mission detail. It used the live
-Arcscan provider and performed no chain or wallet route.
+Arcscan provider and performed no chain or wallet route. A separate route-handler test exercises
+the same dual-session share, contribution and revoke path against an isolated database.
 
 ## Limitations and blocked proof
 
