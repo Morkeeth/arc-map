@@ -8,6 +8,15 @@
   font-size: 14px;
 }
 .brief-search { display: grid; gap: 8px; margin: 16px 0; color: var(--work-muted); }
+.worker-pulse { margin-bottom: 24px; padding: 16px; border: 1px solid var(--work-line); border-radius: 8px; background: white; }
+.worker-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.worker-chip { display: grid; grid-template-columns: auto 1fr auto; gap: 5px 8px; align-items: center; padding: 10px; background: #f8fbff; border: 1px solid var(--work-line); border-radius: 6px; font-size: 11px; text-transform: capitalize; }
+.worker-chip small { grid-column: 1 / -1; color: var(--work-muted); font-size: 10px; line-height: 1.45; text-transform: none; }
+.worker-chip > span:nth-child(3) { color: var(--work-muted); }
+.worker-dot { width: 7px; height: 7px; border-radius: 50%; background: #9aaec8; }
+.worker-dot.running { background: #5da778; }.worker-dot.failed { background: #d36a62; }.worker-dot.stale { background: #d49d48; }
+.worker-dot.stopped,.worker-dot.missing { background: #9aaec8; opacity: 0.85; }
+@media (max-width: 650px) { .worker-grid { grid-template-columns: 1fr; } }
 .brief-search input { width: 100%; min-width: 0; box-sizing: border-box; padding: 12px; border: 1px solid var(--work-line); border-radius: 8px; background: white; color: var(--work-ink); }
 .workbench button,
 .workbench input,

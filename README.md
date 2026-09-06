@@ -86,6 +86,12 @@ examples, screenshots or checked-in client configuration.
 
 ## Verification
 
+For a supervised local run (restarts collectors, records cycle status, never invents all-live):
+
+```sh
+npm run workers
+```
+
 ```sh
 npm test
 npm run typecheck

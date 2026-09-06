@@ -46,6 +46,7 @@ type Capability = {
     service: string | null;
   };
 };
+type WorkerData = { name: string; lastSuccess: string | null; lastError: string | null; cycles: number; freshness: "running" | "stale" | "failed" | "stopped" | "missing" };
 async function api(url: string, body?: unknown) {
   const response = await fetch(
     url,
@@ -69,6 +70,7 @@ export function Workspace({
 }) {
   const [view, setView] = useState<"today"|"discover"|"hunters"|"changes">(initialView);
   const [brief,setBrief]=useState<BriefData|null>(null),[updates,setUpdates]=useState<ResearchUpdate[]|null>(null),[briefError,setBriefError]=useState<string|null>(null);
+  const [workers,setWorkers]=useState<WorkerData[]|null>(null);
   const [feed, setFeed] = useState<FeedData | null>(null);
   const [radar, setRadar] = useState<RadarData | null>(null);
   const [catalogView, setCatalogView] = useState<"radar" | "curated">("radar");
@@ -127,6 +129,7 @@ export function Workspace({
     }
     catch { setError("Saved follows unavailable. Existing data remains visible."); }
     void api("/api/integrations").then(setIndexHealth).catch(() => setIndexHealth(null));
+    void api("/api/workers").then(result => setWorkers(result.workers)).catch(() => setWorkers(null));
     const results = await Promise.allSettled([
       api("/api/feed"),
       api("/api/hunters"),
@@ -457,7 +460,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="today" ? <DailyBrief data={brief} updates={updates} following={following} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
