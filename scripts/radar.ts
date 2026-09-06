@@ -50,6 +50,16 @@ async function cycle() {
   }
 }
 
+function watchIntervalMs() {
+  const raw = process.env.ARCMAP_RADAR_INTERVAL_MS;
+  if (raw == null || raw === "") return 300_000;
+  const ms = Number(raw);
+  if (!Number.isFinite(ms) || ms < 1_000) {
+    throw new Error("ARCMAP_RADAR_INTERVAL_MS must be at least 1000.");
+  }
+  return ms;
+}
+
 async function main() {
   await cycle();
   if (process.argv.includes("--watch"))
@@ -58,7 +68,7 @@ async function main() {
         void cycle().catch(() =>
           console.error("Radar cycle failed; previous records retained."),
         ),
-      300000,
+      watchIntervalMs(),
     );
 }
 

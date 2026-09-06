@@ -44,6 +44,16 @@ async function cycle() {
   }
 }
 
+function watchIntervalMs() {
+  const raw = process.env.ARCMAP_INGEST_INTERVAL_MS;
+  if (raw == null || raw === "") return 300_000;
+  const ms = Number(raw);
+  if (!Number.isFinite(ms) || ms < 1_000) {
+    throw new Error("ARCMAP_INGEST_INTERVAL_MS must be at least 1000.");
+  }
+  return ms;
+}
+
 void (async () => {
   await cycle();
   if (process.argv.includes("--watch"))
@@ -51,7 +61,7 @@ void (async () => {
       void cycle().catch((error) =>
         console.error("Ingestion failed:", error.message),
       );
-    }, 300_000);
+    }, watchIntervalMs());
 })().catch((error) => {
   console.error("Ingestion failed:", error.message);
   process.exitCode = 1;

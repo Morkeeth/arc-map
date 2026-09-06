@@ -92,6 +92,8 @@ For a supervised local run (restarts collectors, records cycle status, never inv
 npm run workers
 ```
 
+Optional local timing for watch cycles (milliseconds, minimum 1000): `ARCMAP_INGEST_INTERVAL_MS`, `ARCMAP_RADAR_INTERVAL_MS`. Default remains five minutes. These do not change freshness rules.
+
 ```sh
 npm test
 npm run typecheck
