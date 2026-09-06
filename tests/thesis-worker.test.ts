@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { ThesisStore } from "../src/lib/thesis-store";
+import { WorkerStatusStore } from "../src/lib/worker-status";
 import { cycle } from "../scripts/thesis-worker";
 
 // Fault-injection fixtures exercise the actual worker and persisted checks.
@@ -12,8 +13,11 @@ import { cycle } from "../scripts/thesis-worker";
 test("source failure survives idle/restart and another thesis; only its own retry clears it", async () => {
   const dir = mkdtempSync(join(tmpdir(), "arcmap-worker-test-"));
   const db = join(dir, "theses.sqlite"), status = join(dir, "status.json");
+  const workerDb = join(dir, "worker-status.sqlite");
   const oldEnv = process.env.ARCMAP_THESES_DB, oldFetch = globalThis.fetch;
+  const oldWorker = process.env.ARCMAP_WORKER_STATUS_DB;
   process.env.ARCMAP_THESES_DB = db;
+  process.env.ARCMAP_WORKER_STATUS_DB = workerDb;
   const create = (owner: string, checks: number) => {
     const store = new ThesisStore();
     try {
@@ -32,6 +36,14 @@ test("source failure survives idle/restart and another thesis; only its own retr
     sql.prepare("UPDATE theses SET data=?,next_at=? WHERE id=?").run(JSON.stringify(item), Date.now() - 1, id);
     sql.close();
   };
+  const thesesRow = () => {
+    const workers = new WorkerStatusStore(workerDb);
+    try {
+      return workers.listExpected().find((row) => row.name === "theses")!;
+    } finally {
+      workers.close();
+    }
+  };
   try {
     const quiet = await cycle(status);
     assert.equal(quiet.cycle, "idle"); assert.equal(quiet.lastSuccess, null);
@@ -40,6 +52,8 @@ test("source failure survives idle/restart and another thesis; only its own retr
     const failed = await cycle(status);
     assert.equal(failed.failed, 1); assert.equal(failed.checked, 0);
     assert.equal(failed.lastSuccess, null); assert.ok(failed.lastError);
+    assert.equal(thesesRow().state, "failed");
+    assert.equal(thesesRow().lastSuccess, null);
     const store = new ThesisStore();
     assert.equal(store.checks("owner-a", thesis.id)[0].sample, null);
     assert.equal(store.get("owner-a", thesis.id)?.remainingChecks, 1); store.close();
@@ -47,6 +61,7 @@ test("source failure survives idle/restart and another thesis; only its own retr
     const idle = await cycle(status); // cycle reopens stores/status, as after restart
     assert.equal(idle.cycle, "idle"); assert.equal(idle.lastError, failed.lastError);
     assert.equal(idle.lastSuccess, null);
+    assert.equal(thesesRow().state, "failed");
 
     const other = create("owner-b", 1); makeDue(other.id);
     globalThis.fetch = async () => new Response(JSON.stringify({ transfers_count: "101" }));
@@ -54,12 +69,16 @@ test("source failure survives idle/restart and another thesis; only its own retr
     assert.equal(unrelated.checked, 1); assert.ok(unrelated.lastError);
     assert.equal(unrelated.lastSuccess, null);
     assert.deepEqual(unrelated.unresolvedChecks, [thesis.id]);
+    assert.equal(thesesRow().state, "failed");
+    assert.equal(thesesRow().lastSuccess, null);
 
     makeDue(thesis.id);
     const recovered = await cycle(status);
     assert.equal(recovered.checked, 1); assert.equal(recovered.failed, 0);
     assert.equal(recovered.lastError, null); assert.ok(recovered.lastSuccess);
     assert.deepEqual(recovered.unresolvedChecks, []);
+    assert.equal(thesesRow().state, "running");
+    assert.ok(thesesRow().lastSuccess);
     const after = await cycle(status);
     assert.equal(after.cycle, "idle"); assert.equal(after.lastSuccess, recovered.lastSuccess);
     const final = new ThesisStore();
@@ -73,6 +92,8 @@ test("source failure survives idle/restart and another thesis; only its own retr
     globalThis.fetch = oldFetch;
     if (oldEnv === undefined) delete process.env.ARCMAP_THESES_DB;
     else process.env.ARCMAP_THESES_DB = oldEnv;
+    if (oldWorker === undefined) delete process.env.ARCMAP_WORKER_STATUS_DB;
+    else process.env.ARCMAP_WORKER_STATUS_DB = oldWorker;
     rmSync(dir, { recursive: true, force: true });
   }
 });
