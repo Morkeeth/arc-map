@@ -1,34 +1,80 @@
-# CLOUD RECEIPT — ARC shared investigation · 2026-09-06
+# ARC MAP shared investigation receipt — 6 September 2026
 
-## Identity
-- **Starting SHA:** `490696286b5ca08844940e5f957e4133fc3462c7`
-- **Branch:** `cursor/arc-shared-investigation-2232-0645`
-- **Draft PR:** https://github.com/Morkeeth/arc-map/pull/9
-- **Cloud agent:** `bc-b6c5c1f6-9fd4-4d96-8332-0ba504e24114`
-- **Cloud run:** `run-cbd02650-42d3-4401-8aeb-6b10b5a3d490`
+## Scope
 
-## Changed user ability
-A researcher can deliberately share **one completed Hunt/investigation**. A second session accepts the invite, adds **sourced counterevidence**, and both see the return decision move to **reassess** without mutating the original report. Owner can **revoke**; prior counterevidence remains for the owner.
+- Repository: `Morkeeth/arc-map`
+- Starting SHA: `490696286b5ca08844940e5f957e4133fc3462c7` (matched local `HEAD`)
+- Requested branch: `cursor/arc-shared-investigation-2026-09-06`
+- Environment-mandated branch used: `cursor/arc-shared-investigation-2232-0645`
+- Draft PR: https://github.com/Morkeeth/arc-map/pull/9
+- No deploy, wallet connection, spend, transaction, main push or merge was performed.
 
-## Commands run (supervisor local on PR tip)
+## User ability delivered
 
-| Check | Command | Result |
-|---|---|---|
-| Unit + store dual-session | `npm test` | **73 pass / 0 fail** |
-| HTTP dual-session API | included in `npm test` (`shared-investigation-http.test.ts`) | **pass** |
-| Typecheck | `npm run typecheck` | **pass** |
-| Build | `npm run build` | **pass** (`/api/investigation-share` present) |
+An owner can create a one-use link for one completed Hunt. Acceptance binds that Hunt to one
+other opaque browser workspace; it does not expose the owner's other missions, follows, theses
+or wallet controls. The contributor can append a public HTTP(S) source URL and a bounded
+counterevidence note. The original report JSON, evidence rows and report hash remain unchanged.
+Both visible views change the research decision from `provisional` to `reassess`.
 
-## Browser / phone pixels
-**Partial / honest:** collaboration UI is wired in `workspace.tsx` (share controls, counterevidence form, list, revoke). Full desktop + 390px screenshot pass against a live dual-browser session was **not** completed in this supervisor slice; store + HTTP dual-session prove the research interaction without bypassing access controls.
+The owner can revoke the active invite. The contributor then loses read and contribution access,
+while their prior counterevidence remains in the owner's persisted record.
 
-## Limitations
-- Auth is cookie `arcmap_session` (existing facility), not a full recoverable account product.
-- One invite acceptor per invite token; share is per completed mission only.
-- No wallet/trading changes; hosting-ready ≠ hosted.
-- Cloud agent may still append receipt/visuals before deadline; this receipt closes the verification gap named in the draft PR body.
+## Checks and observed evidence
 
-## Do not claim
-- Public production deploy
-- Auth-only night without research value (research path is present)
-- Cold hosted multi-device recovery as shipped
+| Check | Result |
+| --- | --- |
+| `npm test` | 72 tests passed, including invite isolation, stranger denial, append-only counterevidence, restart persistence and revocation |
+| `npm run typecheck` | Passed |
+| `npm run build` | Passed with Next.js 16.3.4 |
+| `git diff --check` | Passed before the implementation commit |
+| live local three-session HTTP flow | Owner, contributor and stranger had distinct cookies; invitee saw exactly one shared Hunt; owner's second Hunt stayed hidden; stranger saw none |
+| live Arcscan report | 50 sampled transfer rows, one distinct transaction, explicit `explorer` provider |
+| original commitment | Report hash remained identical after contribution |
+| revocation | Contributor mission list returned zero shared missions after owner revocation |
+
+The live HTTP flow used transaction
+`0x46f7d2ce427a2ff68271604853bdfcf86f8b868cb9497bcf3914e54c6a6c956a`
+from the report itself as the contributed source. The note challenged interpretation of the
+bounded sample; it did not claim a new event or complete activity history.
+
+The valid owner report was reviewed at a 1,259 CSS-pixel desktop viewport
+(`scrollWidth` 1,244) and a responsive viewport configured near 390 CSS pixels
+(`innerWidth` and `scrollWidth` both reported as 398). No horizontal overflow was observed.
+
+## Commands
+
+```sh
+git rev-parse HEAD
+gh pr list --state open --limit 30
+npm ci
+npm test
+npm run typecheck
+npm run build
+npm run dev
+```
+
+The isolated-session proof called the local same-origin routes for follows, mission creation and
+execution, `/api/investigation-share`, mission listing and mission detail. It used the live
+Arcscan provider and performed no chain or wallet route.
+
+## Limitations and blocked proof
+
+- This is deliberate capability sharing between cookie workspaces, not account identity,
+  recovery, general cross-device synchronization or a public report.
+- One completed investigation can have one active contributor invite. There are no named users,
+  notifications, contributor discovery or multi-person roles.
+- Source URLs are constrained to credential-free public HTTP(S) hosts but are not fetched or
+  independently endorsed when contributed.
+- Revocation removes the contributor's access. It does not erase their already-preserved
+  counterevidence from the owner's research record.
+- The automated and live HTTP proofs cover persistence and authorization. Existing follow
+  persistence behavior was unchanged and remained covered by the full suite.
+- A first browser walkthrough used a synthetic explorer response and fabricated source URL. It
+  was rejected, its local database and environment override were deleted, and its screenshots
+  are not evidence. The single repair reran against live Arcscan.
+- In that repaired isolated-browser walkthrough, invite acceptance succeeded but the operator
+  did not complete contributor navigation to the report. End-to-end contributor UI interaction
+  is therefore **BLOCKED as manual browser proof**. The same scoped accept, contribute, owner
+  return and revoke sequence passed through three actual cookie sessions over the local HTTP API.
+- No production deployment, public abuse controls or independent security review was attempted.
