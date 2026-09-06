@@ -22,6 +22,9 @@ not an official Circle ecosystem directory.
   calls; Ship Hunter checks repository activity and exact release-publication claims.
 - **Compare:** run a new investigation against a pinned report. Both original reports remain
   intact. Different sample counts are not presented as growth rates.
+- **Collaborate:** deliberately share one completed investigation with one other browser
+  workspace. The contributor can preserve sourced counterevidence; the original report remains
+  intact and the return decision changes to “reassess.” Access can be revoked.
 - **Follow:** save projects and review changes since your last explicit acknowledgment.
   Refreshing does not reset that baseline.
 - **Track a thesis:** lock a claim, measurable criterion and deadline; schedule a finite number
@@ -152,8 +155,10 @@ This is a narrow, recorded evaluation—not proof of general autonomous-agent re
 - Event timestamps, source-query timestamps and index freshness are distinct.
 - Research analysis is rules-based. An external agent can select and interpret tools; the
   app is not an autonomous investment manager.
-- Private follows, missions and theses use a browser-workspace cookie. Clearing it loses
-  access; there is no account recovery or cross-device sync yet.
+- Private follows, missions and theses use a browser-workspace cookie. A one-use link can grant
+  one other browser workspace access to one completed investigation and its sourced
+  counterevidence. Other Hunts, follows, theses and wallet controls remain private. Clearing a
+  cookie loses access; there is no account recovery or general cross-device sync yet.
 - SQLite state lives in ignored `.data/`. Use persistent storage, not an ephemeral filesystem.
   `npm run backup` creates local snapshots. Do not publish these databases.
 - Research fees are not investment shares. Strategy contracts are **local-only, unaudited

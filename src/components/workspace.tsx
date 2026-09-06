@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Check,
   LoaderCircle,
+  Share2,
 } from "lucide-react";
 import { projects, type Project } from "@/lib/projects";
 import { hunters, type Mission } from "@/lib/hunters";
@@ -88,6 +89,10 @@ export function Workspace({
   const [storageReady, setStorageReady] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [mission, setMission] = useState<Mission | null>(null);
+  const [shareUrl, setShareUrl] = useState("");
+  const [shareNotice, setShareNotice] = useState("");
+  const [counterSource, setCounterSource] = useState("");
+  const [counterNote, setCounterNote] = useState("");
   const [capabilities, setCapabilities] = useState<Capability | null>(null);
   const [indexHealth, setIndexHealth] = useState<{ checkedAt: string; graph: { queryVerified: boolean; fresh: boolean; reason: string | null; indexedBlock: number | null } } | null>(null);
   const [provider, setProvider] = useState<"graph" | "explorer">("graph");
@@ -183,6 +188,34 @@ export function Workspace({
   useEffect(() => {
     void load();
   }, []);
+  useEffect(() => {
+    const match = window.location.hash.match(/^#invite=([a-f0-9]{64})$/);
+    if (!match) return;
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    void api("/api/investigation-share", {
+      action: "accept",
+      token: match[1],
+    })
+      .then(async (result) => {
+        setMission(result.mission);
+        setView("hunters");
+        setMissions((await api("/api/missions")).missions);
+        setShareNotice(
+          "Shared investigation accepted. Its original report is unchanged; add a sourced challenge below.",
+        );
+      })
+      .catch((cause) =>
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Investigation invite could not be accepted.",
+        ),
+      );
+  }, []);
   async function follow(id: string) {
     setFollowBusy(true);
     try {
@@ -202,6 +235,10 @@ export function Workspace({
     setMission(item);
     setChain(null);
     setTx(null);
+    setShareUrl("");
+    setShareNotice("");
+    setCounterSource("");
+    setCounterNote("");
     const target = allProjects.find((p) => p.id === item.projectId);
     if (target) setSelected(target);
   }
@@ -223,6 +260,88 @@ export function Workspace({
       setMissions((await api("/api/missions")).missions);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Mission failed.");
+    } finally {
+      setBusy("");
+    }
+  }
+  async function share(action: "create" | "revoke") {
+    if (!mission) return;
+    setBusy(action === "create" ? "Creating invite" : "Revoking access");
+    setError("");
+    try {
+      const result = await api("/api/investigation-share", {
+        action,
+        missionId: mission.id,
+      });
+      if (action === "create") {
+        setShareUrl(
+          `${window.location.origin}/hunters#invite=${result.invite.token}`,
+        );
+        setMission((current) =>
+          current
+            ? {
+                ...current,
+                collaboration: {
+                  role: "owner",
+                  inviteActive: true,
+                  inviteAccepted: false,
+                  counterevidence:
+                    current.collaboration?.counterevidence || [],
+                },
+              }
+            : current,
+        );
+        setShareNotice(
+          "Invite ready. It grants this investigation only and can be accepted once.",
+        );
+      } else {
+        setMission(result.mission);
+        setMissions((current) =>
+          current.map((item) =>
+            item.id === result.mission.id ? result.mission : item,
+          ),
+        );
+        setShareUrl("");
+        setShareNotice(
+          "Contributor access revoked. Preserved counterevidence remains visible to you.",
+        );
+      }
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Sharing action failed.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function contribute() {
+    if (!mission) return;
+    setBusy("Adding counterevidence");
+    setError("");
+    try {
+      const result = await api("/api/investigation-share", {
+        action: "counterevidence",
+        missionId: mission.id,
+        sourceUrl: counterSource,
+        note: counterNote,
+      });
+      setMission(result.mission);
+      setMissions((current) =>
+        current.map((item) =>
+          item.id === result.mission.id ? result.mission : item,
+        ),
+      );
+      setCounterSource("");
+      setCounterNote("");
+      setShareNotice(
+        "Counterevidence preserved. The return decision now asks both researchers to reassess.",
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Counterevidence could not be added.",
+      );
     } finally {
       setBusy("");
     }
@@ -538,6 +657,9 @@ export function Workspace({
                         </strong>
                         <small>
                           {time(m.createdAt)} · {m.provider}
+                          {m.collaboration?.role === "contributor"
+                            ? " · shared with you"
+                            : ""}
                         </small>
                       </span>
                       <span className={`status-label ${m.status}`}>
@@ -701,7 +823,7 @@ export function Workspace({
             aria-live="polite"
           >
             {previousReport && report && <ReportComparison previous={previousReport} current={mission}/>}
-            {report && <button className="work-refresh work-text-button" disabled={Boolean(busy)} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
+            {report && mission.collaboration?.role !== "contributor" && <button className="work-refresh work-text-button" disabled={Boolean(busy)} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
             <div className="report-heading">
               <div>
                 <span className="work-kicker">MISSION {short(mission.id)}</span>
@@ -726,6 +848,127 @@ export function Workspace({
                   </span>
                   <h3>{report.conclusion}</h3>
                 </div>
+                <section className="investigation-collaboration" aria-label="Shared investigation">
+                  <div className="list-caption">
+                    <span>SHARED INVESTIGATION</span>
+                    <span>
+                      {mission.collaboration?.role === "contributor"
+                        ? "Contributor access"
+                        : mission.collaboration?.inviteAccepted
+                          ? "Contributor joined"
+                          : mission.collaboration?.inviteActive
+                            ? "Invite open"
+                            : "Owner only"}
+                    </span>
+                  </div>
+                  <div
+                    className={`investigation-decision ${
+                      mission.collaboration?.counterevidence.length
+                        ? "reassess"
+                        : "provisional"
+                    }`}
+                  >
+                    <strong>
+                      Research decision:{" "}
+                      {mission.collaboration?.counterevidence.length
+                        ? "reassess"
+                        : "provisional"}
+                    </strong>
+                    <p>
+                      {mission.collaboration?.counterevidence.length
+                        ? "The original Hunter report remains intact, but sourced counterevidence now requires review before relying on its conclusion."
+                        : "The original report is preserved. No collaborator counterevidence has challenged its conclusion yet."}
+                    </p>
+                  </div>
+                  {shareNotice && <p className="setup-note" role="status">{shareNotice}</p>}
+                  {mission.collaboration?.role !== "contributor" ? (
+                    <div className="share-controls">
+                      {!mission.collaboration?.inviteActive && (
+                        <button
+                          className="work-refresh work-text-button"
+                          disabled={Boolean(busy)}
+                          onClick={() => void share("create")}
+                        >
+                          <Share2 size={15} /> Share this investigation
+                        </button>
+                      )}
+                      {mission.collaboration?.inviteActive && (
+                        <button
+                          className="work-refresh work-text-button"
+                          disabled={Boolean(busy)}
+                          onClick={() => void share("revoke")}
+                        >
+                          Revoke contributor access
+                        </button>
+                      )}
+                      {shareUrl && (
+                        <label>
+                          One-use contributor link
+                          <span className="share-link-row">
+                            <input readOnly value={shareUrl} />
+                            <button
+                              type="button"
+                              className="work-refresh work-text-button"
+                              onClick={() => void navigator.clipboard.writeText(shareUrl)}
+                            >
+                              Copy
+                            </button>
+                          </span>
+                        </label>
+                      )}
+                      <p className="report-time">
+                        Sharing grants this completed investigation only. It does not share follows, other Hunts, theses, wallet controls or account recovery.
+                      </p>
+                    </div>
+                  ) : (
+                    <form
+                      className="counterevidence-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void contribute();
+                      }}
+                    >
+                      <h3>Add sourced counterevidence</h3>
+                      <label>
+                        Public source URL
+                        <input
+                          type="url"
+                          required
+                          maxLength={1000}
+                          value={counterSource}
+                          onChange={(event) => setCounterSource(event.target.value)}
+                          placeholder="https://…"
+                        />
+                      </label>
+                      <label>
+                        What does this source challenge?
+                        <textarea
+                          required
+                          minLength={10}
+                          maxLength={500}
+                          value={counterNote}
+                          onChange={(event) => setCounterNote(event.target.value)}
+                        />
+                      </label>
+                      <button className="work-primary-button" disabled={Boolean(busy)}>
+                        {busy || "Preserve counterevidence"}
+                      </button>
+                    </form>
+                  )}
+                  <div className="counterevidence-list">
+                    {mission.collaboration?.counterevidence.map((item, index) => (
+                      <article key={item.id}>
+                        <span className="work-kicker">
+                          CONTRIBUTION {index + 1} · {time(item.createdAt)}
+                        </span>
+                        <p>{item.note}</p>
+                        <a className="evidence-link" href={item.sourceUrl} target="_blank" rel="noreferrer">
+                          Inspect contributed source <ArrowUpRight size={13} />
+                        </a>
+                      </article>
+                    ))}
+                  </div>
+                </section>
                 <div className="report-facts">
                   <div>
                     <strong>{report.sampleSize}</strong>
@@ -804,7 +1047,7 @@ export function Workspace({
                     </details>
                   </div>
                 </div>
-                <div className="funding-panel">
+                {mission.collaboration?.role !== "contributor" ? <div className="funding-panel">
                   <div>
                     <h3>Approve a bounded mission.</h3>
                     <p>
@@ -868,7 +1111,7 @@ export function Workspace({
                       Cancel / reclaim surplus
                     </button>
                   </div>
-                </div>
+                </div> : <p className="setup-note">Contributor access is read-only except for sourced counterevidence. Running research, funding controls and follow state remain with each private workspace.</p>}
                 {busy && <p role="status">{busy}…</p>}
                 {tx && (
                   <a

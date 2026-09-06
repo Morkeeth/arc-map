@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await context.params;
     const store = new MissionStore();
     try {
-      const mission = store.get(access.owner, id);
+      const mission = store.getVisible(access.owner, id);
       return missionResponse(
         mission ? { mission } : { error: "Mission not found." },
         access.cookie,

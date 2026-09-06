@@ -9,6 +9,8 @@ export type LastHuntReturn = {
   conclusion: string | null;
   evidenceCount: number;
   firstEvidenceTx: string | null;
+  counterevidenceCount: number;
+  decision: "reassess" | "provisional";
   href: string;
 };
 
@@ -22,6 +24,8 @@ export function lastHuntReturn(
     return null;
   }
   const evidence = mission.report?.evidence || [];
+  const counterevidence =
+    mission.collaboration?.counterevidence.length || 0;
   return {
     missionId: mission.id,
     projectId: mission.projectId,
@@ -30,6 +34,8 @@ export function lastHuntReturn(
     conclusion: mission.report?.conclusion || null,
     evidenceCount: evidence.length,
     firstEvidenceTx: evidence[0]?.transaction || null,
+    counterevidenceCount: counterevidence,
+    decision: counterevidence ? "reassess" : "provisional",
     href: `/hunters?id=${encodeURIComponent(mission.id)}`,
   };
 }
