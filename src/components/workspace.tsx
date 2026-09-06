@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { projects, type Project } from "@/lib/projects";
 import { hunters, type Mission } from "@/lib/hunters";
+import { missionForReturn } from "@/lib/mission-return";
 import type { FeedData } from "@/lib/feed-types";
 import type { RadarData } from "@/lib/radar-types";
 import { useHunterWallet } from "./wallet-provider";
@@ -65,8 +66,10 @@ async function api(url: string, body?: unknown) {
 }
 export function Workspace({
   initialView = "today",
+  initialMissionId,
 }: {
   initialView?: "today" | "discover" | "hunters";
+  initialMissionId?: string;
 }) {
   const [view, setView] = useState<"today"|"discover"|"hunters"|"changes">(initialView);
   const [brief,setBrief]=useState<BriefData|null>(null),[updates,setUpdates]=useState<ResearchUpdate[]|null>(null),[briefError,setBriefError]=useState<string|null>(null);
@@ -113,6 +116,13 @@ export function Workspace({
     if (mission?.status === "reported" || mission?.status === "blocked")
       reportRef.current?.scrollIntoView({ block: "start" });
   }, [mission?.id, mission?.status]);
+  useEffect(() => {
+    if (!mission) return;
+    const target = [...projects, ...(radar?.projects || [])].find(
+      (project) => project.id === mission.projectId,
+    );
+    if (target) setSelected(target);
+  }, [mission?.id, mission?.projectId, radar]);
   async function load() {
     setError("");
     // Establish the private cookie before any other owner-scoped route starts.
@@ -142,8 +152,23 @@ export function Workspace({
     else setError("Feed unavailable. Existing evidence remains visible.");
     if (results[1].status === "fulfilled")
       setCapabilities(results[1].value.capabilities);
-    if (results[2].status === "fulfilled")
-      setMissions(results[2].value.missions);
+    if (results[2].status === "fulfilled") {
+      const nextMissions = results[2].value.missions as Mission[];
+      setMissions(nextMissions);
+      setMission((current) => {
+        if (current?.status === "researching") {
+          return (
+            nextMissions.find((item) => item.id === current.id) || current
+          );
+        }
+        if (current && nextMissions.some((item) => item.id === current.id)) {
+          return (
+            nextMissions.find((item) => item.id === current.id) || current
+          );
+        }
+        return missionForReturn(nextMissions, initialMissionId);
+      });
+    }
     if (results[3].status === "fulfilled") {
       const updated = results[3].value as RadarData;
       setRadar(updated);
