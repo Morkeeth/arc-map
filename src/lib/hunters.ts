@@ -55,6 +55,18 @@ export type MissionReport = {
   limitations: string[];
   steps: { tool: string; result: string }[];
 };
+export type MissionCounterevidence = {
+  id: string;
+  sourceUrl: string;
+  note: string;
+  createdAt: string;
+};
+export type MissionCollaboration = {
+  role: "owner" | "contributor";
+  inviteActive: boolean;
+  inviteAccepted: boolean;
+  counterevidence: MissionCounterevidence[];
+};
 export type Mission = {
   id: string;
   previousMissionId?: string;
@@ -72,4 +84,5 @@ export type Mission = {
   report: MissionReport | null;
   reportHash: `0x${string}` | null;
   error: string | null;
+  collaboration?: MissionCollaboration;
 };
