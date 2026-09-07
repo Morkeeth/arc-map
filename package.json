@@ -8,6 +8,7 @@
     "start": "next start --hostname 127.0.0.1 --port 3107",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
+    "eval:discovery-rank": "tsx scripts/eval-discovery-rank.ts",
     "ingest": "tsx scripts/ingest.ts",
     "ingest:watch": "tsx scripts/ingest.ts --watch",
     "radar": "tsx scripts/radar.ts",

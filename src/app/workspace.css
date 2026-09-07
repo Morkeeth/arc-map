@@ -857,9 +857,42 @@
 .brief-source { font-size: 11px; color: #627998; }
 .brief-source.stale, .brief-source.unavailable { color: #925828; }
 .brief-finding { line-height: 1.6; font-size: 15px; }
-.brief-why, .brief-counter { font-size: 13px; line-height: 1.6; }
-.brief-why strong, .brief-counter strong { display: block; margin-bottom: 3px; font-weight: 600; }
+.brief-why, .brief-counter, .brief-why-now { font-size: 13px; line-height: 1.6; }
+.brief-why strong, .brief-counter strong, .brief-why-now strong { display: block; margin-bottom: 3px; font-weight: 600; }
+.brief-why-now { margin: 12px 0; padding: 12px 14px; background: #edf5ff; border-left: 3px solid #326bff; }
 .brief-counter { color: #627998; }
+.cooling-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid #b7c9e4;
+  color: #18335b;
+  background: #fff;
+  vertical-align: middle;
+}
+.cooling-chip.hot { border-color: #326bff; color: #326bff; }
+.cooling-chip.warm { border-color: #18335b; }
+.cooling-chip.cooling { border-color: #8da1bd; color: #627998; }
+.cooling-chip.cold, .cooling-chip.unknown { border-color: #c5d0e0; color: #8da1bd; }
+.action-proposal {
+  margin: 20px 0;
+  padding: 18px 20px;
+  background: #f8fbff;
+  border: 1px solid #d4e1f3;
+}
+.action-proposal.withheld { background: #fff; border-style: dashed; }
+.action-proposal h3 { margin: 8px 0 10px; font-size: 20px; letter-spacing: -0.3px; }
+.action-checklist { margin: 12px 0 0; padding-left: 18px; }
+.action-checklist li { margin: 0 0 14px; }
+.action-checklist strong { display: block; margin-bottom: 4px; }
+.action-checklist p { margin: 0 0 6px; font-size: 13px; line-height: 1.55; color: #18335b; }
+@media (max-width: 760px) {
+  .brief-why-now { padding: 10px 12px; }
+  .action-proposal { padding: 14px; }
+}
 .brief-actions { justify-content: flex-start; margin: 18px 0; }
 .brief-card details { border-top: 1px solid #edf2fa; padding-top: 12px; }
 .brief-card details .evidence-link { display: block; margin: 8px 0; font-size: 12px; }

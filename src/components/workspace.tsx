@@ -29,6 +29,8 @@ import { ReportComparison } from "./report-comparison";
 import { DailyBrief } from "./daily-brief";
 import type { DailyBrief as BriefData } from "@/lib/daily-brief";
 import type { ResearchUpdate } from "@/lib/research-updates";
+import { actionProposalFor } from "@/lib/action-proposal";
+import { ActionProposalPanel } from "./action-proposal-panel";
 
 const time = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -726,6 +728,9 @@ export function Workspace({
                   </span>
                   <h3>{report.conclusion}</h3>
                 </div>
+                <ActionProposalPanel
+                  proposal={actionProposalFor(report, mission.address)}
+                />
                 <div className="report-facts">
                   <div>
                     <strong>{report.sampleSize}</strong>

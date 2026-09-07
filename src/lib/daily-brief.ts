@@ -5,12 +5,14 @@ import { projects,type Project } from "./projects";
 import { radarProject } from "./research-catalog";
 import type { FeedEvent,SourceHealth } from "./feed-types";
 import type { RadarEvent,RadarRecord } from "./radar-types";
+import { coolingRank, deriveWhyNow, type Cooling } from "./why-now";
 
 export type BriefEvidence={id:string;title:string;url:string;observedAt:string;eventAt:string|null};
 export type BriefCard={
   id:string;project:Project;kind:"counter-change"|"activity"|"code"|"listing"|"baseline";
-  headline:string;finding:string;whyInvestigate:string;counterevidence:string;question:string;
+  headline:string;finding:string;whyInvestigate:string;whyNow:string;counterevidence:string;question:string;
   evidence:BriefEvidence[];observations:number;observedAt:string;firstEventAt:string|null;lastEventAt:string|null;
+  signalAt:string|null;signalAgeMs:number|null;eventWindowMs:number|null;cooling:Cooling;
   sourceStatus:"fresh"|"stale"|"unavailable"|"unknown";rankReason:string;
 };
 export type DailyBrief={generatedAt:string;since:string;cards:BriefCard[];coverage:string;ranking:string;sourceHealth:SourceHealth[];inputRecords:number};
@@ -40,6 +42,8 @@ export function buildDailyBrief(input:{feed:FeedEvent[];radar:RadarEvent[];recor
       const h=input.health.find(h=>h.sourceId===id);const checked=h?.lastSuccess?Date.parse(h.lastSuccess):NaN;return !h?"unknown":h.error?"unavailable":!Number.isFinite(checked)||checked>now||now-checked>900000?"stale":"fresh";
     });
     const sourceStatus=statuses.includes("unavailable")?"unavailable":statuses.includes("stale")?"stale":statuses.includes("unknown")?"unknown":"fresh";
+    const firstEventAt=events[0]||null,lastEventAt=events.at(-1)||null;
+    const clock=deriveWhyNow({now,observedAt:first.evidence.observedAt,firstEventAt,lastEventAt,kind});
     let headline:string,finding:string,whyInvestigate:string,counterevidence:string,question:string,rankReason:string;
     if(kind==="activity"){
       headline=`${p.name}: ${evidence.length} sampled transaction${evidence.length===1?"":"s"}`;
@@ -47,33 +51,36 @@ export function buildDailyBrief(input:{feed:FeedEvent[];radar:RadarEvent[];recor
       whyInvestigate="A lead for checking whether this contract has activity beyond a single interaction.";
       counterevidence="Calls can be tests or repeated automation. They do not establish unique users, economic demand or safety.";
       question="Does the sampled contract activity extend beyond one successful call?";
-      rankReason=evidence.length>1?"Multiple distinct sampled transaction links; then most recently observed.":"A sampled transaction; then most recently observed.";
+      rankReason=`Why-NOW ${clock.cooling}: ${evidence.length>1?"multiple sampled transaction links":"a sampled transaction"}; signal clock preferred over holder volume.`;
     }else if(kind==="counter-change"){
       headline=`${p.name}: the source counters changed`;finding=first.detail;
       whyInvestigate="A measured change provides a specific question to test against transfer evidence.";
       counterevidence="Counter changes are not active people; source corrections and distribution activity remain possible.";
-      question=p.question;rankReason="A recorded counter change against a prior observation.";
+      question=p.question;rankReason=`Why-NOW ${clock.cooling}: a recorded counter change against a prior observation.`;
     }else if(kind==="code"){
       headline=p.repo?`${p.name}: inspect the code trail`:`${p.name}: source code surfaced`;
       finding=p.repo?`Latest retained commit: ${first.evidence.title}`:"Arcscan recorded a source-code verification for this address.";
       whyInvestigate=p.repo?"Compare the code claim with an exact published release before assuming deployment.":"Published contract source gives you something concrete to inspect.";
       counterevidence="Source work or verification is not proof of deployment time, affiliation, security or adoption.";
       question=p.repo?"Does the claimed version have a published release?":"What does the sourced contract do, and is it being called?";
-      rankReason="Source evidence is available for inspection; then most recently observed.";
+      rankReason=`Why-NOW ${clock.cooling}: source evidence available; event clock decides urgency, not the project name.`;
     }else{
       headline=kind==="baseline"?`${p.name}: a baseline, not a launch`:`${p.name}: a listing worth checking`;
       finding=first.detail;whyInvestigate="Use this observation as the start of a question, then collect a later comparison.";
       counterevidence="A listing or first observation does not establish launch time, legitimacy or continued use.";
-      question=p.question;rankReason="Discovery context after measured changes and source evidence.";
+      question=p.question;rankReason=`Why-NOW ${clock.cooling}: discovery context after measured changes and source evidence.`;
     }
-    cards.push({id:createHash("sha256").update(JSON.stringify([key,group.map(e=>e.evidence.id).sort()])).digest("hex"),project:p,kind,headline,finding,whyInvestigate,counterevidence,question,
-      evidence:evidence.slice(0,6),observations:group.length,observedAt:first.evidence.observedAt,firstEventAt:events[0]||null,lastEventAt:events.at(-1)||null,sourceStatus,rankReason});
+    cards.push({id:createHash("sha256").update(JSON.stringify([key,group.map(e=>e.evidence.id).sort()])).digest("hex"),project:p,kind,headline,finding,whyInvestigate,whyNow:clock.whyNow,counterevidence,question,
+      evidence:evidence.slice(0,6),observations:group.length,observedAt:first.evidence.observedAt,firstEventAt,lastEventAt,
+      signalAt:clock.signalAt,signalAgeMs:clock.signalAgeMs,eventWindowMs:clock.eventWindowMs,cooling:clock.cooling,sourceStatus,rankReason});
   }
-  const tier=(c:BriefCard)=>c.kind==="counter-change"?0:c.kind==="activity"&&c.evidence.length>1?1:c.kind==="code"?2:c.kind==="activity"?3:4;
-  cards.sort((a,b)=>tier(a)-tier(b)||b.observedAt.localeCompare(a.observedAt)||a.id.localeCompare(b.id));
+  const kindTier=(c:BriefCard)=>c.kind==="counter-change"?0:c.kind==="activity"&&c.evidence.length>1?1:c.kind==="code"?2:c.kind==="activity"?3:4;
+  // Why-NOW order: cooling first (hot before cold), then editorial kind, then latest signal clock.
+  // Explicitly not holder count, transfer volume or title/name.
+  cards.sort((a,b)=>coolingRank(a.cooling)-coolingRank(b.cooling)||kindTier(a)-kindTier(b)||(b.signalAt||"").localeCompare(a.signalAt||"")||b.observedAt.localeCompare(a.observedAt)||a.id.localeCompare(b.id));
   return {generatedAt:new Date(now).toISOString(),since,cards,
     inputRecords:input.feed.length+input.radar.length,sourceHealth:input.health,
-    ranking:"Editorial order: recorded counter changes, multiple sampled transactions, code evidence, single sampled transactions, then discovery context. Within each group: latest observation. Not a quality, safety or investment score.",
+    ranking:"Why-NOW order: original source-event cooling (hot → warm → cooling → cold → unknown), then editorial kind (counter changes, multiple sampled transactions, code, single transactions, discovery context), then latest signal clock. Observation/retrieval time is not an event timestamp. Not holder volume, price, quality, safety or investment score. Compare against the naive volume arm in discovery-rank.",
     coverage:"Groups up to 200 retained curated events and 200 radar events observed in the last 24 hours. Not all events from that day. Up to six source links per lead; older source events keep their original dates. Freshness policy: last source success within 15 minutes. Rules-based summaries, not AI-generated facts."};
 }
 export function dailyBrief(){const feed=new FeedStore(),radar=new RadarStore();try{

@@ -223,7 +223,8 @@ export function DailyBrief({
         <span>{cards.length} grouped leads</span>
       </div>
       <p className="brief-intro">
-        What the sources show. Why it may matter. What they do not prove.
+        What the sources show. Why it matters <em>now</em> (original event
+        clocks, not holder volume). What they do not prove.
       </p>
       <div className="work-tabs" role="group" aria-label="Brief scope">
         <button
@@ -307,6 +308,13 @@ export function DailyBrief({
               </p>
             )}
             <p className="brief-finding">{c.finding}</p>
+            <p className="brief-why-now">
+              <strong>
+                Why now{" "}
+                <span className={`cooling-chip ${c.cooling}`}>{c.cooling}</span>
+              </strong>{" "}
+              {c.whyNow}
+            </p>
             <p className="brief-why">
               <strong>Why investigate</strong> {c.whyInvestigate}
             </p>
@@ -315,9 +323,14 @@ export function DailyBrief({
             </p>
             <p className="report-time">
               Observed {time(c.observedAt)} ·{" "}
-              {c.firstEventAt
-                ? `Source events ${time(c.firstEventAt)}${c.lastEventAt !== c.firstEventAt ? ` → ${time(c.lastEventAt!)}` : ""}`
-                : "Source event time unknown"}
+              {c.signalAt
+                ? `Signal ${time(c.signalAt)}`
+                : c.firstEventAt
+                  ? `Source events ${time(c.firstEventAt)}${c.lastEventAt !== c.firstEventAt ? ` → ${time(c.lastEventAt!)}` : ""}`
+                  : "Source event time unknown"}
+              {c.signalAgeMs !== null
+                ? ` · age ${Math.max(0, Math.round(c.signalAgeMs / 60000))}m`
+                : ""}
             </p>
             <div className="brief-actions">
               <button
