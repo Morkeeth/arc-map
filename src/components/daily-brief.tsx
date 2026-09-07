@@ -85,8 +85,12 @@ export function DailyBrief({
           .includes(query.trim().toLowerCase()),
     ) || [];
 
+  const quickLead = cards.find(c => c.kind === "activity") ?? cards[0];
+
   return (
     <div className="daily-brief">
+      {quickLead && <button className="work-primary-button brief-start" onClick={() => onSelect(quickLead.project)}>Start an investigation →<small>{quickLead.project.name} · inspect the sources, then send a Hunter</small></button>}
+      <details className="source-status-details"><summary>Source update status · {workerSummary(workers)}</summary>
       <section className="worker-pulse" aria-label="Local source workers">
         <div className="list-caption">
           <span>RETURN PATH</span>
@@ -117,7 +121,7 @@ export function DailyBrief({
             relabeled fresh.
           </p>
         )}
-      </section>
+      </section></details>
 
       {lastHunt && (
         <section
@@ -156,7 +160,7 @@ export function DailyBrief({
         </section>
       )}
 
-      <section className="research-inbox" aria-label="Research inbox">
+      {(unread.length > 0 || error) && <section className="research-inbox" aria-label="Research inbox">
         <div className="list-caption">
           <span>YOUR RESEARCH INBOX</span>
           <span>
@@ -216,7 +220,7 @@ export function DailyBrief({
         <Link className="evidence-link" href="/theses">
           All monitored questions →
         </Link>
-      </section>
+      </section>}
 
       <div className="list-caption">
         <span>LEADS TO INVESTIGATE</span>

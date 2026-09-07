@@ -11,6 +11,7 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  if(process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1") return missionResponse({error:"Wallet actions are unavailable in this research preview."},undefined,403);
   try {
     const access = missionAccess(request);
     const { id } = await context.params;
@@ -45,6 +46,7 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  if(process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1") return missionResponse({error:"Wallet actions are unavailable in this research preview."},undefined,403);
   let access;
   try {
     access = missionAccess(request, true);
