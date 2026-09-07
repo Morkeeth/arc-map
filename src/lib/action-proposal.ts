@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import type { MissionReport } from "./hunters";
+import { stableId } from "./stable-id";
 
 /**
  * Inspectable next-step proposal after a supported Hunter result.
@@ -47,10 +47,14 @@ export function actionProposalFor(
 ): ActionProposal {
   if (report.stance !== "limited-support") {
     return {
-      id: createHash("sha256")
-        .update(JSON.stringify(["withheld", report.stance, report.observedAt, report.thesis]))
-        .digest("hex")
-        .slice(0, 24),
+      id: stableId(
+        JSON.stringify([
+          "withheld",
+          report.stance,
+          report.observedAt,
+          report.thesis,
+        ]),
+      ),
       status: "withheld",
       title: "No action proposal",
       summary:
@@ -111,21 +115,18 @@ export function actionProposalFor(
   }
 
   return {
-    id: createHash("sha256")
-      .update(
-        JSON.stringify([
-          "ready",
-          report.stance,
-          report.sampleSize,
-          report.transactions,
-          report.firstEventAt,
-          report.lastEventAt,
-          report.provider,
-          txs,
-        ]),
-      )
-      .digest("hex")
-      .slice(0, 24),
+    id: stableId(
+      JSON.stringify([
+        "ready",
+        report.stance,
+        report.sampleSize,
+        report.transactions,
+        report.firstEventAt,
+        report.lastEventAt,
+        report.provider,
+        txs,
+      ]),
+    ),
     status: "ready",
     title: "Reviewable action proposal",
     summary:

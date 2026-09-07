@@ -1,4 +1,5 @@
 import type { ActionProposal } from "./action-proposal";
+import { stableId } from "./stable-id";
 
 export const SIMULATED_ASSET = "Arc testnet native USDC (simulation only)";
 export const MAX_SIMULATED_CEILING = 10;
@@ -47,6 +48,12 @@ export type PolicyReceipt = {
   limit: "Review artifact only. No signing, approval, transfer, swap, bridge or broadcast occurred.";
 };
 
+export type PolicyReview = {
+  envelope: PolicyEnvelope;
+  proposedAmount: string;
+  receipt: PolicyReceipt;
+};
+
 export function initialPolicyEnvelope(
   proposal: ActionProposal,
 ): PolicyEnvelope {
@@ -91,6 +98,52 @@ export function evaluatePolicyEnvelope({
     stop ? null : action,
     stop,
   );
+}
+
+export function policyReviewFromInput({
+  proposal,
+  input,
+  now,
+}: {
+  proposal: ActionProposal;
+  input: Record<string, unknown>;
+  now: string;
+}): PolicyReview {
+  const raw =
+    input.envelope &&
+    typeof input.envelope === "object" &&
+    !Array.isArray(input.envelope)
+      ? (input.envelope as Record<string, unknown>)
+      : {};
+  const envelope: PolicyEnvelope = {
+    version: 1,
+    ceiling: typeof raw.ceiling === "string" ? raw.ceiling : "",
+    approvedAsset:
+      typeof raw.approvedAsset === "string" ? raw.approvedAsset : "",
+    approvedTarget:
+      typeof raw.approvedTarget === "string" ? raw.approvedTarget : "",
+    evidenceThreshold:
+      typeof raw.evidenceThreshold === "number"
+        ? raw.evidenceThreshold
+        : Number.NaN,
+    expiresAt: typeof raw.expiresAt === "string" ? raw.expiresAt : "",
+    counterevidenceRef:
+      typeof raw.counterevidenceRef === "string"
+        ? raw.counterevidenceRef
+        : "",
+  };
+  const proposedAmount =
+    typeof input.proposedAmount === "string" ? input.proposedAmount : "";
+  return {
+    envelope,
+    proposedAmount,
+    receipt: evaluatePolicyEnvelope({
+      proposal,
+      envelope,
+      proposedAmount,
+      now,
+    }),
+  };
 }
 
 export function evidenceWithholdReceipt(
@@ -200,7 +253,7 @@ function receipt(
     stopReason,
   ]);
   return {
-    id: `sim-${fingerprint(seed)}`,
+    id: `sim-${stableId(seed, 1)}`,
     status: stopReason ? "withheld" : "simulated",
     simulatedAt,
     envelope,
@@ -215,13 +268,4 @@ function receipt(
     limit:
       "Review artifact only. No signing, approval, transfer, swap, bridge or broadcast occurred.",
   };
-}
-
-function fingerprint(value: string): string {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0).toString(16).padStart(8, "0");
 }
