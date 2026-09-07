@@ -931,3 +931,6 @@
 @media(max-width:760px) { .brief-card { padding: 20px; } .brief-card h2 { font-size: 22px; } }
 
 .source-status-details{margin-bottom:16px}.source-status-details>summary{padding:10px 0;cursor:pointer;font-size:12px;color:#596477}.source-status-details[open]>.worker-pulse{margin-top:8px}
+
+.brief-start{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-height:54px}.brief-start small{font-weight:400;font-size:11px}
+@media(max-width:760px){.daily-brief{gap:12px}.daily-brief>.work-tabs{margin:0}.brief-search{margin:0}.source-status-details{margin-bottom:0}}
