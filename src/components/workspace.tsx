@@ -266,6 +266,9 @@ export function Workspace({
   const allProjects = [...projects, ...(radar?.projects || [])];
   const selectedRecord = radar?.records.find(r => r.id === selected.id);
   const graphCovered = selected.contract?.toLowerCase() === projects[0].contract?.toLowerCase();
+  useEffect(() => {
+    if (!graphCovered && provider === "graph") setProvider("explorer");
+  }, [graphCovered, provider, selected.id]);
   const visible = (catalogView === "radar" ? radar?.projects || [] : projects).filter(
     (p) =>
       `${p.name} ${p.symbol} ${p.category} ${p.summary} ${p.question} ${p.contract || ""}`

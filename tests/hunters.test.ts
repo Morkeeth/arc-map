@@ -198,6 +198,24 @@ test("mutation rejects cross-origin and missing origin; owner comes from opaque 
       ).owner,
       access.owner,
     );
+    // npm run dev binds 127.0.0.1 while .env.example documents localhost — both are loopback.
+    const loopback = missionAccess(
+      new Request("http://127.0.0.1:3107/api/missions", {
+        method: "POST",
+        headers: { origin: "http://127.0.0.1:3107" },
+      }),
+      true,
+    );
+    assert.ok(loopback.cookie);
+    assert.throws(() =>
+      missionAccess(
+        new Request("http://127.0.0.1:3108/api/missions", {
+          method: "POST",
+          headers: { origin: "http://127.0.0.1:3108" },
+        }),
+        true,
+      ),
+    );
   } finally {
     if (old === undefined) delete process.env.NEXT_PUBLIC_APP_ORIGIN;
     else process.env.NEXT_PUBLIC_APP_ORIGIN = old;

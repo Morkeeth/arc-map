@@ -51,11 +51,11 @@ must be inspectable and non-financial; baseline volume arm may beat us.
 - Ship a **naive volume-rank baseline** compared against editorial why-now order (can lose).
 
 **Done-when (must RUN):**
-- [ ] Candidate pin / unavailable recorded at object (`curl` brief+radar or script)
-- [ ] Unit tests for why-now clocks, action proposal gating, baseline comparison
-- [ ] `npm test && npm run typecheck && npm run build`
-- [ ] Desktop + ~390px notes (screenshots if browser available)
-- [ ] Receipt `docs/CLOUD-RECEIPT-arc-discovery-hunter-2026-09-07.md`
+- [x] Candidate pin / unavailable recorded at object (`npm run radar`; `npm run ingest`; brief dump)
+- [x] Unit tests for why-now clocks, action proposal gating, baseline comparison (`npm test`)
+- [x] `npm test && npm run typecheck && npm run build`
+- [x] Desktop + ~390px notes (screenshots in artifacts)
+- [x] Receipt `docs/CLOUD-RECEIPT-arc-discovery-hunter-2026-09-07.md`
 
 ### Slice 2 — Thesis failure/quiet-cycle status (separate PR; not this NOW)
 Owned by concurrent lanes / later slice. Do not batch into slice 1.
@@ -73,3 +73,15 @@ Same rule: independent PR after slice 1 ships.
 - `hack.md` was missing; written as first deliverable before code.
 - Open PRs at start: #9 (do not touch), #1 (unrelated returning-user test).
 - Ideation (3 candidates → pick) recorded in receipt after pin.
+- Ran `npm run radar` + `npm run ingest` → pinned 128 brief cards / 123 catalog records.
+- Shipped why-NOW clocks, action proposals, discovery-rank baseline arm, loopback origin repair.
+- Done-when commands executed:
+  - [x] Candidate pin — `npm run radar`; `npm run ingest`; brief object dump → `/tmp/candidate-pin.json`
+  - [x] Unit tests — `npm test` (78 pass) including why-now / action-proposal / discovery-rank
+  - [x] `npm test && npm run typecheck && npm run build`
+  - [x] Desktop + ~390px — browser screenshots in `/opt/cursor/artifacts/`
+  - [x] Receipt `docs/CLOUD-RECEIPT-arc-discovery-hunter-2026-09-07.md`
+- Live eval: `npm run eval:discovery-rank` → why-now beat volume on hot/warm share (1.0 vs 0.25).
+- Live Hunt: `node --import tsx scripts/eval-hot-hunt.ts` → limited-support + ready proposal.
+- Repair: Origin `127.0.0.1` vs `localhost` blocked browser Hunt; `originAllowed` + explorer auto-select.
+- Stopped after slice 1 verification; did not start slice 2/3.
