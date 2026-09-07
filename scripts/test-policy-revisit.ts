@@ -164,6 +164,13 @@ async function revisit() {
   );
 }
 
-if (phase === "prepare") await prepare();
-else if (phase === "revisit") await revisit();
-else throw new Error("Use prepare or revisit.");
+async function main() {
+  if (phase === "prepare") await prepare();
+  else if (phase === "revisit") await revisit();
+  else throw new Error("Use prepare or revisit.");
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : "Policy revisit failed.");
+  process.exitCode = 1;
+});
