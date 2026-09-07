@@ -54,4 +54,11 @@ A user gets an honest map of what wallet connection, Graph-backed research, and 
 - 2026-09-07T19:10Z — Initial stale `main` checkout at `490696286b5ca08844940e5f957e4133fc3462c7` had no `hack.md`, so a provisional current contract was created before implementation. Switching to the requested object revealed the prior tracked contract; it was then read at the actual object with `git show HEAD:hack.md` and this contract was reconciled to retain one current NOW.
 - 2026-09-07T19:12Z — Designated branch `cursor/arc-night-wallet-graph-2108-ad60` verified at requested starting ref `c985b0ef7fcce23939c767a147a02b7e47115fd3`.
 - 2026-09-07T19:12Z — Open PRs inspected. PRs 10–12 own the discovery/policy/public-acceptance chain; PR 9 remains untouched.
-- Verification has not yet run. No plan item or completion claim is marked done.
+- 2026-09-07T19:14Z — First `npm run rehearse:mission -- --action send` failed for the wrong reason (`tsx: not found`, exit 127). This was not counted as an allowlist result. Ran `npm ci`; 786 locked packages installed and npm reported 10 moderate advisories.
+- 2026-09-07T19:15Z — Reran `npm run rehearse:mission -- --action send`; it exited 1 at `Unsupported wallet action.` The allowlist control was observed red.
+- 2026-09-07T19:15Z — `npm run rehearse:mission` exited 0 and decoded unsigned `openMission` calldata from deterministic fixtures with no signer, RPC or broadcast path.
+- 2026-09-07T19:15Z — `node --import tsx --test tests/mission-action.test.ts` passed 3 tests.
+- 2026-09-07T19:15Z — Official-source commands executed with `curl -fsSL … | rg -o … | sort -u`: Circle returned the September 16, 2026 public-mainnet target plus its modification/delay/cancellation warning; Arc returned both current public-testnet and mainnet-coming-soon statements.
+- 2026-09-07T19:16Z — `npm test` passed 85 tests; `npm run typecheck` passed; `npm run build` passed with existing viem dynamic-dependency and optional Privy Farcaster/Solana-module warnings.
+- 2026-09-07T19:17Z — First direct preview-route probe failed because the TypeScript loader exposed the route through its default export. The corrected `NEXT_PUBLIC_RESEARCH_PREVIEW=1 node --import tsx --input-type=module -e '…'` probe exercised GET and POST; both returned 403 with the explicit preview-unavailable error.
+- Slice 1 done-when commands have run. Slice 2 cold-clone acceptance and Slice 3 interface acceptance were not started because NOW authorizes exactly one slice.

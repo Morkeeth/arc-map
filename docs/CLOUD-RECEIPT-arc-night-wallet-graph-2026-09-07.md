@@ -3,7 +3,7 @@
 Date: 2026-09-07  
 Starting object: `c985b0ef7fcce23939c767a147a02b7e47115fd3`  
 Development branch: `cursor/arc-night-wallet-graph-2108-ad60`  
-Status: pre-verification; command results are recorded only after execution.
+Status: verified locally; results below were observed on this branch.
 
 ## 1. Wallet connection and current interactions
 
@@ -79,9 +79,11 @@ Runnable source checks:
 
 ```sh
 curl -fsSL 'https://www.circle.com/pressroom/circle-announces-founding-validator-cohort-and-major-integrations-for-arc-ahead-of-september-16-mainnet-launch' \
-  | rg -n 'public mainnet launch on September 16, 2026|modified, delayed, or cancelled'
+  | rg -o 'public mainnet launch on September 16, 2026|modified, delayed, or cancelled' \
+  | sort -u
 curl -fsSL 'https://www.arc.network/' \
-  | rg -n 'Mainnet is coming soon|Live on public testnet'
+  | rg -o 'Mainnet is coming soon|Live on public testnet' \
+  | sort -u
 ```
 
 ## 4. Local unsigned rehearsal
@@ -112,21 +114,32 @@ node --import tsx --test tests/mission-action.test.ts
 This rehearsal proves ABI encoding and the allowlist only. It does **not** claim a successful
 EVM simulation, configured deployment, current Graph index, authenticated wallet, sufficient
 balance, accepted wallet prompt or transaction receipt. Production preparation still performs
-those checks against Arc testnet; no production send is invoked here.
+those checks against Arc testnet; no production send is invoked here. No syscall-level network
+trace was available, so the no-RPC claim is bounded to the executed code path and command output.
 
 ## Positive and negative checks
 
-No check is marked passed in this pre-verification revision. Planned commands:
+| Command run | Observed result |
+| --- | --- |
+| `npm run rehearse:mission -- --action send` | Exited 1 at `Unsupported wallet action.` after dependencies were installed. This is the observed-red allowlist control. |
+| `npm run rehearse:mission` | Exited 0; decoded `openMission` fixture calldata and reported no signer, RPC or broadcast. |
+| `node --import tsx --test tests/mission-action.test.ts` | 3 passed: fund encoding, zero-value close encoding, missing-report and unknown-action rejection. |
+| Circle source `curl … \| rg -o … \| sort -u` above | Exited 0 and returned both the September 16 public-mainnet target and the modification/delay/cancellation warning. |
+| Arc homepage `curl … \| rg -o … \| sort -u` above | Exited 0 and returned both “Live on public testnet” and “Mainnet is coming soon.” |
+| `NEXT_PUBLIC_RESEARCH_PREVIEW=1 node --import tsx --input-type=module -e '…GET/POST route probe…'` | GET and POST each returned 403 with `Wallet actions are unavailable in this research preview.` |
+| `npm test` | 85 passed, 0 failed. |
+| `npm run typecheck` | Exited 0. |
+| `npm run build` | Exited 0; all pages generated. Existing viem dynamic-dependency and optional Privy Farcaster/Solana-module warnings remain. |
+| `git diff --check` | Exited 0 before the pre-verification commit. |
 
-```sh
-npm run rehearse:mission
-npm run rehearse:mission -- --action send   # expected nonzero
-node --import tsx --test tests/mission-action.test.ts
-npm test
-npm run typecheck
-npm run build
-git diff --check
-```
+Failures retained:
+
+- The first unsupported-action run exited 127 at `tsx: not found`; this did not count as the
+  negative control. `npm ci` installed the checked-in dependency tree, after which the exact
+  command exited 1 for the intended allowlist rejection.
+- The first direct preview-route probe assumed named ESM exports and failed with
+  `route[method] is not a function`. The corrected probe used the loader's default export and
+  observed both 403 responses.
 
 ## Explicit boundaries
 
