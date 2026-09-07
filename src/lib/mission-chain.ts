@@ -14,6 +14,51 @@ import { escrowAbi } from "./escrow";
 import type { Mission } from "./hunters";
 import { assessIndexFreshness } from "./index-freshness";
 
+type MissionAuthorities = {
+  executor: Address;
+  service: Address;
+};
+
+export function encodeUnsignedMissionAction(
+  mission: Mission,
+  action: unknown,
+  authorities: MissionAuthorities,
+) {
+  if (action === "fund") {
+    if (!mission.reportHash)
+      throw new Error("A committed report is required before funding.");
+    const value = parseEther(mission.budget);
+    return {
+      action,
+      data: encodeFunctionData({
+        abi: escrowAbi,
+        functionName: "openMission",
+        args: [
+          mission.id as Hex,
+          mission.thesisHash,
+          mission.reportHash,
+          authorities.executor,
+          authorities.service,
+          parseEther(mission.fee),
+          BigInt(mission.deadline),
+        ],
+      }),
+      value,
+    };
+  }
+  if (action === "close")
+    return {
+      action,
+      data: encodeFunctionData({
+        abi: escrowAbi,
+        functionName: "closeMission",
+        args: [mission.id as Hex],
+      }),
+      value: 0n,
+    };
+  throw new Error("Unsupported wallet action.");
+}
+
 export function chainConfig() {
   const address = process.env.HUNTER_ESCROW_ADDRESS,
     executor = process.env.HUNTER_EXECUTOR_ADDRESS,
@@ -154,20 +199,12 @@ export async function prepareMissionAction(
     if (state.funded) throw new Error("Mission is already funded.");
     if (mission.deadline <= Math.floor(Date.now() / 1000))
       throw new Error("Mission expired. Create a new one.");
-    data = encodeFunctionData({
-      abi: escrowAbi,
-      functionName: "openMission",
-      args: [
-        mission.id as Hex,
-        mission.thesisHash,
-        mission.reportHash!,
-        config.executor!,
-        config.service!,
-        parseEther(mission.fee),
-        BigInt(mission.deadline),
-      ],
+    const unsigned = encodeUnsignedMissionAction(mission, action, {
+      executor: config.executor!,
+      service: config.service!,
     });
-    value = parseEther(mission.budget);
+    data = unsigned.data;
+    value = unsigned.value;
     await client.simulateContract({
       address: config.address!,
       abi: escrowAbi,
@@ -193,11 +230,12 @@ export async function prepareMissionAction(
       throw new Error(
         "Only the mission owner can reclaim its remaining budget.",
       );
-    data = encodeFunctionData({
-      abi: escrowAbi,
-      functionName: "closeMission",
-      args: [mission.id as Hex],
+    const unsigned = encodeUnsignedMissionAction(mission, action, {
+      executor: config.executor!,
+      service: config.service!,
     });
+    data = unsigned.data;
+    value = unsigned.value;
     await client.simulateContract({
       address: config.address!,
       abi: escrowAbi,
