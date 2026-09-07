@@ -1,3 +1,69 @@
+# NORTH STAR
+
+Let a stranger prove, on a pinned local EVM, that one selected account can simulate one tightly
+allowlisted opportunity action and see its exact asset delta without broadcasting a transaction.
+
+# PROMISE LINE
+
+The user gets an evidence-bound receipt for an ERC-20 opportunity simulation, constrained so the
+account, target, asset, amount ceiling, expiry, counterevidence and calldata must all match policy
+before any RPC simulation occurs.
+
+# OPEN QUESTIONS
+
+- Non-blocking: whether a future reviewed slice should support opportunity actions other than the
+  single ERC-20 call selected here.
+- Non-blocking: whether production policy envelopes should be signed; this repair proves local
+  binding and fail-closed simulation only.
+- Blocking: none for this slice. The requested starting commit and designated repair branch match.
+
+# CONSTITUTION
+
+- This path is not mission escrow and may not call or extend `prepareMissionAction`,
+  `openMission`, `fund` or `closeMission`.
+- Only a pinned local Anvil fixture is permitted. No public RPC send, public deployment or live funds.
+- No transaction-broadcast API may appear in the opportunity action module or its proof script.
+- The selected account, evidence identifier, counterevidence, asset, approved target, amount ceiling,
+  expiry, chain identity and calldata are one validated envelope; mismatch or staleness fails before RPC.
+- Receipt values are decoded from the local EVM object being simulated, never copied from this prompt
+  or a document.
+- A green control must first be observed red against a deliberate violation.
+- A checkbox is true only after its stated done-when command has run and passed.
+- This remains one small draft PR rooted at `28e0c220ebc0797ec4944ed2f18def3e680dfaf5`;
+  it does not merge, deploy, publish a preview or claim public-chain execution.
+
+# PLAN
+
+- [x] Slice 1 — prove the risky boundary end to end: implement a standalone opportunity-action
+  encoder/validator and pinned local-Anvil simulation, decode before/after account asset deltas,
+  force a pre-simulation rejection red case, add zero-broadcast guard coverage, document a receipt,
+  and make the cold local path usable from one command.
+  Done when RUN:
+  `npm run test:opportunity-action && npm test && npm run typecheck && npm run build && git diff --check`
+
+# NOW
+
+Slice 1 only: allowlisted ERC-20 opportunity simulation and its fail-closed/zero-broadcast proof.
+
+# LOG
+
+- 2026-09-07T19:42Z — Started at exact required SHA
+  `28e0c220ebc0797ec4944ed2f18def3e680dfaf5` on
+  `cursor/arc-night-opp-repair-2141-392f`.
+- 2026-09-07T19:42Z — `hack.md` did not exist. Created it before changing product code.
+- 2026-09-07T19:47Z — Watched the control go red with
+  `npm run rehearse:opportunity -- --wrong-account`: exit 1 for selected-account mismatch,
+  with `simulationRpcStarted: false`.
+- 2026-09-07T19:47Z — First combined full check got all 89 tests green, then failed typecheck
+  because viem's public schema does not type Anvil's custom `eth_accounts` and
+  `debug_traceCall` methods. Narrowed those two local RPC boundaries and retained the failure
+  in the cloud receipt.
+- 2026-09-07T19:49Z — Re-ran the red control after adding the baseline arm. The naive ABI
+  encoder accepted the unauthorized input; the policy-bound arm exited 1 before simulation.
+- 2026-09-07T19:50Z — Checked Slice 1 only after RUNNING the exact done-when command:
+  `npm run test:opportunity-action && npm test && npm run typecheck && npm run build && git diff --check`.
+  It exited 0: 4 focused tests passed, the local EVM receipt decoded balanced asset deltas,
+  89 full tests passed, typecheck passed, the production build completed, and diff-check passed.
 # ARC MAP · external wallet / Graph / simulation seam
 
 ## NORTH STAR
