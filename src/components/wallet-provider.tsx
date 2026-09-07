@@ -90,6 +90,7 @@ function WalletBridge({ children }: { children: ReactNode }) {
   );
 }
 export function WalletProvider({ children }: { children: ReactNode }) {
+  if(process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1") return <>{children}</>;
   return (
     <PrivyProvider
       appId={PRIVY_APP_ID}

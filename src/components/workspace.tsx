@@ -92,7 +92,7 @@ export function Workspace({
   const [mission, setMission] = useState<Mission | null>(null);
   const [capabilities, setCapabilities] = useState<Capability | null>(null);
   const [indexHealth, setIndexHealth] = useState<{ checkedAt: string; graph: { queryVerified: boolean; fresh: boolean; reason: string | null; indexedBlock: number | null } } | null>(null);
-  const [provider, setProvider] = useState<"graph" | "explorer">("graph");
+  const [provider, setProvider] = useState<"graph" | "explorer">(process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1" ? "explorer" : "graph");
   const [budget, setBudget] = useState("0.05");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -106,6 +106,7 @@ export function Workspace({
     block: string;
   } | null>(null);
   const wallet = useHunterWallet();
+  const researchPreview = process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1";
   const detailRef = useRef<HTMLElement>(null);
   const reportRef = useRef<HTMLElement>(null);
   function showProject(project: Project) {
@@ -319,6 +320,7 @@ export function Workspace({
           </Link>
           <Link href="/theses">Theses</Link>
         </nav>
+        {!researchPreview && <>
         <button
           className="wallet-button"
           disabled={!wallet.ready}
@@ -333,6 +335,7 @@ export function Workspace({
               ? "Connect wallet"
               : "Loading wallet…"}
         </button>
+        </>}
       </header>
       <main className="work-main">
         <div className="work-title">
@@ -655,7 +658,7 @@ export function Workspace({
                     </p>
                   )}
                   <label>
-                    Proposed mission budget <span>testnet USDC</span>
+                    {researchPreview ? "Simulation ceiling" : "Proposed mission budget"} <span>testnet USDC</span>
                     <input
                       type="number"
                       min="0.01"
@@ -665,6 +668,7 @@ export function Workspace({
                       onChange={(e) => setBudget(e.target.value)}
                     />
                   </label>
+                  {!researchPreview && <>
                   <div className="mission-terms">
                     <span>
                       Fixed service fee <strong>0.01 USDC</strong>
@@ -676,6 +680,7 @@ export function Workspace({
                       Mission deadline <strong>24 hours from creation</strong>
                     </span>
                   </div>
+                  </>}
                   <button
                     className="work-primary-button"
                     disabled={Boolean(busy) || (provider === "graph" && !graphCovered)}
@@ -692,7 +697,7 @@ export function Workspace({
                     Run research preview <ArrowRight size={16} />
                   </button>
                   <small className="no-charge">
-                    No wallet charge. Review evidence before funding.
+                    {researchPreview ? "Research preview. No wallet, payment or transaction execution." : "No wallet charge. Review evidence before funding."}
                   </small>
                 </>
               )}
@@ -815,6 +820,7 @@ export function Workspace({
                     </details>
                   </div>
                 </div>
+                {!researchPreview && <>
                 <div className="funding-panel">
                   <div>
                     <h3>Approve a bounded mission.</h3>
@@ -880,6 +886,7 @@ export function Workspace({
                     </button>
                   </div>
                 </div>
+                </>}
                 {busy && <p role="status">{busy}…</p>}
                 {tx && (
                   <a
