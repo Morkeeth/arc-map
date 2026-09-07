@@ -136,7 +136,7 @@ test("tampered calldata is rejected before simulation RPC", async () => {
 
   await assert.rejects(
     simulateOpportunityAction(client, prepared),
-    /AbiFunctionSignatureNotFoundError|encoded function signature/i,
+    /binding was changed/,
   );
   assert.equal(rpcCalls, 0);
 });

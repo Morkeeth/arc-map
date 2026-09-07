@@ -7,6 +7,8 @@ import {
   createPublicClient,
   createTestClient,
   decodeFunctionResult,
+  encodeFunctionData,
+  erc20Abi,
   getAddress,
   http,
   keccak256,
@@ -39,6 +41,11 @@ async function main() {
   const request = process.argv.includes("--wrong-account")
     ? { ...baseRequest, account: alternateAccount }
     : baseRequest;
+  const naiveCalldata = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: "transfer",
+    args: [request.target, request.amount],
+  });
 
   let prepared;
   try {
@@ -50,6 +57,12 @@ async function main() {
           status: "rejected-before-simulation",
           simulationRpcStarted: false,
           reason: error instanceof Error ? error.message : String(error),
+          baseline: {
+            name: "ABI encoding only",
+            accepted: Boolean(naiveCalldata),
+            limitation:
+              "The naive encoder accepts the same calldata without checking account, evidence, target policy or expiry.",
+          },
         },
         null,
         2,
@@ -66,7 +79,12 @@ async function main() {
       transport: http(rpcUrl, { retryCount: 0, timeout: 1_000 }),
     });
     await waitForAnvil(publicClient, anvil);
-    const accounts = await publicClient.request({ method: "eth_accounts" });
+    const accounts = await (
+      publicClient.request as unknown as (args: {
+        method: "eth_accounts";
+      }) => Promise<Address[]>
+    )({ method: "eth_accounts" });
+    assert.ok(accounts.length > 0, "Local EVM must expose a fixture account");
     const selected = getAddress(accounts[0]);
     assert.equal(
       selected.toLowerCase(),
@@ -90,7 +108,12 @@ async function main() {
       value: toHex(startingBalance, { size: 32 }),
     });
 
-    const receipt = await simulateOpportunityAction(publicClient, prepared);
+    const receipt = await simulateOpportunityAction(
+      publicClient as unknown as Parameters<
+        typeof simulateOpportunityAction
+      >[0],
+      prepared,
+    );
     assert.equal(receipt.pin.chainId, LOCAL_OPPORTUNITY_CHAIN_ID);
     assert.deepEqual(
       receipt.deltas.map((delta) => delta.delta),
@@ -120,6 +143,11 @@ async function main() {
       JSON.stringify(
         {
           ...receipt,
+          baseline: {
+            name: "ABI encoding only",
+            accepted: Boolean(naiveCalldata),
+            decodedAssetDeltas: false,
+          },
           fixture: {
             tokenRuntimeInjected: true,
             initialAccountBalance: startingBalance,

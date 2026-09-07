@@ -120,6 +120,17 @@ npm run test:lifecycle
 The lifecycle command runs a separate **local Anvil chain**. It does not authorize or execute
 an Arc transaction. `ANVIL_BIN` can override the executable path.
 
+To run the standalone opportunity-action proof (no key, public RPC or broadcast):
+
+```sh
+npm run test:opportunity-action
+```
+
+This command starts its packaged isolated Anvil node, injects a compiled ERC-20 fixture without
+deploying it, simulates one policy-bound transfer to an approved report-contract address, and
+prints the pinned block plus decoded account/target balance deltas. It is separate from mission
+escrow and is not evidence that an equivalent public-chain action is safe or available.
+
 A local production restore test is available after a build:
 
 ```sh

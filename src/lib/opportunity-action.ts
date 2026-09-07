@@ -172,6 +172,15 @@ export async function simulateOpportunityAction(
   client: OpportunitySimulationClient,
   prepared: PreparedOpportunityAction,
 ): Promise<OpportunitySimulationReceipt> {
+  const rebound = prepareOpportunityAction(
+    prepared,
+    Math.floor(Date.now() / 1_000),
+  );
+  if (
+    rebound.calldata !== prepared.calldata ||
+    rebound.bindingHash !== prepared.bindingHash
+  )
+    throw new Error("Prepared opportunity binding was changed before simulation.");
   const decoded = decodeFunctionData({ abi: erc20Abi, data: prepared.calldata });
   if (
     decoded.functionName !== "transfer" ||
