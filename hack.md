@@ -34,7 +34,7 @@ before any RPC simulation occurs.
 
 # PLAN
 
-- [ ] Slice 1 — prove the risky boundary end to end: implement a standalone opportunity-action
+- [x] Slice 1 — prove the risky boundary end to end: implement a standalone opportunity-action
   encoder/validator and pinned local-Anvil simulation, decode before/after account asset deltas,
   force a pre-simulation rejection red case, add zero-broadcast guard coverage, document a receipt,
   and make the cold local path usable from one command.
@@ -51,7 +51,19 @@ Slice 1 only: allowlisted ERC-20 opportunity simulation and its fail-closed/zero
   `28e0c220ebc0797ec4944ed2f18def3e680dfaf5` on
   `cursor/arc-night-opp-repair-2141-392f`.
 - 2026-09-07T19:42Z — `hack.md` did not exist. Created it before changing product code.
-- Verification has not run yet; Slice 1 remains unchecked.
+- 2026-09-07T19:47Z — Watched the control go red with
+  `npm run rehearse:opportunity -- --wrong-account`: exit 1 for selected-account mismatch,
+  with `simulationRpcStarted: false`.
+- 2026-09-07T19:47Z — First combined full check got all 89 tests green, then failed typecheck
+  because viem's public schema does not type Anvil's custom `eth_accounts` and
+  `debug_traceCall` methods. Narrowed those two local RPC boundaries and retained the failure
+  in the cloud receipt.
+- 2026-09-07T19:49Z — Re-ran the red control after adding the baseline arm. The naive ABI
+  encoder accepted the unauthorized input; the policy-bound arm exited 1 before simulation.
+- 2026-09-07T19:50Z — Checked Slice 1 only after RUNNING the exact done-when command:
+  `npm run test:opportunity-action && npm test && npm run typecheck && npm run build && git diff --check`.
+  It exited 0: 4 focused tests passed, the local EVM receipt decoded balanced asset deltas,
+  89 full tests passed, typecheck passed, the production build completed, and diff-check passed.
 # ARC MAP · external wallet / Graph / simulation seam
 
 ## NORTH STAR

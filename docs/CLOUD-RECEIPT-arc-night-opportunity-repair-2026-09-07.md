@@ -16,10 +16,10 @@ The selected account, fixture asset, approved report-contract target, amount and
 expiry, evidence source, counterevidence, and exact ERC-20 `transfer` calldata are committed
 by one binding hash. The simulator re-derives that binding before its first RPC request.
 
-The observed positive receipt at 2026-09-07T19:48:14Z reported:
+The final positive receipt at 2026-09-07T19:49:30Z reported:
 
 - local chain ID `31337`, block `0`, block hash
-  `0x3e92e48a95d4f9099e10269dd73f9bea501ac4402a518b4d58547d158b405727`;
+  `0xa442c92e1404a1a49f0f30008519d1b6d8397b988bcd4df63a024bb02f04c4e1`;
 - selected account balance `1000000 → 975000`, delta `-25000`;
 - approved report-contract balance `0 → 25000`, delta `+25000`;
 - amount `25000` under policy ceiling `30000`;
@@ -63,8 +63,8 @@ escrow close. It does not enable a browser route.
 | `npm run test:opportunity-action` | 4 focused tests passed; local EVM call returned true and decoded balanced `-25000` / `+25000` deltas. |
 | `npm test` | 89 passed, 0 failed. |
 | `npm run typecheck` | Passed after correcting the local custom-RPC TypeScript boundary. |
-| `npm run build` | Pending final run. |
-| `git diff --check` | Pending final run. |
+| `npm run build` | Exited 0; 7 static pages generated and dynamic routes compiled. Existing viem dynamic-dependency and optional Privy Farcaster/Solana-module warnings remain. |
+| `git diff --check` | Exited 0 as the final step of the combined done-when command. |
 
 ## Limitations and failures
 
