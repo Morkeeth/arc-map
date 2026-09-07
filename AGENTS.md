@@ -1,5 +1,18 @@
 # ARC MAP
 
+## Current shared state — public preview, 7 September 2026
+
+- Repository authority is `main` at `490696286b5ca08844940e5f957e4133fc3462c7`.
+- Discovery → Why NOW → Hunt work is based at
+  `f1f9d9344d505d7ec3412c65582aca40838d4017` on
+  `cursor/arc-discovery-hunter-2026-09-07-196a`.
+- The policy-envelope public-preview repair continues on
+  `cursor/arc-policy-envelope-0913-118b`; it must remain simulation-only.
+- Draft PR #9 remains a separate persistent-contribution/revoke slice. Do not silently discard
+  that journey or combine it without resolving re-share eviction and post-commit rollback.
+- Before starting or combining another slice, fetch the relevant remote tip and recheck open PRs
+  and concurrent owners. Root review is still required before merge.
+
 ## Settled product decision
 
 ARC MAP combines a live Arc discovery map, evidence-backed narratives, and agent investigations.

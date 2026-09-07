@@ -734,6 +734,8 @@ export function Workspace({
                 <ActionProposalPanel
                   key={mission.id}
                   proposal={actionProposalFor(report, mission.address)}
+                  missionId={mission.id}
+                  savedReview={mission.policyReview}
                 />
                 <div className="report-facts">
                   <div>

@@ -3,17 +3,21 @@ import { useState, type FormEvent } from "react";
 import type { ActionProposal } from "@/lib/action-proposal";
 import {
   evidenceWithholdReceipt,
-  evaluatePolicyEnvelope,
   initialPolicyEnvelope,
   type PolicyEnvelope,
   type PolicyField,
   type PolicyReceipt,
+  type PolicyReview,
 } from "@/lib/policy-envelope";
 
 export function ActionProposalPanel({
   proposal,
+  missionId,
+  savedReview,
 }: {
   proposal: ActionProposal;
+  missionId: string;
+  savedReview?: PolicyReview | null;
 }) {
   if (proposal.status === "withheld") {
     const receipt = evidenceWithholdReceipt(
@@ -38,27 +42,63 @@ export function ActionProposalPanel({
     );
   }
 
-  return <ReadyActionProposal proposal={proposal} />;
+  return (
+    <ReadyActionProposal
+      proposal={proposal}
+      missionId={missionId}
+      savedReview={savedReview}
+    />
+  );
 }
 
-function ReadyActionProposal({ proposal }: { proposal: ActionProposal }) {
+function ReadyActionProposal({
+  proposal,
+  missionId,
+  savedReview,
+}: {
+  proposal: ActionProposal;
+  missionId: string;
+  savedReview?: PolicyReview | null;
+}) {
   const [envelope, setEnvelope] = useState<PolicyEnvelope>(() =>
-    initialPolicyEnvelope(proposal),
+    savedReview?.envelope ?? initialPolicyEnvelope(proposal),
   );
-  const [proposedAmount, setProposedAmount] = useState("0.01");
-  const [receipt, setReceipt] = useState<PolicyReceipt | null>(null);
+  const [proposedAmount, setProposedAmount] = useState(
+    savedReview?.proposedAmount ?? "0.01",
+  );
+  const [receipt, setReceipt] = useState<PolicyReceipt | null>(
+    savedReview?.receipt ?? null,
+  );
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const stoppedField = receipt?.stopReason?.field ?? null;
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setReceipt(
-      evaluatePolicyEnvelope({
-        proposal,
-        envelope,
-        proposedAmount,
-        now: new Date().toISOString(),
-      }),
-    );
+    setSaving(true);
+    setSaveError("");
+    try {
+      const response = await fetch(`/api/missions/${missionId}/policy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ envelope, proposedAmount }),
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || "Policy review could not be saved.");
+      const review = result.policyReview as PolicyReview;
+      setEnvelope(review.envelope);
+      setProposedAmount(review.proposedAmount);
+      setReceipt(review.receipt);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "Policy review could not be saved.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -90,7 +130,7 @@ function ReadyActionProposal({ proposal }: { proposal: ActionProposal }) {
       <form className="policy-envelope" onSubmit={submit} noValidate>
         <div className="list-caption">
           <span>POLICY ENVELOPE</span>
-          <span>editable · local simulation</span>
+          <span>editable · private workspace</span>
         </div>
         <p className="policy-intro">
           Attach constraints to this supported result, then evaluate one
@@ -208,10 +248,15 @@ function ReadyActionProposal({ proposal }: { proposal: ActionProposal }) {
               onChange={(event) => setProposedAmount(event.target.value)}
             />
           </label>
-          <button className="work-primary-button" type="submit">
-            Simulate policy-gated action
+          <button
+            className="work-primary-button"
+            type="submit"
+            disabled={saving}
+          >
+            {saving ? "Saving simulation…" : "Simulate and save receipt"}
           </button>
         </div>
+        {saveError && <p className="work-error">{saveError}</p>}
       </form>
       {receipt && <PolicyReceiptView receipt={receipt} />}
       <ol className="action-checklist">

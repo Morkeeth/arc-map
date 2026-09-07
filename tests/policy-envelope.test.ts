@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { actionProposalFor } from "../src/lib/action-proposal";
 import {
   evaluatePolicyEnvelope,
@@ -7,6 +10,7 @@ import {
   initialPolicyEnvelope,
 } from "../src/lib/policy-envelope";
 import type { MissionReport } from "../src/lib/hunters";
+import { MissionStore } from "../src/lib/mission-store";
 
 const address = "0x" + "d".repeat(40);
 
@@ -84,4 +88,60 @@ test("unsupported evidence is withheld before an envelope is attached", () => {
   assert.equal(receipt.envelope, null);
   assert.equal(receipt.stopReason?.field, "evidenceThreshold");
   assert.match(receipt.stopReason?.message ?? "", /insufficient evidence/i);
+});
+
+test("workspace retains a simulated receipt across a database restart", () => {
+  const dir = mkdtempSync(join(tmpdir(), "arcmap-policy-review-"));
+  const path = join(dir, "missions.sqlite");
+  try {
+    const first = new MissionStore(path);
+    const created = first.create("owner", {
+      projectId: "sun-token",
+      provider: "graph",
+      budget: "0.05",
+    });
+    first.claim("owner", created.id);
+    const completed = first.finish("owner", created.id, report(), null);
+    const proposal = actionProposalFor(report(), completed.address);
+    const stopped = first.savePolicyReview(
+      "owner",
+      created.id,
+      {
+        envelope: {
+          ...initialPolicyEnvelope(proposal),
+          counterevidenceRef: "",
+        },
+        proposedAmount: "0.01",
+      },
+      "2026-09-07T10:59:00Z",
+    );
+    assert.equal(
+      stopped.policyReview?.receipt.stopReason?.field,
+      "counterevidence",
+    );
+    const saved = first.savePolicyReview(
+      "owner",
+      created.id,
+      {
+        envelope: initialPolicyEnvelope(proposal),
+        proposedAmount: "0.01",
+      },
+      "2026-09-07T11:00:00Z",
+    );
+    assert.equal(saved.policyReview?.receipt.status, "simulated");
+    assert.equal(first.get("other", created.id), null);
+    first.close();
+
+    const restarted = new MissionStore(path);
+    const revisited = restarted.get("owner", created.id);
+    assert.equal(
+      revisited?.policyReview?.receipt.id,
+      saved.policyReview?.receipt.id,
+    );
+    assert.equal(revisited?.policyReview?.receipt.status, "simulated");
+    assert.equal(revisited?.policyReview?.receipt.action?.amount, "0.01");
+    restarted.close();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
