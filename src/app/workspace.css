@@ -889,9 +889,39 @@
 .action-checklist li { margin: 0 0 14px; }
 .action-checklist strong { display: block; margin-bottom: 4px; }
 .action-checklist p { margin: 0 0 6px; font-size: 13px; line-height: 1.55; color: #18335b; }
+.policy-envelope { margin: 18px 0; padding: 16px; border: 1px solid #c8d9f1; background: #fff; }
+.policy-intro { margin: 9px 0 14px; max-width: 72ch; font-size: 12px; line-height: 1.6; color: #627998; }
+.policy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.policy-field, .policy-action-row label { display: flex; min-width: 0; flex-direction: column; gap: 6px; font-size: 11px; color: #627998; }
+.policy-field input, .policy-field textarea, .policy-action-row input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #d4e1f3;
+  border-radius: 5px;
+  background: #f8fbff;
+  color: #18335b;
+  font: inherit;
+}
+.policy-field textarea { min-height: 62px; resize: vertical; }
+.policy-field.failed { color: #a52727; font-weight: 600; }
+.policy-field.failed input, .policy-field.failed textarea, .policy-action-row input[aria-invalid="true"] { border-color: #c73a3a; background: #fff5f5; }
+.policy-action-row { display: grid; grid-template-columns: minmax(150px, 0.5fr) 1fr; gap: 13px; align-items: end; margin-top: 14px; }
+.policy-action-row .work-primary-button { min-height: 37px; justify-content: center; }
+.policy-receipt { margin: 16px 0; padding: 14px; border: 1px solid #9ebee9; background: #edf5ff; overflow-wrap: anywhere; }
+.policy-receipt.withheld { border-color: #d58484; background: #fff5f5; }
+.policy-stop, .policy-pass { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; font-size: 13px; line-height: 1.5; }
+.policy-stop { color: #8f2222; }
+.policy-pass { color: #18335b; }
+.policy-receipt-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
+.policy-receipt-facts div { min-width: 0; padding-top: 8px; border-top: 1px solid #cbdcf2; }
+.policy-receipt-facts dt { margin-bottom: 4px; font-size: 10px; color: #627998; text-transform: uppercase; letter-spacing: 0.04em; }
+.policy-receipt-facts dd { margin: 0; font-size: 11px; line-height: 1.45; }
 @media (max-width: 760px) {
   .brief-why-now { padding: 10px 12px; }
   .action-proposal { padding: 14px; }
+  .policy-envelope { padding: 12px; }
+  .policy-grid, .policy-action-row, .policy-receipt-facts { grid-template-columns: 1fr; }
 }
 .brief-actions { justify-content: flex-start; margin: 18px 0; }
 .brief-card details { border-top: 1px solid #edf2fa; padding-top: 12px; }

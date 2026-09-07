@@ -22,6 +22,7 @@ export type ActionProposal = {
   forbidden: string[];
   basedOn: {
     stance: MissionReport["stance"];
+    target: string | null;
     sampleSize: number;
     transactions: number;
     firstEventAt: string | null;
@@ -29,6 +30,7 @@ export type ActionProposal = {
     provider: MissionReport["provider"];
     source: string;
     observedAt: string;
+    limitations: string[];
   };
 };
 
@@ -57,7 +59,7 @@ export function actionProposalFor(
           : "Evidence was insufficient to assess the thesis. Do not invent a next step from an empty sample.",
       checklist: [],
       forbidden: [...FORBIDDEN],
-      basedOn: base(report),
+      basedOn: base(report, address),
     };
   }
 
@@ -130,13 +132,17 @@ export function actionProposalFor(
       `Hunter stance is limited-support for: “${report.thesis}”. Use this checklist for local inspection or fork simulation only — it is not a spend or approval path. ${report.conclusion}`,
     checklist,
     forbidden: [...FORBIDDEN],
-    basedOn: base(report),
+    basedOn: base(report, address),
   };
 }
 
-function base(report: MissionReport): ActionProposal["basedOn"] {
+function base(
+  report: MissionReport,
+  target?: string,
+): ActionProposal["basedOn"] {
   return {
     stance: report.stance,
+    target: target ?? null,
     sampleSize: report.sampleSize,
     transactions: report.transactions,
     firstEventAt: report.firstEventAt,
@@ -144,5 +150,6 @@ function base(report: MissionReport): ActionProposal["basedOn"] {
     provider: report.provider,
     source: report.source,
     observedAt: report.observedAt,
+    limitations: [...report.limitations],
   };
 }
