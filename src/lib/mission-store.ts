@@ -5,6 +5,8 @@ import { randomBytes } from "node:crypto";
 import { keccak256, toHex, parseEther } from "viem";
 import { researchProject, graphCovers } from "./research-catalog";
 import { hunters, type Mission, type MissionReport } from "./hunters";
+import { actionProposalFor } from "./action-proposal";
+import { policyReviewFromInput } from "./policy-envelope";
 
 export class MissionStore {
   private db: DatabaseSync;
@@ -100,10 +102,30 @@ export class MissionStore {
       report: null,
       reportHash: null,
       error: null,
+      policyReview: null,
     };
     this.db
       .prepare("INSERT INTO missions(id,owner,created_at,data) VALUES(?,?,?,?)")
       .run(id, owner, createdAt, JSON.stringify(mission));
+    return mission;
+  }
+  savePolicyReview(
+    owner: string,
+    id: string,
+    input: Record<string, unknown>,
+    now = new Date().toISOString(),
+  ): Mission {
+    const mission = this.get(owner, id);
+    if (!mission?.report || mission.status !== "reported")
+      throw new Error("A completed Hunter report is required.");
+    mission.policyReview = policyReviewFromInput({
+      proposal: actionProposalFor(mission.report, mission.address),
+      input,
+      now,
+    });
+    this.db
+      .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+      .run(JSON.stringify(mission), id, owner);
     return mission;
   }
   claim(owner: string, id: string, now = Date.now()): Mission {

@@ -732,7 +732,10 @@ export function Workspace({
                   <h3>{report.conclusion}</h3>
                 </div>
                 <ActionProposalPanel
+                  key={mission.id}
                   proposal={actionProposalFor(report, mission.address)}
+                  missionId={mission.id}
+                  savedReview={mission.policyReview}
                 />
                 <div className="report-facts">
                   <div>

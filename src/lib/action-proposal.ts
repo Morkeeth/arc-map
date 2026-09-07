@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import type { MissionReport } from "./hunters";
+import { stableId } from "./stable-id";
 
 /**
  * Inspectable next-step proposal after a supported Hunter result.
@@ -22,6 +22,7 @@ export type ActionProposal = {
   forbidden: string[];
   basedOn: {
     stance: MissionReport["stance"];
+    target: string | null;
     sampleSize: number;
     transactions: number;
     firstEventAt: string | null;
@@ -29,6 +30,7 @@ export type ActionProposal = {
     provider: MissionReport["provider"];
     source: string;
     observedAt: string;
+    limitations: string[];
   };
 };
 
@@ -45,10 +47,14 @@ export function actionProposalFor(
 ): ActionProposal {
   if (report.stance !== "limited-support") {
     return {
-      id: createHash("sha256")
-        .update(JSON.stringify(["withheld", report.stance, report.observedAt, report.thesis]))
-        .digest("hex")
-        .slice(0, 24),
+      id: stableId(
+        JSON.stringify([
+          "withheld",
+          report.stance,
+          report.observedAt,
+          report.thesis,
+        ]),
+      ),
       status: "withheld",
       title: "No action proposal",
       summary:
@@ -57,7 +63,7 @@ export function actionProposalFor(
           : "Evidence was insufficient to assess the thesis. Do not invent a next step from an empty sample.",
       checklist: [],
       forbidden: [...FORBIDDEN],
-      basedOn: base(report),
+      basedOn: base(report, address),
     };
   }
 
@@ -109,34 +115,35 @@ export function actionProposalFor(
   }
 
   return {
-    id: createHash("sha256")
-      .update(
-        JSON.stringify([
-          "ready",
-          report.stance,
-          report.sampleSize,
-          report.transactions,
-          report.firstEventAt,
-          report.lastEventAt,
-          report.provider,
-          txs,
-        ]),
-      )
-      .digest("hex")
-      .slice(0, 24),
+    id: stableId(
+      JSON.stringify([
+        "ready",
+        report.stance,
+        report.sampleSize,
+        report.transactions,
+        report.firstEventAt,
+        report.lastEventAt,
+        report.provider,
+        txs,
+      ]),
+    ),
     status: "ready",
     title: "Reviewable action proposal",
     summary:
       `Hunter stance is limited-support for: “${report.thesis}”. Use this checklist for local inspection or fork simulation only — it is not a spend or approval path. ${report.conclusion}`,
     checklist,
     forbidden: [...FORBIDDEN],
-    basedOn: base(report),
+    basedOn: base(report, address),
   };
 }
 
-function base(report: MissionReport): ActionProposal["basedOn"] {
+function base(
+  report: MissionReport,
+  target?: string,
+): ActionProposal["basedOn"] {
   return {
     stance: report.stance,
+    target: target ?? null,
     sampleSize: report.sampleSize,
     transactions: report.transactions,
     firstEventAt: report.firstEventAt,
@@ -144,5 +151,6 @@ function base(report: MissionReport): ActionProposal["basedOn"] {
     provider: report.provider,
     source: report.source,
     observedAt: report.observedAt,
+    limitations: [...report.limitations],
   };
 }

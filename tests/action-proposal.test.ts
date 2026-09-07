@@ -50,6 +50,11 @@ test("limited-support unlocks an inspectable non-financial action proposal", () 
   assert.ok(proposal.checklist.some((s) => /fork simulation/i.test(s.label)));
   assert.ok(proposal.forbidden.some((f) => /mainnet|testnet funds/i.test(f)));
   assert.equal(proposal.basedOn.transactions, 2);
+  assert.match(proposal.id, /^[a-f0-9]{24}$/);
+  assert.equal(
+    proposal.id,
+    actionProposalFor(report({}), "0x" + "d".repeat(40)).id,
+  );
   assert.ok(!proposal.checklist.some((s) => /approve|fund|wallet send/i.test(s.label)));
 });
 

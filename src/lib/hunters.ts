@@ -1,3 +1,5 @@
+import type { PolicyReview } from "./policy-envelope";
+
 export const hunters = [
   {
     id: "distribution",
@@ -72,4 +74,5 @@ export type Mission = {
   report: MissionReport | null;
   reportHash: `0x${string}` | null;
   error: string | null;
+  policyReview?: PolicyReview | null;
 };
