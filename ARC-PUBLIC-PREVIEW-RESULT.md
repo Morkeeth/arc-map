@@ -1,6 +1,7 @@
 # ARC public preview result — 7 September 2026
 
 Status: repaired and locally verified on `cursor/arc-policy-envelope-0913-118b`.
+Draft PR: [#11](https://github.com/Morkeeth/arc-map/pull/11), based on the A1 branch.
 
 - Production webpack is green. Client-visible proposal IDs use pure JavaScript; `node:crypto`
   remains off the Action Proposal client path.

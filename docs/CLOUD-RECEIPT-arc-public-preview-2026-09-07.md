@@ -8,8 +8,8 @@ Date: 7 September 2026
 - Feature branch: `cursor/arc-policy-envelope-0913-118b`
 - Base: `f1f9d9344d505d7ec3412c65582aca40838d4017` on
   `cursor/arc-discovery-hunter-2026-09-07-196a`
-- Draft PR: creation requested against the base branch. Repository settings still required
-  interactive approval and had not assigned a URL when this receipt was written.
+- Draft PR: [#11 — Policy envelope + simulated action (research preview)](https://github.com/Morkeeth/arc-map/pull/11),
+  retargeted to the A1 base branch.
 - Repair allowance: one harness repair used. The first restart-proof invocation stopped before an
   API call because this repository emits CommonJS through `tsx`; dispatch was moved from top-level
   `await` into `main()`, committed, and the full proof then passed.
