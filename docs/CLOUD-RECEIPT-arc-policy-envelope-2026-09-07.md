@@ -46,8 +46,10 @@ attached.
   complete history, user count, ownership claim, motive claim or investment signal.
 - Counterevidence is a required reference for review; this slice does not independently verify the
   text a user enters.
-- The editable envelope and generated product receipt are browser-local review state and reset when
-  the report component is replaced or the page reloads. The durable on-disk receipt is this file.
+- At this initial revision, the editable envelope and generated product receipt were browser-local
+  review state. The later public-preview repair on the same branch supersedes that limitation by
+  storing the latest review in the private cookie workspace; see
+  `docs/CLOUD-RECEIPT-arc-public-preview-2026-09-07.md`.
 - No live, testnet or local-chain transaction was signed, approved, transferred, swapped, bridged
   or deployed.
 
