@@ -206,7 +206,7 @@ function ReadyActionProposal({
           </PolicyInput>
           <PolicyInput
             field="expiry"
-            label="Expiry · your local time"
+            label="Expiry · UTC"
             stoppedField={stoppedField}
           >
             <input
@@ -216,7 +216,9 @@ function ReadyActionProposal({
               onChange={(event) =>
                 setEnvelope({
                   ...envelope,
-                  expiresAt: event.target.value,
+                  expiresAt: event.target.value
+                    ? `${event.target.value}:00.000Z`
+                    : "",
                 })
               }
             />
