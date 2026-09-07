@@ -515,7 +515,7 @@ export function Workspace({
                   <h3>What would change the view?</h3>
                   <p>{selectedHunter.falsifier}</p>
                   <div className="hunter-tool-list">
-                    {selectedHunter.tools.map((t) => (
+                    {selectedHunter.tools.filter(t => !researchPreview || !t.includes("payment")).map((t) => (
                       <span key={t}>
                         <Terminal size={12} />
                         {t.replaceAll("_", " ")}
@@ -556,11 +556,9 @@ export function Workspace({
                   ))
                 )}
                 <div className="research-boundary">
-                  <strong>Research first. Capital with limits.</strong>
+                  <strong>{researchPreview ? "Research preview. Actions stay simulated." : "Research first. Capital with limits."}</strong>
                   <p>
-                    Mission funding pays a fixed research fee. It is not an
-                    investment, a trade, or ownership of this Hunter. Strategy
-                    shares are not available.
+                    {researchPreview ? "Inspect the source sample, retain its limits, and revisit it. No fee, wallet transaction or investment action occurs in this preview." : "Mission funding pays a fixed research fee. It is not an investment, a trade, or ownership of this Hunter. Strategy shares are not available."}
                   </p>
                 </div>
               </>
