@@ -31,6 +31,11 @@ import type { DailyBrief as BriefData } from "@/lib/daily-brief";
 import type { ResearchUpdate } from "@/lib/research-updates";
 import { actionProposalFor } from "@/lib/action-proposal";
 import { ActionProposalPanel } from "./action-proposal-panel";
+import { formatEther } from "viem";
+import type {
+  MissionFundingReceipt,
+  PreparedMissionTransaction,
+} from "@/lib/funding-types";
 
 const time = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -97,6 +102,8 @@ export function Workspace({
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [tx, setTx] = useState<string | null>(null);
+  const [preparedFunding, setPreparedFunding] =
+    useState<PreparedMissionTransaction | null>(null);
   const [chain, setChain] = useState<{
     funded: boolean;
     completed: boolean;
@@ -127,6 +134,9 @@ export function Workspace({
     );
     if (target) setSelected(target);
   }, [mission?.id, mission?.projectId, radar]);
+  useEffect(() => {
+    setPreparedFunding(mission?.fundingIntent ?? null);
+  }, [mission?.id, mission?.fundingIntent?.policy?.bindingHash]);
   async function load() {
     setError("");
     // Establish the private cookie before any other owner-scoped route starts.
@@ -205,6 +215,7 @@ export function Workspace({
     setMission(item);
     setChain(null);
     setTx(null);
+    setPreparedFunding(item.fundingIntent ?? null);
     const target = allProjects.find((p) => p.id === item.projectId);
     if (target) setSelected(target);
   }
@@ -242,13 +253,61 @@ export function Workspace({
       setBusy("");
     }
   }
-  async function transact(action: "fund" | "close") {
+  async function prepareFunding() {
     if (!mission || !wallet.address) return;
-    setBusy(action === "fund" ? "Review in wallet" : "Reclaiming budget");
+    setBusy("Preparing bounded funding request");
     setError("");
     try {
       const prepared = await api(`/api/missions/${mission.id}/chain`, {
-        action,
+        action: "fund",
+        account: wallet.address,
+      });
+      setMission(prepared.mission);
+      setPreparedFunding(prepared.transaction);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Funding request could not be prepared. Nothing was sent.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function signFunding() {
+    if (!mission || !wallet.address || !preparedFunding?.policy) return;
+    setBusy("Waiting for Privy wallet signature");
+    setError("");
+    try {
+      const hash = await wallet.send(preparedFunding);
+      setBusy("Verifying Arc receipt and MissionOpened event");
+      const verified = await api(
+        `/api/missions/${mission.id}/chain/verify`,
+        {
+          transactionHash: hash,
+          bindingHash: preparedFunding.policy.bindingHash,
+        },
+      );
+      setTx(hash);
+      setMission(verified.mission);
+      setChain(verified.chain);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Funding receipt was not verified. Mission remains inactive.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function reclaim() {
+    if (!mission || !wallet.address) return;
+    setBusy("Reclaiming budget");
+    setError("");
+    try {
+      const prepared = await api(`/api/missions/${mission.id}/chain`, {
+        action: "close",
         account: wallet.address,
       });
       const hash = await wallet.send(prepared.transaction);
@@ -258,7 +317,20 @@ export function Workspace({
       setError(
         e instanceof Error
           ? e.message
-          : "Wallet action failed. No success assumed.",
+          : "Reclaim failed. No success assumed.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function switchWalletChain() {
+    setBusy("Switching linked wallet to Arc testnet");
+    setError("");
+    try {
+      await wallet.switchToArc();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Wallet network could not be changed.",
       );
     } finally {
       setBusy("");
@@ -858,11 +930,37 @@ export function Workspace({
                           Boolean(busy) ||
                           !capabilities?.escrow.configured ||
                           mission.provider !== "graph" ||
-                          Boolean(chain?.funded)
+                          report.stance !== "limited-support" ||
+                          Boolean(chain?.funded) ||
+                          Boolean(mission.fundingReceipt)
                         }
-                        onClick={() => void transact("fund")}
+                        onClick={() => void prepareFunding()}
                       >
-                        Review funding in wallet
+                        {preparedFunding?.policy &&
+                        Date.parse(preparedFunding.expiresAt) >= Date.now()
+                          ? "Refresh funding terms"
+                          : "Prepare exact funding terms"}
+                      </button>
+                    )}
+                    {wallet.address && preparedFunding?.policy && (
+                      <button
+                        disabled={
+                          Boolean(busy) ||
+                          Boolean(chain?.funded) ||
+                          Boolean(mission.fundingReceipt) ||
+                          Date.parse(preparedFunding.expiresAt) < Date.now()
+                        }
+                        onClick={() => void signFunding()}
+                      >
+                        Sign and fund with Privy
+                      </button>
+                    )}
+                    {wallet.address && preparedFunding?.policy && (
+                      <button
+                        disabled={Boolean(busy)}
+                        onClick={() => void switchWalletChain()}
+                      >
+                        Switch wallet to Arc testnet
                       </button>
                     )}
                     <button
@@ -880,12 +978,19 @@ export function Workspace({
                         !chain?.funded ||
                         chain.closed
                       }
-                      onClick={() => void transact("close")}
+                      onClick={() => void reclaim()}
                     >
                       Cancel / reclaim surplus
                     </button>
                   </div>
                 </div>
+                {preparedFunding?.policy &&
+                  !mission.fundingReceipt && (
+                    <FundingPolicyView transaction={preparedFunding} />
+                  )}
+                {mission.fundingReceipt && (
+                  <FundingReceiptView receipt={mission.fundingReceipt} />
+                )}
                 </>}
                 {busy && <p role="status">{busy}…</p>}
                 {tx && (
@@ -926,5 +1031,62 @@ export function Workspace({
         </footer>
       </main>
     </div>
+  );
+}
+
+function FundingPolicyView({
+  transaction,
+}: {
+  transaction: PreparedMissionTransaction;
+}) {
+  const policy = transaction.policy;
+  if (!policy) return null;
+  return (
+    <section className="funding-receipt prepared" aria-label="Prepared funding policy">
+      <div className="list-caption">
+        <span>PREPARED FUNDING POLICY</span>
+        <span>signature required</span>
+      </div>
+      <h3>Review what the wallet will authorize.</h3>
+      <dl className="policy-receipt-facts">
+        <div><dt>Account</dt><dd>{policy.account}</dd></div>
+        <div><dt>Target</dt><dd>{policy.target}</dd></div>
+        <div><dt>Asset</dt><dd>Arc testnet native USDC</dd></div>
+        <div><dt>Amount / ceiling</dt><dd>{formatEther(BigInt(policy.amount))} / {formatEther(BigInt(policy.amountCeiling))}</dd></div>
+        <div><dt>Evidence</dt><dd>The Graph · block {policy.evidence.sourceBlock} · {policy.evidence.observedAt}</dd></div>
+        <div><dt>Report commitment</dt><dd><code>{policy.reportHash}</code></dd></div>
+        <div><dt>Action expiry</dt><dd>{policy.expiresAt}</dd></div>
+        <div><dt>Policy binding</dt><dd><code>{policy.bindingHash}</code></dd></div>
+      </dl>
+      <p className="report-time">
+        The next click opens the linked Privy wallet. A wrong account, wrong chain,
+        changed calldata, stale request or failed receipt cannot activate the mission.
+      </p>
+    </section>
+  );
+}
+
+function FundingReceiptView({ receipt }: { receipt: MissionFundingReceipt }) {
+  return (
+    <section className="funding-receipt active" aria-label="Verified funding receipt">
+      <div className="list-caption">
+        <span>VERIFIED ARC RECEIPT</span>
+        <span>{receipt.status}</span>
+      </div>
+      <h3>Mission active.</h3>
+      <p className="policy-pass">
+        The successful transaction, MissionOpened event and current escrow state
+        match the prepared policy.
+      </p>
+      <dl className="policy-receipt-facts">
+        <div><dt>Transaction</dt><dd><a href={`https://testnet.arcscan.app/tx/${receipt.transactionHash}`} target="_blank" rel="noreferrer">{receipt.transactionHash}</a></dd></div>
+        <div><dt>Account</dt><dd>{receipt.account}</dd></div>
+        <div><dt>Amount / ceiling</dt><dd>{formatEther(BigInt(receipt.amount))} / {formatEther(BigInt(receipt.amountCeiling))} testnet USDC</dd></div>
+        <div><dt>Block</dt><dd>{receipt.blockNumber} · {receipt.confirmations} confirmation{receipt.confirmations === 1 ? "" : "s"}</dd></div>
+        <div><dt>Report commitment</dt><dd><code>{receipt.reportHash}</code></dd></div>
+        <div><dt>Policy binding</dt><dd><code>{receipt.bindingHash}</code></dd></div>
+        <div><dt>Verified</dt><dd>{receipt.verifiedAt}</dd></div>
+      </dl>
+    </section>
   );
 }

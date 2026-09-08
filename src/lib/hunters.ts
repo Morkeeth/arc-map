@@ -1,4 +1,8 @@
 import type { PolicyReview } from "./policy-envelope";
+import type {
+  MissionFundingReceipt,
+  PreparedMissionTransaction,
+} from "./funding-types";
 import type { StoredOpportunityReceipt } from "./opportunity-action";
 
 export const hunters = [
@@ -77,4 +81,6 @@ export type Mission = {
   error: string | null;
   policyReview?: PolicyReview | null;
   opportunityReceipt?: StoredOpportunityReceipt | null;
+  fundingIntent?: PreparedMissionTransaction | null;
+  fundingReceipt?: MissionFundingReceipt | null;
 };

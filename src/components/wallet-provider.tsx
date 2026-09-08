@@ -17,15 +17,8 @@ import {
   type Address,
 } from "viem";
 import { PRIVY_APP_ID } from "@/lib/app-config";
+import type { PreparedMissionTransaction } from "@/lib/funding-types";
 
-type PreparedTransaction = {
-  to: Address;
-  data: Hex;
-  value: string;
-  chainId: number;
-  account: Address;
-  expiresAt: number;
-};
 type WalletState = {
   ready: boolean;
   address: string | null;
@@ -33,7 +26,8 @@ type WalletState = {
   select: (address: string) => void;
   connect: () => void;
   disconnect: () => void;
-  send: (tx: PreparedTransaction) => Promise<Hex>;
+  switchToArc: () => Promise<void>;
+  send: (tx: PreparedMissionTransaction) => Promise<Hex>;
 };
 const WalletContext = createContext<WalletState>({
   ready: false,
@@ -42,16 +36,30 @@ const WalletContext = createContext<WalletState>({
   select: () => {},
   connect: () => {},
   disconnect: () => {},
+  switchToArc: async () => {},
   send: async () => {
     throw new Error("Wallet unavailable.");
   },
 });
 export const useHunterWallet = () => useContext(WalletContext);
 function WalletBridge({ children }: { children: ReactNode }) {
-  const { ready, authenticated, login, logout } = usePrivy();
+  const { ready, authenticated, login, logout, user } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
-  const connectedWallets = authenticated ? wallets : [];
+  const linkedWallets = new Set(
+    (user?.linkedAccounts ?? [])
+      .filter(
+        (account) =>
+          (account.type === "wallet" || account.type === "smart_wallet") &&
+          "address" in account,
+      )
+      .map((account) => String(account.address).toLowerCase()),
+  );
+  const connectedWallets = authenticated
+    ? wallets.filter((candidate) =>
+        linkedWallets.has(candidate.address.toLowerCase()),
+      )
+    : [];
   const wallet =
     connectedWallets.find(
       (candidate) =>
@@ -68,12 +76,28 @@ function WalletBridge({ children }: { children: ReactNode }) {
       setSelectedAddress(connectedWallets[0].address);
     if (!connectedWallets.length && selectedAddress) setSelectedAddress(null);
   }, [connectedWallets, selectedAddress]);
-  async function send(tx: PreparedTransaction): Promise<Hex> {
+  async function switchToArc() {
+    if (!wallet) throw new Error("Connect a linked Privy wallet first.");
+    await wallet.switchChain(arcTestnet.id);
+  }
+  async function send(tx: PreparedMissionTransaction): Promise<Hex> {
     if (!wallet || wallet.address.toLowerCase() !== tx.account.toLowerCase())
       throw new Error("Wallet changed. Prepare the action again.");
-    if (tx.chainId !== arcTestnet.id || tx.expiresAt < Date.now())
+    if (
+      tx.chainId !== arcTestnet.id ||
+      Date.parse(tx.expiresAt) < Date.now()
+    )
       throw new Error("Transaction is stale or uses the wrong network.");
-    await wallet.switchChain(arcTestnet.id);
+    if (
+      tx.action === "fund" &&
+      (!tx.policy ||
+        tx.policy.account.toLowerCase() !== wallet.address.toLowerCase() ||
+        tx.policy.chainId !== tx.chainId ||
+        tx.policy.target.toLowerCase() !== tx.to.toLowerCase() ||
+        tx.policy.calldata !== tx.data ||
+        tx.policy.amount !== tx.value)
+    )
+      throw new Error("Prepared funding policy changed before signature.");
     const provider = await wallet.getEthereumProvider();
     const client = createWalletClient({
       chain: arcTestnet,
@@ -81,7 +105,9 @@ function WalletBridge({ children }: { children: ReactNode }) {
       account: wallet.address as Address,
     });
     if ((await client.getChainId()) !== arcTestnet.id)
-      throw new Error("Switch to Arc testnet before continuing.");
+      throw new Error(
+        "Wrong chain. Switch the linked Privy wallet to Arc testnet before signing.",
+      );
     const hash = await client.sendTransaction({
       to: tx.to,
       data: tx.data,
@@ -115,6 +141,7 @@ function WalletBridge({ children }: { children: ReactNode }) {
         disconnect: () => {
           void logout();
         },
+        switchToArc,
         send,
       }}
     >

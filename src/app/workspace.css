@@ -917,6 +917,10 @@
 .policy-receipt-facts div { min-width: 0; padding-top: 8px; border-top: 1px solid #cbdcf2; }
 .policy-receipt-facts dt { margin-bottom: 4px; font-size: 10px; color: #627998; text-transform: uppercase; letter-spacing: 0.04em; }
 .policy-receipt-facts dd { margin: 0; font-size: 11px; line-height: 1.45; }
+.funding-receipt { margin: 16px 0; padding: 16px; border: 1px solid #9ebee9; background: #f8fbff; overflow-wrap: anywhere; }
+.funding-receipt.active { border-color: #326bff; background: #edf5ff; }
+.funding-receipt h3 { margin: 9px 0; font-size: 19px; }
+.funding-receipt code, .funding-receipt a { word-break: break-all; }
 .opportunity-rehearsal { margin: 20px 0; padding: 16px; border: 1px solid #326bff; background: #edf5ff; overflow-wrap: anywhere; }
 .opportunity-rehearsal.preview-boundary { border-style: dashed; }
 .opportunity-rehearsal h3 { margin: 9px 0; }

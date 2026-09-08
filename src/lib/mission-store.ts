@@ -8,6 +8,10 @@ import { hunters, type Mission, type MissionReport } from "./hunters";
 import { actionProposalFor } from "./action-proposal";
 import { policyReviewFromInput } from "./policy-envelope";
 import type { StoredOpportunityReceipt } from "./opportunity-action";
+import type {
+  MissionFundingReceipt,
+  PreparedMissionTransaction,
+} from "./funding-types";
 
 export class MissionStore {
   private db: DatabaseSync;
@@ -105,6 +109,8 @@ export class MissionStore {
       error: null,
       policyReview: null,
       opportunityReceipt: null,
+      fundingIntent: null,
+      fundingReceipt: null,
     };
     this.db
       .prepare("INSERT INTO missions(id,owner,created_at,data) VALUES(?,?,?,?)")
@@ -143,6 +149,73 @@ export class MissionStore {
       .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
       .run(JSON.stringify(mission), id, owner);
     return mission;
+  }
+  saveFundingIntent(
+    owner: string,
+    id: string,
+    intent: PreparedMissionTransaction,
+    now = Date.now(),
+  ): Mission {
+    if (intent.action !== "fund" || !intent.policy)
+      throw new Error("Only a policy-bound funding request can be retained.");
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const mission = this.get(owner, id);
+      if (!mission?.report || mission.status !== "reported")
+        throw new Error("A completed Hunter report is required.");
+      if (mission.fundingReceipt)
+        throw new Error("This mission already has a verified funding receipt.");
+      const current = mission.fundingIntent;
+      if (current && Date.parse(current.expiresAt) >= now) {
+        if (
+          current.account.toLowerCase() !== intent.account.toLowerCase()
+        )
+          throw new Error(
+            "A funding request is already prepared for another account. Wait for it to expire.",
+          );
+        this.db.exec("COMMIT");
+        return mission;
+      }
+      mission.fundingIntent = intent;
+      this.db
+        .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+        .run(JSON.stringify(mission), id, owner);
+      this.db.exec("COMMIT");
+      return mission;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  saveFundingReceipt(
+    owner: string,
+    id: string,
+    receipt: MissionFundingReceipt,
+  ): Mission {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const mission = this.get(owner, id);
+      if (!mission?.fundingIntent?.policy)
+        throw new Error("No prepared funding request exists for this mission.");
+      if (
+        mission.fundingIntent.policy.bindingHash !== receipt.bindingHash
+      )
+        throw new Error("Funding receipt does not match the prepared policy.");
+      if (
+        mission.fundingReceipt &&
+        mission.fundingReceipt.transactionHash !== receipt.transactionHash
+      )
+        throw new Error("A different funding receipt is already retained.");
+      mission.fundingReceipt = receipt;
+      this.db
+        .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+        .run(JSON.stringify(mission), id, owner);
+      this.db.exec("COMMIT");
+      return mission;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
   }
   claim(owner: string, id: string, now = Date.now()): Mission {
     this.db.exec("BEGIN IMMEDIATE");

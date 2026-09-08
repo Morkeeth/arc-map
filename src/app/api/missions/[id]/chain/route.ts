@@ -64,21 +64,32 @@ export async function POST(
         404,
       );
     const body = await readMissionBody(request);
+    const transaction = await prepareMissionAction(
+      mission,
+      body.action,
+      body.account,
+    );
+    const saved =
+      transaction.action === "fund"
+        ? store.saveFundingIntent(access.owner, id, transaction)
+        : mission;
     return missionResponse(
       {
-        transaction: await prepareMissionAction(
-          mission,
-          body.action,
-          body.account,
-        ),
+        mission: saved,
+        transaction:
+          transaction.action === "fund"
+            ? saved.fundingIntent
+            : transaction,
       },
       access.cookie,
     );
-  } catch {
+  } catch (error) {
     return missionResponse(
       {
         error:
-          "Transaction preparation failed. Check deployment, wallet balance, mission state and fresh Graph evidence. No transaction was sent.",
+          error instanceof Error
+            ? error.message
+            : "Transaction preparation failed. No transaction was sent.",
       },
       access.cookie,
       409,
