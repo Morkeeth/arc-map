@@ -1,4 +1,4 @@
-import { projects, type Project } from "./projects";
+import { projects, graphCovers, type Project } from "./projects";
 import { RadarStore } from "./radar-store";
 import type { RadarRecord } from "./radar-types";
 export function radarProject(record: RadarRecord): Project {
@@ -22,6 +22,4 @@ export function researchProject(id: unknown): Project | undefined {
   try { const found = store.get(id); return found ? radarProject(found) : undefined; }
   finally { store.close(); }
 }
-export function graphCovers(address: string) {
-  return address.toLowerCase() === projects[0].contract!.toLowerCase();
-}
+export { graphCovers };
