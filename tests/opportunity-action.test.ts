@@ -135,6 +135,7 @@ test("wrong account, target, stale evidence, expiry and missing counterevidence 
 });
 
 test("tampered calldata is rejected before simulation RPC", async () => {
+  const currentNow = Math.floor(Date.now() / 1_000);
   let rpcCalls = 0;
   const client = new Proxy(
     {},
@@ -148,7 +149,17 @@ test("tampered calldata is rejected before simulation RPC", async () => {
     },
   ) as OpportunitySimulationClient;
   const prepared = {
-    ...prepareOpportunityAction(request(), now),
+    ...prepareOpportunityAction(
+      {
+        ...request(),
+        evidence: {
+          ...request().evidence,
+          observedAt: new Date(currentNow * 1_000).toISOString(),
+        },
+        policy: { ...request().policy, expiresAt: currentNow + 60 },
+      },
+      currentNow,
+    ),
     calldata: "0x12345678" as Hex,
   };
 
