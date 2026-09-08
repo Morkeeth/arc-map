@@ -13,6 +13,7 @@ import {
 } from "viem";
 import { arcTestnet } from "viem/chains";
 import { escrowAbi } from "./escrow";
+import { assessEvidenceCoverage } from "./evidence-coverage";
 import type { Mission } from "./hunters";
 import { assessIndexFreshness } from "./index-freshness";
 import type {
@@ -182,6 +183,10 @@ export async function prepareMissionAction(
 ): Promise<PreparedMissionTransaction> {
   if (typeof account !== "string" || !isAddress(account))
     throw new Error("Connect a wallet first.");
+  if (action === "fund") {
+    const coverage = assessEvidenceCoverage(mission);
+    if (coverage.funding === "withheld") throw new Error(coverage.reason);
+  }
   const { client, config } = await checkedChain();
   const state = await missionChainState(mission);
   if (Math.abs(Math.floor(Date.now() / 1000) - state.blockTimestamp) > 120)

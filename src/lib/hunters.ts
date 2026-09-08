@@ -1,4 +1,5 @@
 import type { PolicyReview } from "./policy-envelope";
+import type { CoverageDecisionReceipt } from "./evidence-coverage";
 import type {
   MissionFundingReceipt,
   PreparedMissionTransaction,
@@ -79,6 +80,7 @@ export type Mission = {
   report: MissionReport | null;
   reportHash: `0x${string}` | null;
   error: string | null;
+  coverageDecision?: CoverageDecisionReceipt | null;
   policyReview?: PolicyReview | null;
   opportunityReceipt?: StoredOpportunityReceipt | null;
   fundingIntent?: PreparedMissionTransaction | null;

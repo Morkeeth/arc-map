@@ -264,6 +264,14 @@ test("prepared policy and active receipt survive workspace restart", () => {
 
     const restarted = new MissionStore(path);
     const reopened = restarted.get("owner", created.id);
+    assert.match(
+      reopened?.coverageDecision?.id ?? "",
+      /^coverage-[a-f0-9]{24}$/,
+    );
+    assert.equal(
+      reopened?.coverageDecision?.reportHash,
+      reopened?.reportHash,
+    );
     assert.equal(reopened?.fundingIntent?.policy?.bindingHash, receipt.bindingHash);
     assert.equal(reopened?.fundingReceipt?.status, "active");
     assert.equal(reopened?.fundingReceipt?.transactionHash, receipt.transactionHash);

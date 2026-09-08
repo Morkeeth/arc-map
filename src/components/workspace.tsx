@@ -36,6 +36,10 @@ import type {
   MissionFundingReceipt,
   PreparedMissionTransaction,
 } from "@/lib/funding-types";
+import {
+  assessEvidenceCoverage,
+  type EvidenceCoverageAssessment,
+} from "@/lib/evidence-coverage";
 
 const time = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -361,6 +365,12 @@ export function Workspace({
       (filter !== "Onchain" || e.kind !== "code"),
   ).sort((a,b) => Number(Boolean(b.eventAt)) - Number(Boolean(a.eventAt)) || (b.eventAt || b.observedAt).localeCompare(a.eventAt || a.observedAt)).slice(0, 12);
   const report = mission?.report;
+  const coverage =
+    mission?.report ? assessEvidenceCoverage(mission) : null;
+  const selectedWallet = wallet.wallets.find(
+    (candidate) =>
+      candidate.address.toLowerCase() === wallet.address?.toLowerCase(),
+  );
   const previousReport=mission?.previousMissionId?missions.find(m=>m.id===mission.previousMissionId):undefined;
   const selectedHunter = selected.researchKind === "contract" ? hunters[1] : hunters[0];
   return (
@@ -806,6 +816,12 @@ export function Workspace({
                   </span>
                   <h3>{report.conclusion}</h3>
                 </div>
+                {coverage && (
+                  <EvidenceCoveragePanel
+                    assessment={coverage}
+                    mission={mission}
+                  />
+                )}
                 <ActionProposalPanel
                   key={mission.id}
                   proposal={actionProposalFor(report, mission.address)}
@@ -902,6 +918,12 @@ export function Workspace({
                       the report hash to collect the fee; this is not proof that
                       the report is correct.
                     </p>
+                    {coverage?.funding === "eligible" && wallet.address && (
+                      <p className="selected-wallet">
+                        Selected {selectedWallet?.kind ?? "linked"} wallet{" "}
+                        <code>{wallet.address}</code>
+                      </p>
+                    )}
                     {!capabilities?.escrow.configured && (
                       <p className="setup-note">
                         {capabilities?.escrow.reason ||
@@ -917,7 +939,11 @@ export function Workspace({
                     )}
                   </div>
                   <div className="funding-actions">
-                    {!wallet.address ? (
+                    {coverage?.funding === "withheld" ? (
+                      <button disabled>
+                        Funding withheld — {coverage.status}
+                      </button>
+                    ) : !wallet.address ? (
                       <button
                         disabled={!wallet.ready}
                         onClick={() => wallet.connect()}
@@ -929,8 +955,7 @@ export function Workspace({
                         disabled={
                           Boolean(busy) ||
                           !capabilities?.escrow.configured ||
-                          mission.provider !== "graph" ||
-                          report.stance !== "limited-support" ||
+                          coverage?.funding !== "eligible" ||
                           Boolean(chain?.funded) ||
                           Boolean(mission.fundingReceipt)
                         }
@@ -1031,6 +1056,74 @@ export function Workspace({
         </footer>
       </main>
     </div>
+  );
+}
+
+function EvidenceCoveragePanel({
+  assessment,
+  mission,
+}: {
+  assessment: EvidenceCoverageAssessment;
+  mission: Mission;
+}) {
+  const retained = mission.coverageDecision;
+  return (
+    <section
+      className={`coverage-decision ${assessment.status}`}
+      aria-label="Evidence coverage decision"
+    >
+      <div className="list-caption">
+        <span>DATA COVERAGE</span>
+        <span className="coverage-status">{assessment.status}</span>
+      </div>
+      <h3>
+        {assessment.funding === "eligible"
+          ? "Evidence clears the coverage gate."
+          : "Funding is withheld."}
+      </h3>
+      <p>{assessment.reason}</p>
+      <dl className="coverage-facts">
+        <div>
+          <dt>Exact target</dt>
+          <dd><code>{mission.address}</code></dd>
+        </div>
+        <div>
+          <dt>Provider</dt>
+          <dd>{mission.report?.provider === "graph" ? "The Graph" : "Arcscan preview"}</dd>
+        </div>
+        <div>
+          <dt>Report observed</dt>
+          <dd>{mission.report?.observedAt}</dd>
+        </div>
+        <div>
+          <dt>Current decision</dt>
+          <dd>{assessment.funding} · recalculated when this mission is opened</dd>
+        </div>
+      </dl>
+      {retained && (
+        <details>
+          <summary>Retained coverage receipt {retained.id}</summary>
+          <p>
+            {retained.funding} as {retained.status} at {retained.evaluatedAt}.
+            Report commitment <code>{retained.reportHash}</code>.
+          </p>
+        </details>
+      )}
+      {assessment.neededEvidence.length > 0 && (
+        <div className="coverage-requirements">
+          <strong>What evidence would make this eligible</strong>
+          <ol>
+            {assessment.neededEvidence.map((requirement) => (
+              <li key={requirement}>{requirement}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+      <p className="coverage-boundary">
+        Coverage eligibility never authorizes a signature or broadcast. The
+        wallet and policy checks are separate.
+      </p>
+    </section>
   );
 }
 

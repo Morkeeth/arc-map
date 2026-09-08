@@ -6,6 +6,7 @@ import { keccak256, toHex, parseEther } from "viem";
 import { researchProject, graphCovers } from "./research-catalog";
 import { hunters, type Mission, type MissionReport } from "./hunters";
 import { actionProposalFor } from "./action-proposal";
+import { coverageDecisionReceipt } from "./evidence-coverage";
 import { policyReviewFromInput } from "./policy-envelope";
 import type { StoredOpportunityReceipt } from "./opportunity-action";
 import type {
@@ -107,6 +108,7 @@ export class MissionStore {
       report: null,
       reportHash: null,
       error: null,
+      coverageDecision: null,
       policyReview: null,
       opportunityReceipt: null,
       fundingIntent: null,
@@ -275,6 +277,10 @@ export class MissionStore {
     mission.reportHash = report
       ? keccak256(toHex(JSON.stringify(report)))
       : null;
+    mission.coverageDecision =
+      report && mission.reportHash
+        ? coverageDecisionReceipt(mission, mission.reportHash)
+        : null;
     mission.status = report ? "reported" : "blocked";
     mission.error = error;
     this.db
