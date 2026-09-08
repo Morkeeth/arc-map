@@ -1,19 +1,14 @@
 <!-- STATE:start -->
-## SHARED WORK STATE · revision 5ff9698e5647 · rendered 2026-09-07 · scope repo arc-map
+## SHARED WORK STATE · revision ffabe397994e · rendered 2026-09-08 · scope repo arc-map
 This repo's rows of the one shared work state. Authorities: todo.md (human), TASKS.yaml (ids), board clocks, Oscar's rulings (local only). Views such as GLANCE, SLASK and ZUP are adapters over the same revision.
 **A CLOSED task stays closed. Do not requeue, re-verify or re-poll it.**
-Before acting, record that you read this revision, exact session and exact rev: `python3 ~/CODE/fleet-ops/state/state.py ack --session <your session id> --consumer <claude|codex|cursor> --rev 5ff9698e5647`. In a cloud sandbox instead append `{"session":"<your session id>","consumer":"<claude|codex|cursor>","rev":"5ff9698e5647","ts":"<iso>","stage":"acknowledged"}` to `.fleet/ACK.jsonl` in this repo and commit it.
+Before acting, record that you read this revision, exact session and exact rev: `python3 ~/CODE/fleet-ops/state/state.py ack --session <your session id> --consumer <claude|codex|cursor> --rev ffabe397994e`. In a cloud sandbox instead append `{"session":"<your session id>","consumer":"<claude|codex|cursor>","rev":"ffabe397994e","ts":"<iso>","stage":"acknowledged"}` to `.fleet/ACK.jsonl` in this repo and commit it.
 
 ### OPEN
-- **HUNT-ETHONLINE** · ETHOnline, ARC MAP full product · owner agent · `arc-map` · due 2026-09-10T23:59
-  - next: Continue from arc-map/.internal/HANDOFF-2026-09-05.md, persistent service/workers, restart/restore, returning-user; no new production deploy/spend
-  - preserved: ETHOnline is ARC MAP full product (Oscar)
-  - preserved: Personal hard stop 10 Sep Stockholm; Unclaimed blockers are historical
-  - preserved: No new paid spend; no inferred production deploy
 - **ARCMAP-HOSTING** · ARC MAP: host it, judge URL · owner agent · `arc-map`
   - next: LAUNCH-OPERATIONS.md:18 says not deployed. A judge-openable URL before Thu 10 Sep 23:59 Stockholm. No runner produces this.
 
-### ACKNOWLEDGED THIS REVISION: claude/dc8db26e-0366-4b4c-8309-460715de7fcb, claude/dc8db26e-0366-4b4c-8309-460715de7fcb, claude/dc8db26e-0366-4b4c-8309-460715de7fcb
+### ACKNOWLEDGED THIS REVISION: nobody yet
 <!-- STATE:end -->
 
 # ARC MAP
