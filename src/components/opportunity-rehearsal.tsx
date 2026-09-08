@@ -52,7 +52,8 @@ export function OpportunityRehearsal({
     );
 
   async function run(control?: Control) {
-    if (!wallet.address) return;
+    const account = wallet.address ?? (control ? receipt?.account : null);
+    if (!account) return;
     setBusy(control ?? "positive");
     setError("");
     if (!control) setRefusal(null);
@@ -60,7 +61,7 @@ export function OpportunityRehearsal({
       const response = await fetch(`/api/missions/${missionId}/opportunity`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account: wallet.address, control }),
+        body: JSON.stringify({ account, control }),
       });
       const result = await response.json();
       if (result.refusal) {
@@ -138,7 +139,8 @@ export function OpportunityRehearsal({
       <details className="opportunity-controls">
         <summary>Run visible refusal controls</summary>
         <p className="policy-intro">
-          Each control must stop before simulation RPC.
+          Each control must stop before simulation RPC. A reopened receipt can
+          rerun these checks against its retained account without reconnecting.
         </p>
         <div>
           {(
@@ -150,7 +152,7 @@ export function OpportunityRehearsal({
           ).map(([control, label]) => (
             <button
               key={control}
-              disabled={!wallet.address || Boolean(busy)}
+              disabled={(!wallet.address && !receipt) || Boolean(busy)}
               onClick={() => void run(control)}
             >
               {busy === control ? "Checking…" : label}
