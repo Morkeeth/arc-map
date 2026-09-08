@@ -1,5 +1,11 @@
 "use client";
-import { createContext, useContext, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
 import { arcTestnet } from "viem/chains";
 import {
@@ -23,6 +29,8 @@ type PreparedTransaction = {
 type WalletState = {
   ready: boolean;
   address: string | null;
+  wallets: { address: string; kind: "embedded" | "external" }[];
+  select: (address: string) => void;
   connect: () => void;
   disconnect: () => void;
   send: (tx: PreparedTransaction) => Promise<Hex>;
@@ -30,6 +38,8 @@ type WalletState = {
 const WalletContext = createContext<WalletState>({
   ready: false,
   address: null,
+  wallets: [],
+  select: () => {},
   connect: () => {},
   disconnect: () => {},
   send: async () => {
@@ -40,7 +50,24 @@ export const useHunterWallet = () => useContext(WalletContext);
 function WalletBridge({ children }: { children: ReactNode }) {
   const { ready, authenticated, login, logout } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
-  const wallet = authenticated ? wallets[0] : undefined;
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  const connectedWallets = authenticated ? wallets : [];
+  const wallet =
+    connectedWallets.find(
+      (candidate) =>
+        candidate.address.toLowerCase() === selectedAddress?.toLowerCase(),
+    ) ?? connectedWallets[0];
+  useEffect(() => {
+    if (
+      connectedWallets.length &&
+      !connectedWallets.some(
+        (candidate) =>
+          candidate.address.toLowerCase() === selectedAddress?.toLowerCase(),
+      )
+    )
+      setSelectedAddress(connectedWallets[0].address);
+    if (!connectedWallets.length && selectedAddress) setSelectedAddress(null);
+  }, [connectedWallets, selectedAddress]);
   async function send(tx: PreparedTransaction): Promise<Hex> {
     if (!wallet || wallet.address.toLowerCase() !== tx.account.toLowerCase())
       throw new Error("Wallet changed. Prepare the action again.");
@@ -78,6 +105,12 @@ function WalletBridge({ children }: { children: ReactNode }) {
       value={{
         ready: ready && walletsReady,
         address: wallet?.address || null,
+        wallets: connectedWallets.map((candidate) => ({
+          address: candidate.address,
+          kind:
+            candidate.walletClientType === "privy" ? "embedded" : "external",
+        })),
+        select: setSelectedAddress,
         connect: login,
         disconnect: () => {
           void logout();

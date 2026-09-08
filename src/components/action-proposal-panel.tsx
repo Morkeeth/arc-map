@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import type { ActionProposal } from "@/lib/action-proposal";
+import type { MissionReport } from "@/lib/hunters";
 import {
   evidenceWithholdReceipt,
   initialPolicyEnvelope,
@@ -9,15 +10,20 @@ import {
   type PolicyReceipt,
   type PolicyReview,
 } from "@/lib/policy-envelope";
+import { OpportunityRehearsal } from "./opportunity-rehearsal";
 
 export function ActionProposalPanel({
   proposal,
   missionId,
   savedReview,
+  report,
+  savedOpportunityReceipt,
 }: {
   proposal: ActionProposal;
   missionId: string;
   savedReview?: PolicyReview | null;
+  report: MissionReport;
+  savedOpportunityReceipt?: import("@/lib/opportunity-action").StoredOpportunityReceipt | null;
 }) {
   if (proposal.status === "withheld") {
     const receipt = evidenceWithholdReceipt(
@@ -47,6 +53,8 @@ export function ActionProposalPanel({
       proposal={proposal}
       missionId={missionId}
       savedReview={savedReview}
+      report={report}
+      savedOpportunityReceipt={savedOpportunityReceipt}
     />
   );
 }
@@ -55,10 +63,14 @@ function ReadyActionProposal({
   proposal,
   missionId,
   savedReview,
+  report,
+  savedOpportunityReceipt,
 }: {
   proposal: ActionProposal;
   missionId: string;
   savedReview?: PolicyReview | null;
+  report: MissionReport;
+  savedOpportunityReceipt?: import("@/lib/opportunity-action").StoredOpportunityReceipt | null;
 }) {
   const [envelope, setEnvelope] = useState<PolicyEnvelope>(() =>
     savedReview?.envelope ?? initialPolicyEnvelope(proposal),
@@ -261,6 +273,12 @@ function ReadyActionProposal({
         {saveError && <p className="work-error">{saveError}</p>}
       </form>
       {receipt && <PolicyReceiptView receipt={receipt} />}
+      <OpportunityRehearsal
+        missionId={missionId}
+        target={proposal.basedOn.target ?? ""}
+        report={report}
+        savedReceipt={savedOpportunityReceipt}
+      />
       <ol className="action-checklist">
         {proposal.checklist.map((step) => (
           <li key={step.id}>

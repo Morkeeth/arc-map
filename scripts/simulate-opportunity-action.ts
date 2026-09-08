@@ -176,7 +176,9 @@ function requestFor(account: Address, now: number): OpportunityActionRequest {
     amount: 25_000n,
     evidence: {
       reportId: "local-fixture-report",
+      provider: "explorer",
       source: "contracts/fixtures/OpportunityToken.sol",
+      sourceBlock: 1,
       observedAt: new Date(now * 1_000).toISOString(),
       counterevidence:
         "A successful fixture transfer does not show that a public-chain target is safe or useful.",

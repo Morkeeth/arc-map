@@ -7,6 +7,7 @@ import { researchProject, graphCovers } from "./research-catalog";
 import { hunters, type Mission, type MissionReport } from "./hunters";
 import { actionProposalFor } from "./action-proposal";
 import { policyReviewFromInput } from "./policy-envelope";
+import type { StoredOpportunityReceipt } from "./opportunity-action";
 
 export class MissionStore {
   private db: DatabaseSync;
@@ -103,6 +104,7 @@ export class MissionStore {
       reportHash: null,
       error: null,
       policyReview: null,
+      opportunityReceipt: null,
     };
     this.db
       .prepare("INSERT INTO missions(id,owner,created_at,data) VALUES(?,?,?,?)")
@@ -123,6 +125,20 @@ export class MissionStore {
       input,
       now,
     });
+    this.db
+      .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+      .run(JSON.stringify(mission), id, owner);
+    return mission;
+  }
+  saveOpportunityReceipt(
+    owner: string,
+    id: string,
+    receipt: StoredOpportunityReceipt,
+  ): Mission {
+    const mission = this.get(owner, id);
+    if (!mission?.report || mission.status !== "reported")
+      throw new Error("A completed Hunter report is required.");
+    mission.opportunityReceipt = receipt;
     this.db
       .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
       .run(JSON.stringify(mission), id, owner);

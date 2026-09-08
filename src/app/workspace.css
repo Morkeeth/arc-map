@@ -917,11 +917,30 @@
 .policy-receipt-facts div { min-width: 0; padding-top: 8px; border-top: 1px solid #cbdcf2; }
 .policy-receipt-facts dt { margin-bottom: 4px; font-size: 10px; color: #627998; text-transform: uppercase; letter-spacing: 0.04em; }
 .policy-receipt-facts dd { margin: 0; font-size: 11px; line-height: 1.45; }
+.opportunity-rehearsal { margin: 20px 0; padding: 16px; border: 1px solid #326bff; background: #edf5ff; overflow-wrap: anywhere; }
+.opportunity-rehearsal.preview-boundary { border-style: dashed; }
+.opportunity-rehearsal h3 { margin: 9px 0; }
+.opportunity-wallet-select { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; font-size: 11px; color: #627998; }
+.opportunity-wallet-select select { max-width: 100%; padding: 9px 10px; border: 1px solid #b7c9e4; background: #fff; color: #18335b; }
+.opportunity-binding { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.opportunity-binding div { min-width: 0; padding-top: 8px; border-top: 1px solid #cbdcf2; }
+.opportunity-binding dt { margin-bottom: 4px; font-size: 10px; color: #627998; text-transform: uppercase; }
+.opportunity-binding dd { margin: 0; font-size: 11px; line-height: 1.5; }
+.opportunity-binding code { word-break: break-all; }
+.opportunity-actions { margin: 14px 0; }
+.opportunity-controls summary, .opportunity-receipt summary { cursor: pointer; font-size: 12px; font-weight: 600; }
+.opportunity-controls > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.opportunity-controls button { padding: 7px 9px; border: 1px solid #b7c9e4; background: #fff; color: #18335b; }
+.opportunity-refusal { display: flex; flex-direction: column; gap: 4px; margin: 14px 0; padding: 12px; border: 1px solid #d58484; background: #fff5f5; color: #8f2222; font-size: 12px; }
+.opportunity-receipt { margin-top: 16px; padding: 14px; border: 1px solid #9ebee9; background: #fff; }
+.refusal-text { color: #8f2222; font-weight: 600; }
 @media (max-width: 760px) {
   .brief-why-now { padding: 10px 12px; }
   .action-proposal { padding: 14px; }
   .policy-envelope { padding: 12px; }
   .policy-grid, .policy-action-row, .policy-receipt-facts { grid-template-columns: 1fr; }
+  .opportunity-rehearsal { padding: 12px; }
+  .opportunity-binding { grid-template-columns: 1fr; }
 }
 .brief-actions { justify-content: flex-start; margin: 18px 0; }
 .brief-card details { border-top: 1px solid #edf2fa; padding-top: 12px; }
