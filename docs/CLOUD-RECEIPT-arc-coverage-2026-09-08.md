@@ -1,6 +1,6 @@
 # ARC N-U3 coverage receipt — 2026-09-08
 
-Starting ref: `day/2026-09-08-arc-coverage`  
+Starting ref: `day/2026-09-08-arc-coverage`
 Starting SHA: `11004255f268fbce53c85b5a89ac86d02da2e577`
 
 ## Delivered
