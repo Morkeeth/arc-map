@@ -1,5 +1,5 @@
 import { stableId } from "./stable-id";
-import { graphCovers } from "./research-catalog";
+import { graphCovers } from "./projects";
 import type { Mission, MissionReport } from "./hunters";
 
 export const COVERAGE_MAX_AGE_MS = 15 * 60_000;
