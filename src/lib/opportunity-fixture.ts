@@ -1,8 +1,7 @@
 import "server-only";
 import { spawn, type ChildProcess } from "node:child_process";
-import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import {
   createPublicClient,
   createTestClient,
@@ -140,12 +139,16 @@ async function runIsolatedFixture(
 }
 
 function startAnvil() {
-  const require = createRequire(import.meta.url);
-  const packagePath = require.resolve("@foundry-rs/anvil/package.json");
   return spawn(
     process.execPath,
     [
-      join(dirname(packagePath), "bin.mjs"),
+      join(
+        process.cwd(),
+        "node_modules",
+        "@foundry-rs",
+        "anvil",
+        "bin.mjs",
+      ),
       "--host",
       "127.0.0.1",
       "--port",
