@@ -34,7 +34,9 @@ function request(): OpportunityActionRequest {
     amount: 25n,
     evidence: {
       reportId: "report-fixture",
+      provider: "graph",
       source: "local test fixture",
+      sourceBlock: 123,
       observedAt: "2027-01-15T08:00:00.000Z",
       counterevidence: "One successful call does not establish target safety.",
     },
@@ -75,7 +77,23 @@ test("encoder binds evidence, policy, account and exact ERC-20 calldata", () => 
   assert.notEqual(prepared.bindingHash, changedEvidence.bindingHash);
 });
 
-test("wrong account, target, expiry and missing counterevidence fail closed", () => {
+test("wrong account, target, stale evidence, expiry and missing counterevidence fail closed", () => {
+  assert.throws(
+    () =>
+      prepareOpportunityAction(
+        {
+          ...request(),
+          evidence: {
+            ...request().evidence,
+            observedAt: new Date(
+              (now - 15 * 60 - 1) * 1_000,
+            ).toISOString(),
+          },
+        },
+        now,
+      ),
+    /stale/,
+  );
   assert.throws(
     () =>
       prepareOpportunityAction(
@@ -117,6 +135,7 @@ test("wrong account, target, expiry and missing counterevidence fail closed", ()
 });
 
 test("tampered calldata is rejected before simulation RPC", async () => {
+  const currentNow = Math.floor(Date.now() / 1_000);
   let rpcCalls = 0;
   const client = new Proxy(
     {},
@@ -130,7 +149,17 @@ test("tampered calldata is rejected before simulation RPC", async () => {
     },
   ) as OpportunitySimulationClient;
   const prepared = {
-    ...prepareOpportunityAction(request(), now),
+    ...prepareOpportunityAction(
+      {
+        ...request(),
+        evidence: {
+          ...request().evidence,
+          observedAt: new Date(currentNow * 1_000).toISOString(),
+        },
+        policy: { ...request().policy, expiresAt: currentNow + 60 },
+      },
+      currentNow,
+    ),
     calldata: "0x12345678" as Hex,
   };
 
@@ -144,6 +173,9 @@ test("tampered calldata is rejected before simulation RPC", async () => {
 test("opportunity proof sources expose no transaction-broadcast primitive", () => {
   const files = [
     "src/lib/opportunity-action.ts",
+    "src/lib/opportunity-fixture.ts",
+    "src/app/api/missions/[id]/opportunity/route.ts",
+    "src/components/opportunity-rehearsal.tsx",
     "scripts/simulate-opportunity-action.ts",
   ];
   const forbidden =
@@ -152,4 +184,30 @@ test("opportunity proof sources expose no transaction-broadcast primitive", () =
     const source = readFileSync(join(process.cwd(), file), "utf8");
     assert.doesNotMatch(source, forbidden, file);
   }
+});
+
+test("browser rehearsal exposes local-only labels, retained effects and refusal controls", () => {
+  const component = readFileSync(
+    join(process.cwd(), "src/components/opportunity-rehearsal.tsx"),
+    "utf8",
+  );
+  const route = readFileSync(
+    join(
+      process.cwd(),
+      "src/app/api/missions/[id]/opportunity/route.ts",
+    ),
+    "utf8",
+  );
+  for (const text of [
+    "chain-ID-31337",
+    "not Arc public-chain",
+    "Wrong account",
+    "Stale evidence",
+    "Changed calldata",
+    "Decoded fixture effects",
+    "Retained local simulation receipt",
+  ])
+    assert.match(component, new RegExp(text, "i"));
+  assert.match(route, /NEXT_PUBLIC_RESEARCH_PREVIEW/);
+  assert.match(route, /simulationRpcStarted: false/);
 });

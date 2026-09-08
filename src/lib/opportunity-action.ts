@@ -11,10 +11,13 @@ import {
 } from "viem";
 
 export const LOCAL_OPPORTUNITY_CHAIN_ID = 31_337;
+export const OPPORTUNITY_EVIDENCE_MAX_AGE_SECONDS = 15 * 60;
 
 export type OpportunityEvidence = {
   reportId: string;
+  provider: "graph" | "explorer";
   source: string;
+  sourceBlock: number;
   observedAt: string;
   counterevidence: string;
 };
@@ -71,6 +74,39 @@ export type OpportunitySimulationReceipt = {
   broadcast: false;
 };
 
+export type StoredOpportunityReceipt = {
+  id: string;
+  simulatedAt: string;
+  mode: "local-evm-simulation";
+  action: PreparedOpportunityAction["kind"];
+  account: Address;
+  asset: Address;
+  approvedTarget: Address;
+  amount: string;
+  amountCeiling: string;
+  policyExpiresAt: number;
+  evidence: OpportunityEvidence & {
+    freshnessSeconds: number;
+    maximumFreshnessSeconds: typeof OPPORTUNITY_EVIDENCE_MAX_AGE_SECONDS;
+  };
+  calldata: Hex;
+  bindingHash: Hex;
+  pin: {
+    chainId: typeof LOCAL_OPPORTUNITY_CHAIN_ID;
+    blockNumber: string;
+    blockHash: Hex;
+  };
+  deltas: {
+    account: Address;
+    before: string;
+    after: string;
+    delta: string;
+  }[];
+  returnValue: Hex;
+  broadcast: false;
+  limitations: string[];
+};
+
 type TraceAccount = {
   storage?: Record<Hex, Hex>;
 };
@@ -103,6 +139,10 @@ export type OpportunitySimulationClient = {
   }): Promise<unknown>;
 };
 
+export function opportunityFixtureAddress(label: string): Address {
+  return getAddress(`0x${keccak256(toHex(label)).slice(-40)}`);
+}
+
 export function prepareOpportunityAction(
   request: OpportunityActionRequest,
   now: number,
@@ -129,9 +169,20 @@ export function prepareOpportunityAction(
   if (
     !request.evidence.reportId.trim() ||
     !request.evidence.source.trim() ||
-    !Number.isFinite(Date.parse(request.evidence.observedAt))
+    !Number.isSafeInteger(request.evidence.sourceBlock) ||
+    request.evidence.sourceBlock < 1
   )
     throw new Error("A valid evidence reference is required.");
+  const observedAt = Date.parse(request.evidence.observedAt);
+  const ageSeconds = now - Math.floor(observedAt / 1_000);
+  if (
+    !Number.isFinite(observedAt) ||
+    ageSeconds < 0 ||
+    ageSeconds > OPPORTUNITY_EVIDENCE_MAX_AGE_SECONDS
+  )
+    throw new Error(
+      `Opportunity evidence is stale; rerun the Hunter within ${OPPORTUNITY_EVIDENCE_MAX_AGE_SECONDS / 60} minutes.`,
+    );
   if (!request.evidence.counterevidence.trim())
     throw new Error("Counterevidence is required before opportunity simulation.");
 

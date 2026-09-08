@@ -1,4 +1,5 @@
 import type { PolicyReview } from "./policy-envelope";
+import type { StoredOpportunityReceipt } from "./opportunity-action";
 
 export const hunters = [
   {
@@ -75,4 +76,5 @@ export type Mission = {
   reportHash: `0x${string}` | null;
   error: string | null;
   policyReview?: PolicyReview | null;
+  opportunityReceipt?: StoredOpportunityReceipt | null;
 };

@@ -739,6 +739,8 @@ export function Workspace({
                   proposal={actionProposalFor(report, mission.address)}
                   missionId={mission.id}
                   savedReview={mission.policyReview}
+                  report={report}
+                  savedOpportunityReceipt={mission.opportunityReceipt}
                 />
                 <div className="report-facts">
                   <div>
