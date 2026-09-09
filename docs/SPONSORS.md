@@ -5,27 +5,34 @@ This is intended product fit, not a claim of current prize eligibility.
 
 ## The Graph
 
-Best AI Tooling / AI Use Case, From Scratch: first place $2,500. The live graph supplies the
-evidence for narratives and agent investigations. The Graph must be load-bearing, use live
-provider data and support meaningful work. The composable track is an additional possibility
-only if actual composition or a meaningful standardized schema is built.
+The current prize page has separate From Scratch and Continuity pools for Best AI Tooling or AI
+Use Case. Both require The Graph to be load-bearing, live provider data and meaningful work rather
+than a raw query. The Continuity pool additionally requires selecting that pool and documenting
+pre-existing work. The composable/standardized track requires composition of two Graph products
+or meaningful use/contribution of a standardized schema; one custom subgraph query is insufficient.
 
-Current state: adapter contract exists; no subgraph is deployed. Explorer fallback is explicitly
-labeled and does not satisfy the Graph requirements.
+Current state: a deployed SUN-only Arc testnet subgraph exposes immutable `Transfer` entities. The
+Graph-backed Hunter queries it live when `GRAPH_TRANSFERS_URL` is configured. The retained thesis
+condition uses event block/log identity, while retrieval time and indexed-block progress alone do
+not resolve the condition. Explorer fallback is explicitly labeled and does not satisfy Graph
+requirements. C4 extends pre-existing code from the base recorded in `hack.md`; Continuity is the
+candidate pool, not certified eligibility.
 
-Source: https://ethglobal.com/events/ethonline2026/prizes/the-graph
+Source: https://ethglobal.com/events/ethonline2026/prizes
 
 ## Arc
 
-Launch on Arc Testnet & Push to Mainnet: first place $2,500, mainnet deployment-ready by Sep30.
-A user funds a hunt and the agent spends a bounded USDC budget on Arc. The map alone is a weaker
-fit than this real financial flow. The Agentic Economy track ($1,667) additionally expects
-Circle Agent Stack with autonomous USDC flows and real decision logic; a Privy wallet alone
-must not be presented as satisfying that stack requirement.
+The current prize page asks for meaningful Arc/USDC use and a functional frontend/backend plus
+architecture diagram and demo. Agentic tracks additionally look for agents that transact with
+clear decision logic and USDC flows. A research map or a past standalone transaction is not that
+complete current flow.
 
-Current state: reads Arc testnet explorer data. No payment or mainnet-readiness claim.
+Current state: the product reads Arc testnet Graph and explorer evidence, preserves chain ID
+5042002, and has a testnet-only fixed-fee escrow and policy preparation path. This C4 run does not
+sign, broadcast, deploy or claim mainnet readiness. The end-to-end current browser financial flow
+remains a separate acceptance requirement.
 
-Source: https://ethglobal.com/events/ethonline2026/prizes/arc
+Source: https://ethglobal.com/events/ethonline2026/prizes
 
 ## Privy
 
@@ -34,9 +41,12 @@ Required: use at least one Privy wallet and complete a functional financial flow
 available feature. A login button is insufficient. The B2B track is not the default target simply
 because two coworkers use the app.
 
-Current state: planned integration; no connected Privy app or wallet flow.
+Current state: Privy is integrated for authentication and linked embedded/external wallet
+selection. The product can prepare exact policy-bound terms, but this C4 run has no authenticated
+wallet or completed functional financial-flow receipt. Unit tests, a login dialog or a past
+standalone testnet transaction do not satisfy the prize requirement.
 
-Source: https://ethglobal.com/events/ethonline2026/prizes/privy
+Source: https://ethglobal.com/events/ethonline2026/prizes
 
 ## Event constraints
 

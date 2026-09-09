@@ -128,3 +128,39 @@ A user gets an honest map of what wallet connection, Graph-backed research, and 
 - 2026-09-07T19:16Z — `npm test` passed 85 tests; `npm run typecheck` passed; `npm run build` passed with existing viem dynamic-dependency and optional Privy Farcaster/Solana-module warnings.
 - 2026-09-07T19:17Z — First direct preview-route probe failed because the TypeScript loader exposed the route through its default export. The corrected `NEXT_PUBLIC_RESEARCH_PREVIEW=1 node --import tsx --input-type=module -e '…'` probe exercised GET and POST; both returned 403 with the explicit preview-unavailable error.
 - Slice 1 done-when commands have run. Slice 2 cold-clone acceptance and Slice 3 interface acceptance were not started because NOW authorizes exactly one slice.
+
+# Judge-first stage review
+
+This compact review is the public product record. Operational prompts, credentials, personal
+notes and private workspace records do not belong here. ARC MAP does not claim uniqueness for
+maps, saved cases, AI labels or history: Bubblemaps V2 already offers real-time clusters and
+history, while Intel Desk supports collaborative investigations and incentives. The candidate
+wedge is a retained research thesis with explicit invalidation evidence and an honest second visit.
+
+| Stage | Criterion | Observed user action | Source/runtime receipt | Largest product gap | Next implementation |
+| --- | --- | --- | --- | --- | --- |
+| Entry / idea | One product joins Arc discovery, evidence narratives and bounded investigations. | Selected ARC MAP and the Explore → Hunt → revisit loop. | `docs/DECISIONS.md`; repository history beginning 4 Sep 2026. | No proof that a stranger returns. | Build one sourced vertical slice. |
+| First vertical slice | A source-linked opportunity reaches a Hunter report without a wallet. | Opened Why NOW, ran a bounded explorer preview and inspected counterevidence. | `src/lib/hunter-runner.ts`; immutable mission report hash. | Explorer-only research is not Graph evidence. | Make one live Graph source load-bearing. |
+| The Graph integration | SUN `Transfer` entities determine a conclusion and a later-event invalidation condition. | Runs a Graph mission, pins the newest event block/log and checks the same condition later. | `providers/graph-transfers.ts`, `subgraphs/arcmap/schema.graphql`; live provider receipt required at demo. | Deployed coverage is SUN-only; one custom subgraph is not standardized/composable track proof. | Verify a real retrieval/revisit and keep replay/failure states explicit. |
+| Arc integration | Arc testnet identity, chain guard and USDC research policy remain bounded. | Reviews an exact policy or withheld reason; no opportunity transaction is required for research. | Chain ID 5042002, `HunterEscrow.sol`, local lifecycle and prior dated testnet receipt in `docs/VERIFICATION.md`. | Current browser funding lifecycle is not fully accepted. | Separate authorized wallet acceptance; do not infer mainnet readiness. |
+| Privy integration | Actual linked wallets are labeled embedded or external before preparation. | Can connect and select a linked account, then review exact unsigned terms. | `wallet-provider.tsx` and the prepared policy view; no authenticated wallet receipt in this C4 run yet. | Prize rules require at least one Privy wallet and a completed functional financial flow. | Perform a separately authorized real-wallet acceptance without weakening policy checks. |
+| Retained thesis / revisit | A locked condition distinguishes a later event from index or retrieval progress. | Saves the Graph report as a thesis baseline, runs a finite check and returns to the evidence trail. | Graph provider, `Transfer` entity, event transaction/log, indexed block and retrieval time are retained separately. | Cold browser and worker completion receipt pending at implementation checkpoint. | Complete one live free/public SUN check and restart acceptance. |
+| Pre-demo | A stranger can state user, pain and signature interaction from the product alone at 1440 and 390 CSS px. | Expected signature: “save Graph revisit condition,” then inspect changed/unchanged/insufficient result and next transaction. | Actual screenshots must be attached before a visual verdict. | Demo proof pending. | Capture sanitized browser output; no fixtures presented as live. |
+| Exact submitted build | Submission SHA, public repository and 2–4 minute video are fixed and reproducible. | Not submitted. | **No submitted build or video receipt yet.** | Submission and public-repo requirements remain open. | Record the exact reviewed SHA only when submission is authorized. |
+| Pre-results retro | Product and integration misses are written before judging results. | Not started. | **Pending; no result inferred.** | Risk of retrofitting the story after results. | Record before results when the submission exists. |
+| Results append | Actual judging and partner outcomes are appended without rewriting the retro. | No results. | **Pending.** | None can be inferred before judging. | Append exact outcomes and source after they exist. |
+
+## Provider removal test
+
+Removing The Graph removes the schema-bound SUN event baseline, indexed-block provenance and the
+finite “later `Transfer` entity” revisit condition. Explorer discovery and previews would remain,
+but this partner-backed thesis loop would not. A raw query, badge or renamed explorer response does
+not satisfy that criterion.
+
+## Continuity disclosure
+
+C4 extends existing ARC MAP code from exact base
+`a2b5492bb89bd59676e80355ace4d7d71a995d5b`; it is not a from-scratch claim for this branch.
+The official event page describes a Continuity pool for The Graph AI work and requires disclosure
+of pre-existing work, live provider data, meaningful use, public source and a 2–4 minute video.
+This repository record supports disclosure but does not certify event or partner eligibility.

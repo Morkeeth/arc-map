@@ -836,6 +836,28 @@ export function Workspace({
                     mission={mission}
                   />
                 )}
+                {report.provider === "graph" && (
+                  <section className="graph-revisit-cta">
+                    <div>
+                      <span className="work-kicker">
+                        RETAIN A GRAPH INVALIDATION CONDITION
+                      </span>
+                      <h3>What would make you revisit this conclusion?</h3>
+                      <p>
+                        Pin the newest returned Transfer entity, indexed block,
+                        exact SUN contract and report commitment. A later check
+                        resolves only on a later event block/log identity—not a
+                        newer retrieval timestamp.
+                      </p>
+                    </div>
+                    <Link
+                      className="work-primary-button"
+                      href={`/theses?project=${encodeURIComponent(mission.projectId)}&mission=${encodeURIComponent(mission.id)}`}
+                    >
+                      Save Graph revisit condition <ArrowRight size={15} />
+                    </Link>
+                  </section>
+                )}
                 <ActionProposalPanel
                   key={mission.id}
                   proposal={actionProposalFor(report, mission.address)}
