@@ -8,6 +8,7 @@ import { describeThesisCriterion } from "../src/lib/thesis-types";
 const directory = mkdtempSync(join(tmpdir(), "arcmap-graph-revisit-"));
 const store = new ThesisStore(join(directory, "theses.sqlite"));
 
+async function main() {
 try {
   if (!process.env.GRAPH_TRANSFERS_URL) {
     console.log(
@@ -107,3 +108,6 @@ try {
   store.close();
   rmSync(directory, { recursive: true, force: true });
 }
+}
+
+void main();
