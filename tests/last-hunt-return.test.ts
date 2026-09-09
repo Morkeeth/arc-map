@@ -25,3 +25,36 @@ test("Today last-hunt card deep-links reported evidence", () => {
   assert.equal(card.firstEvidenceTx, `0x${"a".repeat(64)}`);
   assert.equal(lastHuntReturn([]), null);
 });
+
+test("Today return card retains decisions across a pinned rerun", () => {
+  const baseline = {
+    id: "0xbase",
+    projectId: "sun-token",
+    status: "reported",
+    report: { evidence: [] },
+    policyReview: {
+      receipt: {
+        id: "policy-one",
+        status: "simulated",
+        simulatedAt: "2026-09-09T08:00:00.000Z",
+      },
+    },
+  } as Mission;
+  const current = {
+    id: "0xcurrent",
+    previousMissionId: baseline.id,
+    projectId: "sun-token",
+    status: "reported",
+    report: { evidence: [] },
+    coverageDecision: {
+      id: "coverage-two",
+      funding: "eligible",
+      evaluatedAt: "2026-09-09T08:10:00.000Z",
+      reason: "Fresh Graph coverage.",
+    },
+  } as Mission;
+  const card = lastHuntReturn([current, baseline]);
+  assert.equal(card?.decision?.id, "coverage-two");
+  assert.equal(card?.baselineDecision?.id, "policy-one");
+  assert.equal(card?.hasComparison, true);
+});

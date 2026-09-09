@@ -1,5 +1,9 @@
 import type { Mission } from "./hunters";
 import { missionForReturn } from "./mission-return";
+import {
+  retainedDecisionFor,
+  type RetainedDecision,
+} from "./retained-decision";
 
 export type LastHuntReturn = {
   missionId: string;
@@ -9,6 +13,9 @@ export type LastHuntReturn = {
   conclusion: string | null;
   evidenceCount: number;
   firstEvidenceTx: string | null;
+  decision: RetainedDecision | null;
+  baselineDecision: RetainedDecision | null;
+  hasComparison: boolean;
   href: string;
 };
 
@@ -22,6 +29,9 @@ export function lastHuntReturn(
     return null;
   }
   const evidence = mission.report?.evidence || [];
+  const baseline = mission.previousMissionId
+    ? missions.find((item) => item.id === mission.previousMissionId)
+    : undefined;
   return {
     missionId: mission.id,
     projectId: mission.projectId,
@@ -30,6 +40,9 @@ export function lastHuntReturn(
     conclusion: mission.report?.conclusion || null,
     evidenceCount: evidence.length,
     firstEvidenceTx: evidence[0]?.transaction || null,
+    decision: retainedDecisionFor(mission),
+    baselineDecision: baseline ? retainedDecisionFor(baseline) : null,
+    hasComparison: Boolean(baseline?.report && mission.report),
     href: `/hunters?id=${encodeURIComponent(mission.id)}`,
   };
 }

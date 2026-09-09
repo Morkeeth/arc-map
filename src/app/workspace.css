@@ -883,6 +883,10 @@
 .report-comparison { padding: 24px; background: #f8fbff; border: 1px solid #dce6f2; border-radius: 8px; margin-bottom: 24px; line-height: 1.7; }
 .comparison-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .comparison-pair > div { min-width: 0; padding: 15px 0; }
+.comparison-decisions, .return-decision { margin: 14px 0; padding: 14px; border-left: 3px solid #326bff; background: #edf5ff; overflow-wrap: anywhere; }
+.comparison-decisions p, .return-decision p { margin: 6px 0; font-size: 12px; line-height: 1.6; }
+.comparison-decisions small, .return-decision small { color: #627998; line-height: 1.5; }
+.decision-retained { margin: 14px 0 0; padding: 10px 12px; background: #eff8f5; border-left: 3px solid #286859; color: #286859; font-size: 12px; line-height: 1.6; }
 @media (max-width:760px) { .comparison-pair { grid-template-columns:1fr; gap:8px; } .report-comparison { padding:16px; } }
 .followed-changes .work-event { display: block; }
 .followed-changes > .work-text-button { margin-top: 20px; }

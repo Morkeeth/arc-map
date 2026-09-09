@@ -157,9 +157,21 @@ export function summarizeWorkers(
   workers: Array<WorkerStatus & { freshness: ReturnType<typeof workerFreshness> }>,
 ): string {
   if (!workers.length) return "No worker identities registered";
-  if (workers.some((w) => w.freshness === "missing"))
-    return "Missing expected workers";
   if (workers.every((w) => w.freshness === "running"))
     return "All source cycles live";
-  return "Inspect freshness";
+  const counts = workers.reduce(
+    (result, worker) => {
+      if (worker.freshness !== "running") result[worker.freshness] += 1;
+      return result;
+    },
+    { stale: 0, failed: 0, stopped: 0, missing: 0 },
+  );
+  return [
+    counts.failed && `${counts.failed} failed`,
+    counts.stale && `${counts.stale} stale`,
+    counts.stopped && `${counts.stopped} stopped`,
+    counts.missing && `${counts.missing} missing`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }

@@ -127,6 +127,16 @@ export function Workspace({
         detailRef.current?.scrollIntoView({ block: "start" }),
       );
   }
+  function startInvestigation(project: Project) {
+    setSelected(project);
+    setView("hunters");
+    if (window.innerWidth <= 760)
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          detailRef.current?.scrollIntoView({ block: "start" }),
+        ),
+      );
+  }
   useEffect(() => {
     if (mission?.status === "reported" || mission?.status === "blocked")
       reportRef.current?.scrollIntoView({ block: "start" });
@@ -576,7 +586,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={showProject} onReview={reviewUpdate} onOpenChanges={()=>setView("changes")} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={startInvestigation} onReview={reviewUpdate} onOpenChanges={()=>setView("changes")} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={startInvestigation} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
