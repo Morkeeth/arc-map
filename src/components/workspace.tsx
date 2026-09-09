@@ -576,7 +576,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={showProject} onReview={reviewUpdate} onOpenChanges={()=>setView("changes")} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
@@ -919,10 +919,33 @@ export function Workspace({
                       the report is correct.
                     </p>
                     {coverage?.funding === "eligible" && wallet.address && (
-                      <p className="selected-wallet">
-                        Selected {selectedWallet?.kind ?? "linked"} wallet{" "}
-                        <code>{wallet.address}</code>
-                      </p>
+                      <div className="selected-wallet">
+                        <p>
+                          Selected wallet for preparation (user-owned external vs
+                          Privy embedded — choose explicitly):
+                        </p>
+                        <label className="opportunity-wallet-select">
+                          <span>Connected account</span>
+                          <select
+                            value={wallet.address}
+                            onChange={(event) =>
+                              wallet.select(event.target.value)
+                            }
+                          >
+                            {wallet.wallets.map((item) => (
+                              <option value={item.address} key={item.address}>
+                                {item.kind} · {item.address}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <p className="report-time">
+                          Using {selectedWallet?.kind ?? "linked"} ·{" "}
+                          <code>{wallet.address}</code>. Preparing terms does not
+                          broadcast; Sign and fund remains a separate step and is
+                          not required for research review.
+                        </p>
+                      </div>
                     )}
                     {!capabilities?.escrow.configured && (
                       <p className="setup-note">

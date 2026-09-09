@@ -170,6 +170,19 @@ test("tampered calldata is rejected before simulation RPC", async () => {
   assert.equal(rpcCalls, 0);
 });
 
+test("opportunity route withholds rehearsal when evidence coverage withholds funding", () => {
+  const route = readFileSync(
+    join(
+      process.cwd(),
+      "src/app/api/missions/[id]/opportunity/route.ts",
+    ),
+    "utf8",
+  );
+  assert.match(route, /assessEvidenceCoverage/);
+  assert.match(route, /funding === "withheld"/);
+  assert.match(route, /409/);
+});
+
 test("opportunity proof sources expose no transaction-broadcast primitive", () => {
   const files = [
     "src/lib/opportunity-action.ts",

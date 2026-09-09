@@ -5,6 +5,7 @@ import {
   missionResponse,
   readMissionBody,
 } from "@/lib/mission-access";
+import { assessEvidenceCoverage } from "@/lib/evidence-coverage";
 import {
   OPPORTUNITY_EVIDENCE_MAX_AGE_SECONDS,
   opportunityFixtureAddress,
@@ -58,6 +59,17 @@ export async function POST(
         throw new Error("A completed Hunter report is required.");
       if (mission.report.stance !== "limited-support")
         throw new Error("The Hunter evidence does not support rehearsal.");
+      const coverage = assessEvidenceCoverage(mission);
+      if (coverage.funding === "withheld")
+        return missionResponse(
+          {
+            error: coverage.reason,
+            coverage,
+            withheld: true,
+          },
+          access.setCookie,
+          409,
+        );
       const sourceBlock =
         mission.report.indexedBlock ??
         Math.max(0, ...mission.report.evidence.map((item) => item.block));
