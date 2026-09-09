@@ -16,7 +16,7 @@ test("Today last-hunt card deep-links reported evidence", () => {
         { transaction: `0x${"b".repeat(64)}` },
       ],
     },
-  } as Mission;
+  } as unknown as Mission;
   const card = lastHuntReturn([mission]);
   assert.ok(card);
   assert.equal(card.href, "/hunters?id=0xabc");
@@ -39,7 +39,7 @@ test("Today return card retains decisions across a pinned rerun", () => {
         simulatedAt: "2026-09-09T08:00:00.000Z",
       },
     },
-  } as Mission;
+  } as unknown as Mission;
   const current = {
     id: "0xcurrent",
     previousMissionId: baseline.id,
@@ -52,7 +52,7 @@ test("Today return card retains decisions across a pinned rerun", () => {
       evaluatedAt: "2026-09-09T08:10:00.000Z",
       reason: "Fresh Graph coverage.",
     },
-  } as Mission;
+  } as unknown as Mission;
   const card = lastHuntReturn([current, baseline]);
   assert.equal(card?.decision?.id, "coverage-two");
   assert.equal(card?.baselineDecision?.id, "policy-one");
