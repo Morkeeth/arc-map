@@ -11,6 +11,7 @@
     "rehearse:mission": "tsx scripts/rehearse-mission-action.ts",
     "rehearse:opportunity": "tsx scripts/simulate-opportunity-action.ts",
     "test:opportunity-action": "tsx --test tests/opportunity-action.test.ts && tsx scripts/simulate-opportunity-action.ts",
+    "test:graph-revisit": "tsx scripts/test-graph-thesis-revisit.ts",
     "eval:discovery-rank": "tsx scripts/eval-discovery-rank.ts",
     "ingest": "tsx scripts/ingest.ts",
     "ingest:watch": "tsx scripts/ingest.ts --watch",

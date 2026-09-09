@@ -63,6 +63,15 @@ For Graph research, configure `GRAPH_TRANSFERS_URL` for the schema in
 it does **not** index every radar contract. Missing Graph access stays an explicit error,
 never an explorer result relabeled as Graph.
 
+To replay the load-bearing Graph thesis check without wallet actions:
+
+```sh
+npm run test:graph-revisit
+```
+
+It performs two bounded SUN `Transfer` reads when the existing endpoint is configured. Without
+`GRAPH_TRANSFERS_URL` it exits unavailable and states that explorer data was not substituted.
+
 ## Try the product
 
 1. Open Today, inspect a lead and choose Hunt this, or browse Discover for a sourced target.
