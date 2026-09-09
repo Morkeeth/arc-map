@@ -72,7 +72,19 @@ test("empty store lists expected workers as missing, never all-live", () => {
   }));
   assert.equal(workers.length, EXPECTED_WORKERS.length);
   assert.ok(workers.every((w) => w.freshness === "missing"));
-  assert.equal(summarizeWorkers(workers), "Missing expected workers");
+  assert.equal(summarizeWorkers(workers), "3 missing");
+  store.close();
+});
+
+test("summary names failures instead of hiding them behind generic freshness", () => {
+  const store = new WorkerStatusStore(":memory:");
+  store.start("ingest", 1, "2026-09-06T08:00:00.000Z");
+  store.fail("ingest", "provider unavailable", "2026-09-06T08:01:00.000Z");
+  const workers = store.listExpected().map((worker) => ({
+    ...worker,
+    freshness: workerFreshness(worker, Date.parse("2026-09-06T08:01:00.000Z")),
+  }));
+  assert.equal(summarizeWorkers(workers), "1 failed · 2 missing");
   store.close();
 });
 

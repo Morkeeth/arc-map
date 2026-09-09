@@ -272,7 +272,15 @@ function ReadyActionProposal({
         </div>
         {saveError && <p className="work-error">{saveError}</p>}
       </form>
-      {receipt && <PolicyReceiptView receipt={receipt} />}
+      {receipt && (
+        <>
+          <p className="decision-retained" role="status">
+            Decision retained in this private workspace. Reopen this Hunt to
+            inspect the same receipt; a rerun creates a separate report.
+          </p>
+          <PolicyReceiptView receipt={receipt} />
+        </>
+      )}
       <OpportunityRehearsal
         missionId={missionId}
         target={proposal.basedOn.target ?? ""}

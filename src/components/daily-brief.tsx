@@ -36,11 +36,24 @@ const workerTime = (at: string | null) =>
 
 function workerSummary(workers: WorkerData[] | null) {
   if (workers === null) return "Status unavailable";
-  if (!workers.length || workers.some((w) => w.freshness === "missing"))
-    return "Missing expected workers";
+  if (!workers.length) return "No worker identities registered";
   if (workers.every((w) => w.freshness === "running"))
     return "All source cycles live";
-  return "Inspect freshness";
+  const counts = workers.reduce(
+    (result, worker) => {
+      if (worker.freshness !== "running") result[worker.freshness] += 1;
+      return result;
+    },
+    { stale: 0, failed: 0, stopped: 0, missing: 0 },
+  );
+  return [
+    counts.failed && `${counts.failed} failed`,
+    counts.stale && `${counts.stale} stale`,
+    counts.stopped && `${counts.stopped} stopped`,
+    counts.missing && `${counts.missing} missing`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 export function DailyBrief({
@@ -153,6 +166,37 @@ export function DailyBrief({
                 ? `${lastHunt.evidenceCount} retained evidence record${lastHunt.evidenceCount === 1 ? "" : "s"}${lastHunt.firstEvidenceTx ? ` · first tx ${lastHunt.firstEvidenceTx.slice(0, 10)}…` : ""}`
                 : "No transfer evidence rows on this report."}
             </p>
+            {(lastHunt.decision || lastHunt.baselineDecision) && (
+              <div className="return-decision">
+                <strong>Retained decision</strong>
+                {lastHunt.decision ? (
+                  <p>
+                    {lastHunt.decision.kind.replaceAll("-", " ")} ·{" "}
+                    {lastHunt.decision.status} · {lastHunt.decision.summary}
+                  </p>
+                ) : (
+                  <p>
+                    The current rerun has no saved review decision. Its pinned
+                    baseline retains a {lastHunt.baselineDecision!.kind.replaceAll("-", " ")}{" "}
+                    decision: {lastHunt.baselineDecision!.status}.
+                  </p>
+                )}
+                {lastHunt.decision && lastHunt.baselineDecision && (
+                  <p>
+                    Pinned baseline decision:{" "}
+                    {lastHunt.baselineDecision.kind.replaceAll("-", " ")} ·{" "}
+                    {lastHunt.baselineDecision.status}. The rerun did not
+                    overwrite it.
+                  </p>
+                )}
+                {lastHunt.hasComparison && (
+                  <small>
+                    A later immutable report is ready to compare with its
+                    pinned baseline.
+                  </small>
+                )}
+              </div>
+            )}
             <div className="brief-actions">
               <Link className="evidence-link" href={lastHunt.href}>
                 Reopen investigation →
@@ -163,7 +207,7 @@ export function DailyBrief({
                   className="evidence-link"
                   onClick={onOpenChanges}
                 >
-                  Review Changes for retained decisions →
+                  Review followed source changes →
                 </button>
               )}
             </div>

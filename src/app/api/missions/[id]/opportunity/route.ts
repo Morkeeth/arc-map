@@ -67,7 +67,7 @@ export async function POST(
             coverage,
             withheld: true,
           },
-          access.setCookie,
+          access.cookie,
           409,
         );
       const sourceBlock =
