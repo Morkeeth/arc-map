@@ -122,7 +122,7 @@ export function compareReports(
     throw new Error("The pinned baseline report commitment is invalid.");
   validatePair(previous, current);
 
-  if (!current.report || current.status === "blocked") {
+  if (current.status === "blocked") {
     return {
       previousMissionId: previous.id,
       currentMissionId: current.id,
@@ -166,6 +166,8 @@ export function compareReports(
     };
   }
 
+  if (!current.report)
+    throw new Error("The latest retrieval is still in progress.");
   const latest = current.report;
   if (
     current.status !== "reported" ||

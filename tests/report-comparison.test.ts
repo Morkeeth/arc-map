@@ -66,6 +66,10 @@ test("unchanged revisit ignores retrieval time and bounded count changes alone",
       ...input,
       previousMissionId: first.id,
     });
+    assert.throws(
+      () => compareReports(before, second),
+      /still in progress/,
+    );
     const after = finish(store, "a", second.id, {
       ...report,
       observedAt: "2026-09-05T00:30:00Z",
