@@ -191,8 +191,9 @@ export function DailyBrief({
                 )}
                 {lastHunt.hasComparison && (
                   <small>
-                    A later immutable report is ready to compare with its
-                    pinned baseline.
+                    {lastHunt.status === "reported"
+                      ? "A later immutable report is ready to compare with its pinned baseline."
+                      : "The failed retrieval is retained beside its pinned baseline; no change is inferred."}
                   </small>
                 )}
               </div>

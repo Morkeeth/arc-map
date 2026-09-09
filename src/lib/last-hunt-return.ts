@@ -42,7 +42,10 @@ export function lastHuntReturn(
     firstEvidenceTx: evidence[0]?.transaction || null,
     decision: retainedDecisionFor(mission),
     baselineDecision: baseline ? retainedDecisionFor(baseline) : null,
-    hasComparison: Boolean(baseline?.report && mission.report),
+    hasComparison: Boolean(
+      baseline?.report &&
+        (mission.report || mission.status === "blocked"),
+    ),
     href: `/hunters?id=${encodeURIComponent(mission.id)}`,
   };
 }

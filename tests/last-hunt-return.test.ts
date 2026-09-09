@@ -58,3 +58,24 @@ test("Today return card retains decisions across a pinned rerun", () => {
   assert.equal(card?.baselineDecision?.id, "policy-one");
   assert.equal(card?.hasComparison, true);
 });
+
+test("Today returns the newest unavailable rerun instead of an older report", () => {
+  const baseline = {
+    id: "0xbase",
+    projectId: "sun-token",
+    status: "reported",
+    report: { evidence: [] },
+  } as unknown as Mission;
+  const blocked = {
+    id: "0xblocked",
+    previousMissionId: baseline.id,
+    projectId: "sun-token",
+    status: "blocked",
+    report: null,
+    error: "Source unavailable.",
+  } as unknown as Mission;
+  const card = lastHuntReturn([blocked, baseline]);
+  assert.equal(card?.missionId, blocked.id);
+  assert.equal(card?.status, "blocked");
+  assert.equal(card?.hasComparison, true);
+});

@@ -800,7 +800,9 @@ export function Workspace({
             className="mission-report"
             aria-live="polite"
           >
-            {previousReport && report && <ReportComparison previous={previousReport} current={mission}/>}
+            {previousReport && (
+              <ReportComparison previous={previousReport} current={mission} />
+            )}
             {report && <button className="work-refresh work-text-button" disabled={Boolean(busy)} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
             <div className="report-heading">
               <div>
