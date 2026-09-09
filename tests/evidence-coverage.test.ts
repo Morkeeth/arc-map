@@ -96,3 +96,23 @@ test("coverage receipt retains the exact withhold and report commitment", () => 
   assert.equal(receipt.address, other);
   assert.equal(receipt.evaluatedAt, "2026-09-08T21:30:00.000Z");
 });
+
+test("UnitFlow-style explorer limited-support remains funding-withheld (not Graph)", () => {
+  const unitFlowish = assessEvidenceCoverage(
+    {
+      address: other,
+      provider: "explorer",
+      report: report({
+        provider: "explorer",
+        stance: "limited-support",
+        indexedBlock: null,
+        source: "Arcscan fixture",
+      }),
+    },
+    now,
+  );
+  assert.equal(unitFlowish.funding, "withheld");
+  assert.equal(unitFlowish.status, "unsupported");
+  assert.doesNotMatch(unitFlowish.reason, /The Graph covered/i);
+  assert.match(unitFlowish.reason, /not relabeled as Graph/i);
+});

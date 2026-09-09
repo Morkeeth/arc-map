@@ -16,6 +16,13 @@ public launch. Oscar / root retain those decisions.
 
 ## Zero-spend local path (authorized)
 
+This is the **exact free / no-new-spend hosting option** for judges and operators:
+run the product on a local machine (or a machine you already control) with Node 22,
+SQLite under `.data/`, and optional `compose.yaml`/`Dockerfile` sketches. Limitations:
+no public judge URL until Root deploys; cookie workspace is device-local; Graph remains
+SUN-only unless a verified index is configured; workers must run separately for live
+radar/thesis freshness.
+
 ```sh
 # Node 22.x required
 node -v

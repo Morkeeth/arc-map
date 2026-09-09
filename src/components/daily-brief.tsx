@@ -51,6 +51,7 @@ export function DailyBrief({
   lastHunt,
   onSelect,
   onReview,
+  onOpenChanges,
   error,
 }: {
   data: BriefData | null;
@@ -60,6 +61,7 @@ export function DailyBrief({
   lastHunt: LastHuntReturn | null;
   onSelect: (p: Project) => void;
   onReview: (id: string) => Promise<void>;
+  onOpenChanges?: () => void;
   error: string | null;
 }) {
   const [filter, setFilter] = useState("All leads");
@@ -155,6 +157,15 @@ export function DailyBrief({
               <Link className="evidence-link" href={lastHunt.href}>
                 Reopen investigation →
               </Link>
+              {onOpenChanges && (
+                <button
+                  type="button"
+                  className="evidence-link"
+                  onClick={onOpenChanges}
+                >
+                  Review Changes for retained decisions →
+                </button>
+              )}
             </div>
           </article>
         </section>
