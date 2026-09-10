@@ -1,3 +1,4 @@
+import { keccak256, toHex } from "viem";
 import { ThesisStore, validateThesisInput } from "@/lib/thesis-store";
 import {
   graphThesisBaselineFromReport,
@@ -21,27 +22,19 @@ export async function POST(request:Request) {
     store.reserveRequest(access.owner);
     let baseline;
     let baselineMissionId: string | null = null;
-    if (
-      config.metric === "graph-transfer-event" &&
-      input.missionId !== undefined
-    ) {
-      if (typeof input.missionId !== "string")
-        throw new Error("Choose a completed Graph mission.");
+    if (input.missionId !== undefined) {
+      if (typeof input.missionId !== "string") throw new Error("Choose a completed research report.");
       const mission = missions.get(access.owner, input.missionId);
-      if (
-        !mission?.report ||
-        !mission.reportHash ||
-        mission.status !== "reported" ||
-        mission.provider !== "graph" ||
-        mission.projectId !== config.project.id
-      )
-        throw new Error(
-          "Choose your completed Graph report for this exact project.",
-        );
-      baseline = graphThesisBaselineFromReport(mission.report);
+      if (!mission?.report || !mission.reportHash || mission.status !== "reported" || mission.projectId !== config.project.id || mission.address.toLowerCase() !== config.project.contract?.toLowerCase() || keccak256(toHex(JSON.stringify(mission.report))) !== mission.reportHash) throw new Error("Choose your completed report for this exact project.");
+      if (config.metric === "graph-transfer-event") {
+        if(mission.provider !== "graph") throw new Error("A Graph event condition needs a Graph report.");
+        baseline = graphThesisBaselineFromReport(mission.report);
+      } else {
+        baseline = await readThesisEvidence(config.project.id, config.metric);
+      }
       baselineMissionId = mission.id;
     } else {
-      baseline=await readThesisEvidence(config.project.id,config.metric);
+      baseline = await readThesisEvidence(config.project.id, config.metric);
     }
     const thesis=store.create(access.owner,input,baseline);
     if (baselineMissionId)

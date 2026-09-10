@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { projects, type Project } from "@/lib/projects";
 import { hunters, type Mission } from "@/lib/hunters";
+import { loadBrowserFollows } from "@/lib/browser-follows";
 import { missionForReturn } from "@/lib/mission-return";
 import { lastHuntReturn } from "@/lib/last-hunt-return";
 import type { FeedData } from "@/lib/feed-types";
@@ -27,7 +28,7 @@ import { RepositoryPanel } from "./repository-panel";
 import { FollowedChanges, type FollowedData } from "./followed-changes";
 import { ReportComparison } from "./report-comparison";
 import { DailyBrief } from "./daily-brief";
-import type { DailyBrief as BriefData } from "@/lib/daily-brief";
+import type { BriefCard, DailyBrief as BriefData } from "@/lib/daily-brief";
 import type { ResearchUpdate } from "@/lib/research-updates";
 import { actionProposalFor } from "@/lib/action-proposal";
 import { ActionProposalPanel } from "./action-proposal-panel";
@@ -79,9 +80,11 @@ async function api(url: string, body?: unknown) {
 export function Workspace({
   initialView = "today",
   initialMissionId,
+  initialProject,
 }: {
   initialView?: "today" | "discover" | "hunters";
   initialMissionId?: string;
+  initialProject?: Project;
 }) {
   const [view, setView] = useState<"today"|"discover"|"hunters"|"changes">(initialView);
   const [brief,setBrief]=useState<BriefData|null>(null),[updates,setUpdates]=useState<ResearchUpdate[]|null>(null),[briefError,setBriefError]=useState<string|null>(null);
@@ -90,7 +93,9 @@ export function Workspace({
   const [radar, setRadar] = useState<RadarData | null>(null);
   const [catalogView, setCatalogView] = useState<"radar" | "curated">("radar");
   const [displayLimit, setDisplayLimit] = useState(8);
-  const [selected, setSelected] = useState<Project>(projects[0]);
+  const [selected, setSelected] = useState<Project>(initialProject ?? projects[0]);
+  const [story, setStory] = useState<BriefCard | null>(null);
+  const [followNotice, setFollowNotice] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All activity");
   const [following, setFollowing] = useState<string[]>([]);
@@ -118,17 +123,27 @@ export function Workspace({
   } | null>(null);
   const wallet = useHunterWallet();
   const researchPreview = process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1";
+  const targetGeneration = useRef(0);
+  const newTarget = useRef(Boolean(initialProject));
   const detailRef = useRef<HTMLElement>(null);
   const reportRef = useRef<HTMLElement>(null);
   function showProject(project: Project) {
+    targetGeneration.current += 1;
+    newTarget.current = true;
     setSelected(project);
+    setStory(null);
+    setMission(null);
+    setChain(null);
+    setError("");
+    setFollowNotice("");
     if (window.innerWidth <= 760)
       requestAnimationFrame(() =>
         detailRef.current?.scrollIntoView({ block: "start" }),
       );
   }
-  function startInvestigation(project: Project) {
-    setSelected(project);
+  function startInvestigation(project: Project, lead?: BriefCard) {
+    showProject(project);
+    setStory(lead ?? null);
     setView("hunters");
     if (window.innerWidth <= 760)
       requestAnimationFrame(() =>
@@ -155,14 +170,8 @@ export function Workspace({
     setError("");
     // Establish the private cookie before any other owner-scoped route starts.
     try {
-      let data=await api("/api/follows");
-      try { if(!localStorage.getItem("arcmap.follows.migrated.v2")) {
-        const legacy=JSON.parse(localStorage.getItem("arcmap.projects.v1")||"[]");
-        if(Array.isArray(legacy)) for(const id of legacy.slice(0,100)) {
-          if(typeof id==="string" && (projects.some(p=>p.id===id)||/^arc:0x[0-9a-f]{40}$/.test(id))) data=await api("/api/follows",{action:"follow",projectId:id});
-        }
-        localStorage.setItem("arcmap.follows.migrated.v2","true");
-      } } catch { setError("Old local follows could not be imported. Server-saved follows remain available."); }
+      const {data,migrationError} = await loadBrowserFollows();
+      if(migrationError)setError("Some old browser follows could not be imported. They remain in browser storage; server-saved follows are available.");
       setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));setStorageReady(true);
     }
     catch { setError("Saved follows unavailable. Existing data remains visible."); }
@@ -194,7 +203,8 @@ export function Workspace({
             nextMissions.find((item) => item.id === current.id) || current
           );
         }
-        return missionForReturn(nextMissions, initialMissionId);
+        if(initialMissionId && !nextMissions.some(m=>m.id===initialMissionId)) {setError("This investigation is not available in your private workspace. Choose a saved Hunt below or start a new one.");return null;}
+        return newTarget.current && !current ? null : missionForReturn(nextMissions, initialMissionId);
       });
     }
     if (results[3].status === "fulfilled") {
@@ -215,6 +225,7 @@ export function Workspace({
     try {
       const data=await api("/api/follows",{action:following.includes(id)?"unfollow":"follow",projectId:id});
       setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));
+      setFollowNotice(data.follows.some((f:{projectId:string})=>f.projectId===id) ? "Saved. Return to Changes to compare source observations; reading does not reset your baseline." : "Removed from following.");
     } catch { setError("Your follow could not be saved. Try again."); }
     finally {setFollowBusy(false);}
   }
@@ -226,7 +237,10 @@ export function Workspace({
     finally {setFollowBusy(false);}
   }
   function selectMission(item: Mission) {
+    targetGeneration.current += 1;
+    newTarget.current = false;
     setMission(item);
+    setStory(null);
     setChain(null);
     setTx(null);
     setPreparedFunding(item.fundingIntent ?? null);
@@ -234,6 +248,8 @@ export function Workspace({
     if (target) setSelected(target);
   }
   async function run(previous?:Mission) {
+    const generation = targetGeneration.current;
+    newTarget.current = false;
     setBusy("Researching");
     setError("");
     setChain(null);
@@ -243,14 +259,14 @@ export function Workspace({
         projectId: previous?.projectId || selected.id,
         provider: previous?.provider || provider,
         budget: previous?.budget || budget,
-        ...(previous?{previousMissionId:previous.id}:{}),
+        ...(previous?{previousMissionId:previous.id}:story?{leadId:story.id}:{}),
       });
-      setMission(created.mission);
+      if(generation === targetGeneration.current) setMission(created.mission);
       const result = await api(`/api/missions/${created.mission.id}/run`, {});
-      setMission(result.mission);
+      if(generation === targetGeneration.current) setMission(result.mission);
       setMissions((await api("/api/missions")).missions);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Mission failed.");
+      if(generation === targetGeneration.current) setError(e instanceof Error ? e.message : "Mission failed.");
     } finally {
       setBusy("");
     }
@@ -354,8 +370,8 @@ export function Workspace({
   const selectedRecord = radar?.records.find(r => r.id === selected.id);
   const graphCovered = selected.contract?.toLowerCase() === projects[0].contract?.toLowerCase();
   useEffect(() => {
-    if (!graphCovered && provider === "graph") setProvider("explorer");
-  }, [graphCovered, provider, selected.id]);
+    if ((!graphCovered || capabilities?.graphConfigured === false) && provider === "graph") setProvider("explorer");
+  }, [graphCovered, provider, selected.id, capabilities?.graphConfigured]);
   const visible = (catalogView === "radar" ? radar?.projects || [] : projects).filter(
     (p) =>
       `${p.name} ${p.symbol} ${p.category} ${p.summary} ${p.question} ${p.contract || ""}`
@@ -680,6 +696,8 @@ export function Workspace({
                 </span>
               </button>
             </div>
+            {followNotice && <p className="setup-note" role="status">{followNotice} <button className="evidence-link" onClick={()=>setView("changes")}>Open Changes →</button></p>}
+            {story && story.project.id === selected.id && <section className="selected-story" aria-label="Lead being investigated"><span className="work-kicker">YOUR LEAD</span><h3>{story.question}</h3><p>{story.finding}</p><p className="report-time">{story.whyNow}</p><details><summary>Original evidence and limits</summary><p>{story.counterevidence}</p>{story.evidence.map(e=><a key={e.id} className="evidence-link" href={e.url} target="_blank" rel="noreferrer">{e.title} ↗</a>)}</details></section>}
             <p className="detail-summary">{selected.summary}</p>
             <p className="detail-relation">{selected.relation}</p>
             <div className="detail-links">
@@ -707,7 +725,8 @@ export function Workspace({
               <span className="work-kicker">
                 <Crosshair size={13} /> THE HUNT
               </span>
-              <h3>{selectedHunter.question}</h3>
+              <h3>{selected.repo ? "Want to inspect onchain activity too?" : selectedHunter.question}</h3>
+              {story && selected.contract && <p className="report-time">This Hunt answers the activity part of your lead with a bounded source sample. It does not explain the contract code or verify the team.</p>}
               {!selected.contract ? (
                 <p className="work-empty">
                   No verified contract association is configured for this
@@ -732,7 +751,7 @@ export function Workspace({
                       </option>
                     </select>
                   </label>
-                  {!graphCovered && <p className="setup-note">This target is outside the deployed Graph index. Choose Arcscan explicitly for a free preview. Graph coverage will not be implied.</p>}
+                  {!graphCovered && <p className="setup-note">This target is outside the deployed Graph index. Arcscan is selected for a free preview. Graph coverage will not be implied.</p>}
                   {provider === "graph" && !capabilities?.graphConfigured && (
                     <p className="setup-note">
                       Graph endpoint not configured. A Graph run will stop with
@@ -747,6 +766,7 @@ export function Workspace({
                       {indexHealth && ` Checked ${time(indexHealth.checkedAt)}.`}
                     </p>
                   )}
+                  <details className="research-terms"><summary>Optional research budget · no charge to run</summary><p className="report-time">These terms apply only if you later choose a separate payment or simulation action. Running this Hunt is free.</p>
                   <label>
                     {researchPreview ? "Simulation ceiling" : "Proposed mission budget"} <span>testnet USDC</span>
                     <input
@@ -771,9 +791,10 @@ export function Workspace({
                     </span>
                   </div>
                   </>}
+                  </details>
                   <button
                     className="work-primary-button"
-                    disabled={Boolean(busy) || (provider === "graph" && !graphCovered)}
+                    disabled={Boolean(busy) || (provider === "graph" && (!graphCovered || !capabilities?.graphConfigured))}
                     onClick={() => {
                       setView("hunters");
                       void run();
@@ -784,7 +805,7 @@ export function Workspace({
                     ) : (
                       <Crosshair size={16} />
                     )}
-                    Run research preview <ArrowRight size={16} />
+                    Hunt this · free <ArrowRight size={16} />
                   </button>
                   <small className="no-charge">
                     {researchPreview ? "Research preview. No wallet, payment or transaction execution." : "No wallet charge. Review evidence before funding."}
@@ -821,6 +842,7 @@ export function Workspace({
                 {mission.status}
               </span>
             </div>
+            {mission.sourceLead && <section className="selected-story"><span className="work-kicker">THE LEAD YOU SAVED</span><h3>{mission.sourceLead.question}</h3><p>{mission.sourceLead.finding}</p><details><summary>Original source links · observed {time(mission.sourceLead.observedAt)}</summary>{mission.sourceLead.evidence.map(e=><a className="evidence-link" key={e.id} href={e.url} target="_blank" rel="noreferrer">{e.title} ↗</a>)}</details><p className="report-time">The Hunter tests the bounded activity question below. The original lead is context, not an additional verified conclusion.</p></section>}
             {mission.error && <p className="work-error">{mission.error}</p>}
             {report && (
               <>
@@ -836,26 +858,26 @@ export function Workspace({
                     mission={mission}
                   />
                 )}
-                {report.provider === "graph" && (
+                {report && (
                   <section className="graph-revisit-cta">
                     <div>
                       <span className="work-kicker">
-                        RETAIN A GRAPH INVALIDATION CONDITION
+                        KEEP THIS QUESTION OPEN
                       </span>
                       <h3>What would make you revisit this conclusion?</h3>
                       <p>
-                        Pin the newest returned Transfer entity, indexed block,
-                        exact SUN contract and report commitment. A later check
-                        resolves only on a later event block/log identity—not a
-                        newer retrieval timestamp.
+                        {report.provider === "graph" ? "Save this report and watch for a later Transfer event from this exact contract. A newer index or retrieval alone does not meet the condition." : "Keep this report and choose a measurable counter change to check next. The counter starts from a fresh source reading; it is not the size of this report’s sample."}
                       </p>
                     </div>
                     <Link
                       className="work-primary-button"
                       href={`/theses?project=${encodeURIComponent(mission.projectId)}&mission=${encodeURIComponent(mission.id)}`}
                     >
-                      Save Graph revisit condition <ArrowRight size={15} />
+                      Save a revisit condition <ArrowRight size={15} />
                     </Link>
+                    <button className="work-refresh work-text-button" disabled={!storageReady || followBusy} onClick={()=>void follow(mission.projectId)}>{following.includes(mission.projectId) ? "Following · remove" : "Follow this project"}</button>
+                    <p className="report-time">Your report is saved. Reopen it from Today’s last investigation or Hunters. Scheduled thesis checks need a running worker.</p>
+                    {followNotice && <p role="status" className="setup-note">{followNotice}</p>}
                   </section>
                 )}
                 <ActionProposalPanel

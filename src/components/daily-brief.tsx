@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import type { DailyBrief as BriefData } from "@/lib/daily-brief";
+import type { BriefCard, DailyBrief as BriefData } from "@/lib/daily-brief";
 import type { ResearchUpdate } from "@/lib/research-updates";
-import type { Project } from "@/lib/projects";
+import { projects, type Project } from "@/lib/projects";
 import type { LastHuntReturn } from "@/lib/last-hunt-return";
 import { selectFollowedBrief } from "@/lib/brief-selection";
 
@@ -72,7 +72,7 @@ export function DailyBrief({
   workers: WorkerData[] | null;
   following: string[];
   lastHunt: LastHuntReturn | null;
-  onSelect: (p: Project) => void;
+  onSelect: (p: Project, story?: BriefCard) => void;
   onReview: (id: string) => Promise<void>;
   onOpenChanges?: () => void;
   error: string | null;
@@ -100,11 +100,15 @@ export function DailyBrief({
           .includes(query.trim().toLowerCase()),
     ) || [];
 
-  const quickLead = cards.find(c => c.kind === "activity") ?? cards[0];
 
   return (
     <div className="daily-brief">
-      {quickLead && <button className="work-primary-button brief-start" onClick={() => onSelect(quickLead.project)}>Start an investigation →<small>{quickLead.project.name} · inspect the sources, then send a Hunter</small></button>}
+      {!lastHunt && <section className="field-entry" aria-label="Choose your first investigation">
+        <div className="list-caption"><span>NEW TO ARC?</span><span>NO WALLET NEEDED</span></div>
+        <p>Start with a question you can test.</p>
+        {projects.filter(p => p.contract || p.repo).map(p => <button key={p.id} className="field-entry-target" onClick={() => onSelect(p)}><strong>{p.name}</strong><span>{p.question}</span><small>{p.repo ? "Read code and check a published release" : "Inspect actual transfers and their dates"} →</small></button>)}
+        <details><summary>What am I looking at?</summary><p>Arc is Circle’s blockchain network for stablecoin finance. This map explores its testnet: experiments, contract activity and public code. A token name does not prove who issued it.</p><a className="evidence-link" href="https://www.circle.com/pressroom/circle-launches-arc-public-testnet" target="_blank" rel="noreferrer">Read Circle’s testnet announcement ↗</a><p>Follow a project to keep it in Changes. Save a thesis to track a specific condition. Both stay in this browser’s private workspace; clearing its cookie loses access.</p></details>
+      </section>}
       <details className="source-status-details"><summary>Source update status · {workerSummary(workers)}</summary>
       <section className="worker-pulse" aria-label="Local source workers">
         <div className="list-caption">
@@ -368,6 +372,7 @@ export function DailyBrief({
               </p>
             )}
             <p className="brief-finding">{c.finding}</p>
+            <p className="brief-question"><strong>Ask the Hunter</strong> {c.question}</p>
             <p className="brief-why-now">
               <strong>
                 Why now{" "}
@@ -395,7 +400,7 @@ export function DailyBrief({
             <div className="brief-actions">
               <button
                 className="work-primary-button"
-                onClick={() => onSelect(c.project)}
+                onClick={() => onSelect(c.project, c)}
               >
                 Hunt this →
               </button>

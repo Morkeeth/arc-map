@@ -1,3 +1,4 @@
+import { dailyBrief } from "./daily-brief";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -72,6 +73,13 @@ export class MissionStore {
       if(!previous?.report || !previous.reportHash || previous.status!=="reported")throw new Error("Choose a completed report in this workspace as the baseline.");
       if(previous.address.toLowerCase()!==project.contract.toLowerCase() || previous.provider!==input.provider || previous.hunterId!==hunter.id)throw new Error("Comparison must keep the same contract, provider and Hunter.");
     }
+    let sourceLead = previous?.sourceLead;
+    if(!previous && input.leadId !== undefined) {
+      if(typeof input.leadId !== "string") throw new Error("Choose a retained source lead.");
+      const lead = dailyBrief().cards.find(c=>c.id===input.leadId && c.project.id===project.id);
+      if(!lead) throw new Error("This source lead changed or expired. Refresh Today and choose it again.");
+      sourceLead = {id:lead.id,question:lead.question,finding:lead.finding,observedAt:lead.observedAt,evidence:lead.evidence};
+    }
     const createdAt = new Date().toISOString();
     const id = `0x${randomBytes(32).toString("hex")}`;
     const thesis = hunter.question;
@@ -79,6 +87,7 @@ export class MissionStore {
     const mission: Mission = {
       id,
       ...(previous?{previousMissionId:previous.id}:{}),
+      ...(sourceLead ? {sourceLead} : {}),
       hunterId: hunter.id,
       projectId: project.id,
       address: project.contract,
