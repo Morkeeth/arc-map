@@ -167,6 +167,7 @@ export function Workspace({
     setPreparedFunding(mission?.fundingIntent ?? null);
   }, [mission?.id, mission?.fundingIntent?.policy?.bindingHash]);
   async function load() {
+    const loadGeneration = targetGeneration.current;
     setError("");
     // Establish the private cookie before any other owner-scoped route starts.
     try {
@@ -193,7 +194,8 @@ export function Workspace({
       const nextMissions = results[2].value.missions as Mission[];
       setMissions(nextMissions);
       setMission((current) => {
-        if (current?.status === "researching") {
+        if(loadGeneration !== targetGeneration.current) return current;
+        if (current?.status === "researching" || current?.status === "created") {
           return (
             nextMissions.find((item) => item.id === current.id) || current
           );
@@ -248,7 +250,7 @@ export function Workspace({
     if (target) setSelected(target);
   }
   async function run(previous?:Mission) {
-    const generation = targetGeneration.current;
+    const generation = ++targetGeneration.current;
     newTarget.current = false;
     setBusy("Researching");
     setError("");
@@ -850,6 +852,7 @@ export function Workspace({
                   <span className="work-kicker">
                     {report.stance.replaceAll("-", " ").toUpperCase()}
                   </span>
+                  <p className="report-time">Question tested: {report.thesis}</p>
                   <h3>{report.conclusion}</h3>
                 </div>
                 {coverage && (
