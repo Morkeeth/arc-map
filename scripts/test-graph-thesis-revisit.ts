@@ -1,9 +1,16 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parseEnv } from "node:util";
 import { readThesisEvidence } from "../src/lib/thesis-evidence";
 import { ThesisStore } from "../src/lib/thesis-store";
 import { describeThesisCriterion } from "../src/lib/thesis-types";
+
+// Match other local probes: load existing .env.local without printing secrets.
+if (existsSync(".env.local")) {
+  const local = parseEnv(readFileSync(".env.local", "utf8"));
+  for (const [key, value] of Object.entries(local)) process.env[key] ??= value;
+}
 
 const directory = mkdtempSync(join(tmpdir(), "arcmap-graph-revisit-"));
 const store = new ThesisStore(join(directory, "theses.sqlite"));
