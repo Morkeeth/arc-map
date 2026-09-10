@@ -12,6 +12,7 @@ export default async function HuntersPage({
   if (project && !target) notFound();
   return (
     <Workspace
+      key={typeof id === "string" ? `mission:${id}` : target ? `project:${target.id}` : "hunters"}
       initialView="hunters"
       initialProject={target}
       initialMissionId={typeof id === "string" ? id : undefined}
