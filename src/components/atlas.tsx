@@ -76,6 +76,7 @@ export function Atlas() {
     `${token.name} ${token.symbol} ${token.address}`.toLowerCase().includes(query.toLowerCase()) &&
     (view !== "following" || following.includes(projectIdFor(token.address)))
   );
+  const tokenFollowCount = tokens.filter(token=>following.includes(projectIdFor(token.address))).length;
   const isFollowing = selected ? following.includes(projectIdFor(selected.address)) : false;
   const selectedStory = selected ? storyFor(selected) : null;
 
@@ -103,7 +104,7 @@ export function Atlas() {
 
       <div className="app-body">
         <aside className="rail" aria-label="Main navigation">
-          <nav>{nav.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${view === id ? "active" : ""}`} aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}><Icon size={19} strokeWidth={1.7} /><span>{label}</span>{id === "following" && following.length > 0 && <b>{following.length}</b>}</button>)}</nav>
+          <nav>{nav.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${view === id ? "active" : ""}`} aria-current={view === id ? "page" : undefined} onClick={() => setView(id)}><Icon size={19} strokeWidth={1.7} /><span>{label}</span>{id === "following" && tokenFollowCount > 0 && <b>{tokenFollowCount}</b>}</button>)}</nav>
           <div className="rail-note"><span className="eyebrow">EXPLORE WITH INTENT</span><p>Follow a signal.<br />Find the story.</p><div className="rail-cross">✳</div></div>
           <div className="rail-footer"><span className="live-dot" /> ARC TESTNET<br /><span>Independent field guide</span></div>
         </aside>
@@ -116,6 +117,7 @@ export function Atlas() {
 
           {error && <div className="error-banner" role="alert">{error} {snapshot && "The previous snapshot remains visible."}<button onClick={() => void refresh()}>Retry</button></div>}
 
+          {view === "following" && <p className="quiet">{tokenFollowCount} followed tokens are in this map’s retained catalog. Other projects and repositories appear in Changes in the full workspace. <Link href="/">Open workspace →</Link></p>}
           {view === "hunters" ? <section className="hunter-home"><div className="hunter-art"><Telescope size={82} strokeWidth={1} /><span>SCOUT / 001</span></div><div><span className="eyebrow">THE HUNT / TRANSFER SCOUT</span><h2>What are those wallets actually doing?</h2><p>Select a token and send the transfer scout. It inspects a bounded transfer sample, checks whether it spans distinct transactions, and keeps the source evidence.</p><div className="capability-tags"><span>Read only</span><span>No wallet needed</span><span>Bounded sample</span></div><button className="primary-button" onClick={() => setView("map")}>Find a story to hunt <ArrowRight size={17} /></button><p className="quiet">Hunters run fixed evidence checks. Open a target to keep its report, compare another run and save a thesis.</p></div></section> : (
           <div className="explorer-grid">
             <section className="map-section" aria-label={view === "map" ? "Token atlas" : "Token discovery list"}>
@@ -145,7 +147,7 @@ export function Atlas() {
             </aside>
           </div>)}
 
-          <section className="bottom-strip"><div><span className="eyebrow">A FIELD GUIDE, NOT A FINISH LINE</span><p>Explore the signals. Keep the good questions.</p></div><button onClick={() => setView("following")}>Your watchlist <span>{following.length}</span><ArrowRight size={16} /></button></section>
+          <section className="bottom-strip"><div><span className="eyebrow">A FIELD GUIDE, NOT A FINISH LINE</span><p>Explore the signals. Keep the good questions.</p></div><button onClick={() => setView("following")}>Your token watchlist <span>{tokenFollowCount}</span><ArrowRight size={16} /></button></section>
           <footer className="provenance"><span>{snapshot?.coverage ?? "Discovery is loading from the Arc testnet explorer."}</span><span>ARC MAP / EARLY FIELD EDITION</span></footer>
         </main>
       </div>

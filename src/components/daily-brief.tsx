@@ -58,6 +58,7 @@ function workerSummary(workers: WorkerData[] | null) {
 
 export function DailyBrief({
   data,
+  missionsReady,
   updates,
   workers,
   following,
@@ -68,6 +69,7 @@ export function DailyBrief({
   error,
 }: {
   data: BriefData | null;
+  missionsReady: boolean;
   updates: ResearchUpdate[] | null;
   workers: WorkerData[] | null;
   following: string[];
@@ -103,7 +105,7 @@ export function DailyBrief({
 
   return (
     <div className="daily-brief">
-      {!lastHunt && <section className="field-entry" aria-label="Choose your first investigation">
+      {missionsReady && !lastHunt && <section className="field-entry" aria-label="Choose your first investigation">
         <div className="list-caption"><span>NEW TO ARC?</span><span>NO WALLET NEEDED</span></div>
         <p>Start with a question you can test.</p>
         {projects.filter(p => p.contract || p.repo).map(p => <button key={p.id} className="field-entry-target" onClick={() => onSelect(p)}><strong>{p.name}</strong><span>{p.question}</span><small>{p.repo ? "Read code and check a published release" : "Inspect actual transfers and their dates"} →</small></button>)}

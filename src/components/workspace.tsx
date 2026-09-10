@@ -103,6 +103,7 @@ export function Workspace({
   const [followBusy, setFollowBusy] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [missionsReady, setMissionsReady] = useState(false);
   const [mission, setMission] = useState<Mission | null>(null);
   const [capabilities, setCapabilities] = useState<Capability | null>(null);
   const [indexHealth, setIndexHealth] = useState<{ checkedAt: string; graph: { queryVerified: boolean; fresh: boolean; reason: string | null; indexedBlock: number | null } } | null>(null);
@@ -193,6 +194,7 @@ export function Workspace({
     if (results[2].status === "fulfilled") {
       const nextMissions = results[2].value.missions as Mission[];
       setMissions(nextMissions);
+      setMissionsReady(true);
       setMission((current) => {
         if(loadGeneration !== targetGeneration.current) return current;
         if (current?.status === "researching" || current?.status === "created") {
@@ -369,6 +371,7 @@ export function Workspace({
     }
   }
   const allProjects = [...projects, ...(radar?.projects || [])];
+  const storyExpired = Boolean(story && brief && !brief.cards.some(card=>card.id===story.id));
   const selectedRecord = radar?.records.find(r => r.id === selected.id);
   const graphCovered = selected.contract?.toLowerCase() === projects[0].contract?.toLowerCase();
   useEffect(() => {
@@ -392,6 +395,7 @@ export function Workspace({
       (filter !== "Code" || e.kind === "code") &&
       (filter !== "Onchain" || e.kind !== "code"),
   ).sort((a,b) => Number(Boolean(b.eventAt)) - Number(Boolean(a.eventAt)) || (b.eventAt || b.observedAt).localeCompare(a.eventAt || a.observedAt)).slice(0, 12);
+  const missionTargetUnavailable = Boolean(mission && radar && !allProjects.some(p=>p.id===mission.projectId));
   const report = mission?.report;
   const coverage =
     mission?.report ? assessEvidenceCoverage(mission) : null;
@@ -604,7 +608,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={startInvestigation} onReview={reviewUpdate} onOpenChanges={()=>setView("changes")} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={startInvestigation} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief missionsReady={missionsReady} data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={startInvestigation} onReview={reviewUpdate} onOpenChanges={()=>setView("changes")} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={startInvestigation} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
@@ -679,6 +683,7 @@ export function Workspace({
             className="work-detail"
             aria-label="Selected project and Hunter mission"
           >
+            {missionTargetUnavailable ? <section className="selected-story"><span className="work-kicker">SAVED REPORT TARGET</span><h2>Contract no longer in the source catalog</h2><code>{mission?.address}</code><p>Your original Hunt remains below. New research and monitoring need this target to be available in the source catalog.</p></section> : <>
             <div className="detail-heading">
               <span className="project-monogram">
                 {selected.symbol.slice(0, 3)}
@@ -698,8 +703,9 @@ export function Workspace({
                 </span>
               </button>
             </div>
-            {followNotice && <p className="setup-note" role="status">{followNotice} <button className="evidence-link" onClick={()=>setView("changes")}>Open Changes →</button></p>}
+            {followNotice && !report && <p className="setup-note" role="status">{followNotice} <button className="evidence-link" onClick={()=>setView("changes")}>Open Changes →</button></p>}
             {story && story.project.id === selected.id && <section className="selected-story" aria-label="Lead being investigated"><span className="work-kicker">YOUR LEAD</span><h3>{story.question}</h3><p>{story.finding}</p><p className="report-time">{story.whyNow}</p><details><summary>Original evidence and limits</summary><p>{story.counterevidence}</p>{story.evidence.map(e=><a key={e.id} className="evidence-link" href={e.url} target="_blank" rel="noreferrer">{e.title} ↗</a>)}</details></section>}
+            {storyExpired && <p className="setup-note" role="alert">This lead changed or left the current brief. Your original question stays above; choose a current lead before running another Hunt. <button className="evidence-link" onClick={()=>setView("today")}>Choose a current lead →</button></p>}
             <p className="detail-summary">{selected.summary}</p>
             <p className="detail-relation">{selected.relation}</p>
             <div className="detail-links">
@@ -745,7 +751,7 @@ export function Workspace({
                         setProvider(e.target.value as "graph" | "explorer")
                       }
                     >
-                      <option value="graph" disabled={!graphCovered}>
+                      <option value="graph" disabled={!graphCovered || capabilities?.graphConfigured !== true}>
                         The Graph · transfer subgraph
                       </option>
                       <option value="explorer">
@@ -754,10 +760,9 @@ export function Workspace({
                     </select>
                   </label>
                   {!graphCovered && <p className="setup-note">This target is outside the deployed Graph index. Arcscan is selected for a free preview. Graph coverage will not be implied.</p>}
-                  {provider === "graph" && !capabilities?.graphConfigured && (
+                  {graphCovered && capabilities?.graphConfigured !== true && (
                     <p className="setup-note">
-                      Graph endpoint not configured. A Graph run will stop with
-                      a visible error; it will not substitute explorer data.
+                      {capabilities ? "The Graph is not configured for this server. Arcscan is available as a separate free preview; it is not Graph evidence." : "Checking whether The Graph is available. You can choose the separate Arcscan preview."}
                     </p>
                   )}
                   {provider === "graph" && capabilities?.graphConfigured && (
@@ -796,7 +801,7 @@ export function Workspace({
                   </details>
                   <button
                     className="work-primary-button"
-                    disabled={Boolean(busy) || (provider === "graph" && (!graphCovered || !capabilities?.graphConfigured))}
+                    disabled={Boolean(busy) || storyExpired || (provider === "graph" && (!graphCovered || !capabilities?.graphConfigured))}
                     onClick={() => {
                       setView("hunters");
                       void run();
@@ -815,6 +820,7 @@ export function Workspace({
                 </>
               )}
             </section>
+            </>}
           </aside>
         </div>
         {mission && (
@@ -828,7 +834,7 @@ export function Workspace({
                 mission.status === "blocked") && (
               <ReportComparison previous={previousReport} current={mission} />
             )}
-            {report && <button className="work-refresh work-text-button" disabled={Boolean(busy)} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
+            {report && <button className="work-refresh work-text-button" disabled={Boolean(busy) || missionTargetUnavailable} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
             <div className="report-heading">
               <div>
                 <span className="work-kicker">MISSION {short(mission.id)}</span>
