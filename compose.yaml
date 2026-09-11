@@ -32,6 +32,9 @@ services:
       context: .
       target: collector
     command: ["npm", "run", "theses:watch"]
+    environment:
+      GRAPH_TRANSFERS_URL: ${GRAPH_TRANSFERS_URL:-}
+      GRAPH_API_KEY: ${GRAPH_API_KEY:-}
     volumes:
       - arcmap-data:/app/.data
     restart: unless-stopped

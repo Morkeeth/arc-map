@@ -7,7 +7,7 @@ export function missionForReturn(
 ): Mission | null {
   if (preferredId) {
     const exact = missions.find((mission) => mission.id === preferredId);
-    if (exact) return exact;
+    return exact ?? null;
   }
   return (
     missions.find(

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { projects, type Project, sourceIds } from "@/lib/projects";
 import type { FeedData, FeedEvent } from "@/lib/feed-types";
-import type { HuntReport } from "@/lib/types";
+import { loadBrowserFollows } from "@/lib/browser-follows";
 
 const stamp = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -29,42 +29,17 @@ const stamp = (value: string) =>
     minute: "2-digit",
     timeZoneName: "short",
   });
-function useFollowing() {
+export function useFollowing() {
   const [following, setFollowing] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
-  useEffect(() => {
-    try {
-      const saved: unknown = JSON.parse(
-        localStorage.getItem("arcmap.projects.v1") || "[]",
-      );
-      if (Array.isArray(saved))
-        setFollowing(
-          saved.filter(
-            (id) =>
-              typeof id === "string" &&
-              projects.some((project) => project.id === id),
-          ),
-        );
-    } catch {
-      setError(true);
-    }
-    setReady(true);
-  }, []);
-  function toggle(id: string) {
-    setFollowing((previous) => {
-      const next = previous.includes(id)
-        ? previous.filter((item) => item !== id)
-        : [...previous, id];
-      try {
-        localStorage.setItem("arcmap.projects.v1", JSON.stringify(next));
-      } catch {
-        setError(true);
-      }
-      return next;
-    });
+  const [notice, setNotice] = useState("");
+  useEffect(() => { void loadBrowserFollows().then(({data,migrationError})=>{setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));setError(migrationError);setReady(true);}).catch(()=>setError(true)); }, []);
+  async function toggle(id:string) {
+    setReady(false);setError(false);setNotice("");
+    try {const response=await fetch("/api/follows",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:following.includes(id)?"unfollow":"follow",projectId:id})});if(!response.ok)throw new Error();const data=await response.json();setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));setNotice(data.follows.some((f:{projectId:string})=>f.projectId===id)?"Saved to your private workspace. Open Changes from Today to revisit source observations.":"Removed from following.");}catch{setError(true);}finally{setReady(true);}
   }
-  return { following, toggle, ready, error };
+  return {following,toggle,ready,error,notice};
 }
 
 export function DiscoveryHeader() {
@@ -453,6 +428,7 @@ export function Today() {
                     {project.symbol}
                   </Link>
                   <Follow project={project} state={follows} />
+          {follows.notice && <p role="status">{follows.notice}</p>}
                 </div>
                 <span className="project-category">{project.category}</span>
                 <h3>
@@ -488,8 +464,7 @@ export function ProjectDetail({ project }: { project: Project }) {
   const [sources, setSources] = useState<FeedData["sources"]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [report, setReport] = useState<HuntReport | null>(null);
-  const [running, setRunning] = useState(false);
+
   const follows = useFollowing();
   useEffect(() => {
     fetch(`/api/projects/${project.id}`)
@@ -502,22 +477,6 @@ export function ProjectDetail({ project }: { project: Project }) {
       .catch((cause) => setError(cause.message))
       .finally(() => setLoading(false));
   }, [project.id]);
-  async function hunt() {
-    if (!project.contract) return;
-    setRunning(true);
-    setError("");
-    setReport(null);
-    try {
-      const response = await fetch(`/api/hunt?address=${project.contract}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Scout unavailable");
-      setReport(data);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Scout unavailable");
-    } finally {
-      setRunning(false);
-    }
-  }
   return (
     <>
       <DiscoveryHeader />
@@ -537,6 +496,7 @@ export function ProjectDetail({ project }: { project: Project }) {
             <p>{project.summary}</p>
           </div>
           <Follow project={project} state={follows} />
+          {follows.notice && <p role="status">{follows.notice}</p>}
         </section>
         <div className="project-detail-grid">
           <section>
@@ -602,36 +562,10 @@ export function ProjectDetail({ project }: { project: Project }) {
               <h2>Follow the evidence.</h2>
               <p>
                 {project.contract
-                  ? "Send a read-only scout to inspect the latest returned transfer page."
-                  : "Start with the sources. Automated repository investigations are not connected yet."}
+                  ? "Open a free Hunt, keep its report, and track what changes next."
+                  : project.repo ? "Open Ship Hunter to inspect commits and check an exact published release." : "Start with the linked source. No verified contract or repository association is available."}
               </p>
-              {project.contract ? (
-                <button
-                  className="blue-action"
-                  disabled={running}
-                  onClick={() => void hunt()}
-                >
-                  {running ? (
-                    <>
-                      <LoaderCircle className="spin" size={16} /> Following the
-                      trail…
-                    </>
-                  ) : (
-                    <>
-                      Hunt this <ArrowUpRight size={17} />
-                    </>
-                  )}
-                </button>
-              ) : (
-                <a
-                  className="blue-action"
-                  href={project.reference}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Inspect the source <ArrowUpRight size={17} />
-                </a>
-              )}
+              {project.contract || project.repo ? <Link className="blue-action" href={`/hunters?project=${encodeURIComponent(project.id)}`}>Hunt this <ArrowUpRight size={17}/></Link> : <a className="blue-action" href={project.reference} target="_blank" rel="noreferrer">Inspect the source <ArrowUpRight size={17}/></a>}
               <small>Fixed evidence scout · no spend · no signing</small>
             </section>
             <section className="source-box source-status">
@@ -676,43 +610,8 @@ export function ProjectDetail({ project }: { project: Project }) {
         )}
         {follows.error && (
           <p className="feed-notice">
-            Could not persist follows in this browser.
+            Could not save your follow. Existing server-saved follows remain unchanged.
           </p>
-        )}
-        {report && (
-          <section className="case-result" aria-live="polite">
-            <span className="field-label">
-              <Check size={16} /> SCOUT RETURNED
-            </span>
-            <h2>Investigation findings.</h2>
-            <div className="case-stats">
-              <div>
-                <strong>{report.examined}</strong>
-                <span>sampled events</span>
-              </div>
-              <div>
-                <strong>{report.uniqueTransactions}</strong>
-                <span>transactions in sample</span>
-              </div>
-              <div>
-                <strong>{report.uniqueSenders}</strong>
-                <span>sender addresses</span>
-              </div>
-            </div>
-            {report.observations.map((text) => (
-              <p key={text}>{text}</p>
-            ))}
-            {report.newestTransferAt && (
-              <p>
-                Latest sampled event: {stamp(report.newestTransferAt)}.
-                Retrieved: {stamp(report.fetchedAt)}.
-              </p>
-            )}
-            <p className="case-limits">{report.limitation}</p>
-            <a href={report.source} target="_blank" rel="noreferrer">
-              Open the source response <ArrowUpRight size={15} />
-            </a>
-          </section>
         )}
         <footer className="discovery-footer">
           Project profile, not an endorsement. ARC MAP / FIELD EDITION

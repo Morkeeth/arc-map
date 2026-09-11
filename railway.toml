@@ -1,0 +1,12 @@
+# Railway service config for the single-service image (Dockerfile final stage "all").
+# One service, one volume at /app/.data. The entrypoint exits nonzero on any
+# unexpected child exit, so the platform restart policy is what brings it back.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/workers"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

@@ -55,8 +55,15 @@ Public-source discovery and explorer research need no API key. Copy `.env.exampl
 `.env.local` only when configuring optional integrations. Never put a private key or server
 secret in a `NEXT_PUBLIC_` variable.
 
-Hosting / local production restore: see [docs/HOSTING-READINESS.md](docs/HOSTING-READINESS.md)
-and `npm run check:hosting`. That checklist does not authorize paid hosting or public deploy.
+For a persistent host, the Dockerfile's final `all` target runs the web app and worker
+supervisor in one service. Mount a writable volume at `/app/.data`. If the web process or
+supervisor exits unexpectedly, the service exits nonzero so the host can restart it;
+`railway.toml` sets that policy. Local container restart and volume-retention checks passed
+on 11 September 2026. No public HTTPS deployment has been verified.
+
+Hosting and restore instructions: [docs/HOSTING-READINESS.md](docs/HOSTING-READINESS.md)
+and [docs/LAUNCH-OPERATIONS.md](docs/LAUNCH-OPERATIONS.md). `npm run check:hosting`
+checks configuration; it does not prove a deployed service or authorize hosting spend.
 
 For Graph research, configure `GRAPH_TRANSFERS_URL` for the schema in
 [subgraphs/arcmap](subgraphs/arcmap/README.md). The deployed index covers SUN transfers;
