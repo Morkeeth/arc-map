@@ -31,3 +31,17 @@ RUN mkdir -p /app/.data && chown node:node /app/.data
 USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+# Single-service image: web + worker supervisor in one process tree, one volume.
+# Use this target on hosts where a volume attaches to exactly one service.
+FROM dependencies AS all
+COPY --from=build --chown=node:node /app/.next/standalone ./.next/standalone
+COPY --from=build --chown=node:node /app/.next/static ./.next/standalone/.next/static
+COPY --chown=node:node src ./src
+COPY --chown=node:node scripts ./scripts
+COPY --chown=node:node tsconfig.json ./tsconfig.json
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
+RUN mkdir -p /app/.data && chown node:node /app/.data
+USER node
+EXPOSE 3000
+CMD ["node", "scripts/serve-all.mjs"]
