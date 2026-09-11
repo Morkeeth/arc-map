@@ -55,13 +55,29 @@ Public-source discovery and explorer research need no API key. Copy `.env.exampl
 `.env.local` only when configuring optional integrations. Never put a private key or server
 secret in a `NEXT_PUBLIC_` variable.
 
-Hosting / local production restore: see [docs/HOSTING-READINESS.md](docs/HOSTING-READINESS.md)
-and `npm run check:hosting`. That checklist does not authorize paid hosting or public deploy.
+For a persistent host, the Dockerfile's final `all` target runs the web app and worker
+supervisor in one service. Mount a writable volume at `/app/.data`. If the web process or
+supervisor exits unexpectedly, the service exits nonzero so the host can restart it;
+`railway.toml` sets that policy. Local container restart and volume-retention checks passed
+on 11 September 2026. No public HTTPS deployment has been verified.
+
+Hosting and restore instructions: [docs/HOSTING-READINESS.md](docs/HOSTING-READINESS.md)
+and [docs/LAUNCH-OPERATIONS.md](docs/LAUNCH-OPERATIONS.md). `npm run check:hosting`
+checks configuration; it does not prove a deployed service or authorize hosting spend.
 
 For Graph research, configure `GRAPH_TRANSFERS_URL` for the schema in
 [subgraphs/arcmap](subgraphs/arcmap/README.md). The deployed index covers SUN transfers;
 it does **not** index every radar contract. Missing Graph access stays an explicit error,
 never an explorer result relabeled as Graph.
+
+To replay the load-bearing Graph thesis check without wallet actions:
+
+```sh
+npm run test:graph-revisit
+```
+
+It performs two bounded SUN `Transfer` reads when the existing endpoint is configured. Without
+`GRAPH_TRANSFERS_URL` it exits unavailable and states that explorer data was not substituted.
 
 ## Try the product
 
@@ -119,6 +135,17 @@ npm run test:lifecycle
 
 The lifecycle command runs a separate **local Anvil chain**. It does not authorize or execute
 an Arc transaction. `ANVIL_BIN` can override the executable path.
+
+To run the standalone opportunity-action proof (no key, public RPC or broadcast):
+
+```sh
+npm run test:opportunity-action
+```
+
+This command starts its packaged isolated Anvil node, injects a compiled ERC-20 fixture without
+deploying it, simulates one policy-bound transfer to an approved report-contract address, and
+prints the pinned block plus decoded account/target balance deltas. It is separate from mission
+escrow and is not evidence that an equivalent public-chain action is safe or available.
 
 A local production restore test is available after a build:
 

@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { randomUUID, createHash } from "node:crypto";
-import { researchProject } from "./research-catalog";
+import { graphCovers, researchProject } from "./research-catalog";
 import { evaluateThesis, readThesisEvidence } from "./thesis-evidence";
 import type { Thesis, ThesisSample, ThesisCheck, ThesisMetric, ThesisResearch } from "./thesis-types";
 import { MissionStore } from "./mission-store";
@@ -13,12 +13,19 @@ export function validateThesisInput(input: Record<string, unknown>) {
   const project = researchProject(input.projectId);
   if (!project) throw new Error("Choose a sourced project.");
   const metric = input.metric as ThesisMetric;
-  if (!["transfer-counter", "holder-counter", "repository-head", "transaction-counter"].includes(metric)) throw new Error("Choose a supported observable criterion.");
+  if (!["transfer-counter", "holder-counter", "repository-head", "transaction-counter", "graph-transfer-event"].includes(metric)) throw new Error("Choose a supported observable criterion.");
   if (project.researchKind === "contract" && metric !== "transaction-counter") throw new Error("Generic contract theses use the address transaction counter, not token counters.");
+  if (
+    metric === "graph-transfer-event" &&
+    (!project.contract || !graphCovers(project.contract))
+  )
+    throw new Error(
+      "The deployed Graph Transfer index covers the sourced SUN contract only.",
+    );
   if (metric === "repository-head" ? !project.repo : !project.contract) throw new Error("This target does not have the required verified source association.");
   const claim = typeof input.claim === "string" ? input.claim.trim() : "";
   if (claim.length < 10 || claim.length > 400) throw new Error("Write a claim between 10 and 400 characters.");
-  const threshold = metric === "repository-head" ? 1 : input.threshold;
+  const threshold = metric === "repository-head" || metric === "graph-transfer-event" ? 1 : input.threshold;
   const hours = input.hours ?? 8, interval = input.intervalMinutes ?? 30, checks = input.checks ?? 16;
   if (!Number.isSafeInteger(threshold) || Number(threshold) < 1 || Number(threshold) > 1000000) throw new Error("Choose a whole-number threshold from 1 to 1,000,000.");
   if (!Number.isSafeInteger(hours) || Number(hours) < 1 || Number(hours) > 168) throw new Error("Horizon must be 1–168 hours.");
@@ -101,7 +108,21 @@ export class ThesisStore {
   create(owner: string, input: Record<string, unknown>, baseline: ThesisSample, now = Date.now()): Thesis {
     const config = validateThesisInput(input);
     if (baseline.metric !== config.metric || !Number.isFinite(Date.parse(baseline.observedAt)) || Math.abs(now-Date.parse(baseline.observedAt)) > 120000) throw new Error("A fresh matching baseline is required.");
-    if (config.metric === "repository-head" ? typeof baseline.value !== "string" || !/^[a-f0-9]{40}$/i.test(baseline.value) : typeof baseline.value !== "number" || !Number.isSafeInteger(baseline.value) || baseline.value < 0) throw new Error("Invalid baseline value.");
+    if (
+      config.metric === "repository-head"
+        ? typeof baseline.value !== "string" ||
+          !/^[a-f0-9]{40}$/i.test(baseline.value)
+        : config.metric === "graph-transfer-event"
+          ? typeof baseline.value !== "string" ||
+            !/^0x[a-f0-9]{64}:\d+$/i.test(baseline.value) ||
+            baseline.provenance?.provider !== "graph" ||
+            baseline.provenance.schema !== "Transfer" ||
+            baseline.provenance.chainId !== 5042002
+          : typeof baseline.value !== "number" ||
+            !Number.isSafeInteger(baseline.value) ||
+            baseline.value < 0
+    )
+      throw new Error("Invalid baseline value.");
     if(typeof baseline.value==="number"&&!Number.isSafeInteger(baseline.value+config.threshold))throw new Error("The resulting counter target exceeds supported precision.");
     this.db.exec("BEGIN IMMEDIATE");
     try {

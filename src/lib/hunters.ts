@@ -1,3 +1,11 @@
+import type { PolicyReview } from "./policy-envelope";
+import type { CoverageDecisionReceipt } from "./evidence-coverage";
+import type {
+  MissionFundingReceipt,
+  PreparedMissionTransaction,
+} from "./funding-types";
+import type { StoredOpportunityReceipt } from "./opportunity-action";
+
 export const hunters = [
   {
     id: "distribution",
@@ -58,6 +66,7 @@ export type MissionReport = {
 export type Mission = {
   id: string;
   previousMissionId?: string;
+  sourceLead?: { id: string; question: string; finding: string; observedAt: string; evidence: { id:string;title:string;url:string;observedAt:string;eventAt:string|null }[] };
   hunterId: string;
   projectId: string;
   address: string;
@@ -72,4 +81,9 @@ export type Mission = {
   report: MissionReport | null;
   reportHash: `0x${string}` | null;
   error: string | null;
+  coverageDecision?: CoverageDecisionReceipt | null;
+  policyReview?: PolicyReview | null;
+  opportunityReceipt?: StoredOpportunityReceipt | null;
+  fundingIntent?: PreparedMissionTransaction | null;
+  fundingReceipt?: MissionFundingReceipt | null;
 };

@@ -1,5 +1,10 @@
 FROM node:22-bookworm-slim AS dependencies
 WORKDIR /app
+# bufferutil (a ws native helper pulled in by the wallet/chain libraries) has no
+# prebuilt binary for this platform, so npm ci falls back to node-gyp and needs a
+# toolchain. Kept in this stage only; the final image copies node_modules out.
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
 
@@ -31,3 +36,20 @@ RUN mkdir -p /app/.data && chown node:node /app/.data
 USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+# Single-service image: web + worker supervisor in one process tree, one volume.
+# Use this target on hosts where a volume attaches to exactly one service.
+FROM node:22-bookworm-slim AS all
+WORKDIR /app
+COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node package.json ./package.json
+COPY --from=build --chown=node:node /app/.next/standalone ./.next/standalone
+COPY --from=build --chown=node:node /app/.next/static ./.next/standalone/.next/static
+COPY --chown=node:node src ./src
+COPY --chown=node:node scripts ./scripts
+COPY --chown=node:node tsconfig.json ./tsconfig.json
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
+RUN mkdir -p /app/.data && chown node:node /app/.data
+USER node
+EXPOSE 3000
+CMD ["node", "scripts/serve-all.mjs"]

@@ -1,3 +1,4 @@
+import { dailyBrief } from "./daily-brief";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -5,6 +6,14 @@ import { randomBytes } from "node:crypto";
 import { keccak256, toHex, parseEther } from "viem";
 import { researchProject, graphCovers } from "./research-catalog";
 import { hunters, type Mission, type MissionReport } from "./hunters";
+import { actionProposalFor } from "./action-proposal";
+import { coverageDecisionReceipt } from "./evidence-coverage";
+import { policyReviewFromInput } from "./policy-envelope";
+import type { StoredOpportunityReceipt } from "./opportunity-action";
+import type {
+  MissionFundingReceipt,
+  PreparedMissionTransaction,
+} from "./funding-types";
 
 export class MissionStore {
   private db: DatabaseSync;
@@ -64,6 +73,13 @@ export class MissionStore {
       if(!previous?.report || !previous.reportHash || previous.status!=="reported")throw new Error("Choose a completed report in this workspace as the baseline.");
       if(previous.address.toLowerCase()!==project.contract.toLowerCase() || previous.provider!==input.provider || previous.hunterId!==hunter.id)throw new Error("Comparison must keep the same contract, provider and Hunter.");
     }
+    let sourceLead = previous?.sourceLead;
+    if(!previous && input.leadId !== undefined) {
+      if(typeof input.leadId !== "string") throw new Error("Choose a retained source lead.");
+      const lead = dailyBrief().cards.find(c=>c.id===input.leadId && c.project.id===project.id);
+      if(!lead) throw new Error("This source lead changed or expired. Refresh Today and choose it again.");
+      sourceLead = {id:lead.id,question:lead.question,finding:lead.finding,observedAt:lead.observedAt,evidence:lead.evidence};
+    }
     const createdAt = new Date().toISOString();
     const id = `0x${randomBytes(32).toString("hex")}`;
     const thesis = hunter.question;
@@ -71,6 +87,7 @@ export class MissionStore {
     const mission: Mission = {
       id,
       ...(previous?{previousMissionId:previous.id}:{}),
+      ...(sourceLead ? {sourceLead} : {}),
       hunterId: hunter.id,
       projectId: project.id,
       address: project.contract,
@@ -100,11 +117,116 @@ export class MissionStore {
       report: null,
       reportHash: null,
       error: null,
+      coverageDecision: null,
+      policyReview: null,
+      opportunityReceipt: null,
+      fundingIntent: null,
+      fundingReceipt: null,
     };
     this.db
       .prepare("INSERT INTO missions(id,owner,created_at,data) VALUES(?,?,?,?)")
       .run(id, owner, createdAt, JSON.stringify(mission));
     return mission;
+  }
+  savePolicyReview(
+    owner: string,
+    id: string,
+    input: Record<string, unknown>,
+    now = new Date().toISOString(),
+  ): Mission {
+    const mission = this.get(owner, id);
+    if (!mission?.report || mission.status !== "reported")
+      throw new Error("A completed Hunter report is required.");
+    mission.policyReview = policyReviewFromInput({
+      proposal: actionProposalFor(mission.report, mission.address),
+      input,
+      now,
+    });
+    this.db
+      .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+      .run(JSON.stringify(mission), id, owner);
+    return mission;
+  }
+  saveOpportunityReceipt(
+    owner: string,
+    id: string,
+    receipt: StoredOpportunityReceipt,
+  ): Mission {
+    const mission = this.get(owner, id);
+    if (!mission?.report || mission.status !== "reported")
+      throw new Error("A completed Hunter report is required.");
+    mission.opportunityReceipt = receipt;
+    this.db
+      .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+      .run(JSON.stringify(mission), id, owner);
+    return mission;
+  }
+  saveFundingIntent(
+    owner: string,
+    id: string,
+    intent: PreparedMissionTransaction,
+    now = Date.now(),
+  ): Mission {
+    if (intent.action !== "fund" || !intent.policy)
+      throw new Error("Only a policy-bound funding request can be retained.");
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const mission = this.get(owner, id);
+      if (!mission?.report || mission.status !== "reported")
+        throw new Error("A completed Hunter report is required.");
+      if (mission.fundingReceipt)
+        throw new Error("This mission already has a verified funding receipt.");
+      const current = mission.fundingIntent;
+      if (current && Date.parse(current.expiresAt) >= now) {
+        if (
+          current.account.toLowerCase() !== intent.account.toLowerCase()
+        )
+          throw new Error(
+            "A funding request is already prepared for another account. Wait for it to expire.",
+          );
+        this.db.exec("COMMIT");
+        return mission;
+      }
+      mission.fundingIntent = intent;
+      this.db
+        .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+        .run(JSON.stringify(mission), id, owner);
+      this.db.exec("COMMIT");
+      return mission;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  saveFundingReceipt(
+    owner: string,
+    id: string,
+    receipt: MissionFundingReceipt,
+  ): Mission {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const mission = this.get(owner, id);
+      if (!mission?.fundingIntent?.policy)
+        throw new Error("No prepared funding request exists for this mission.");
+      if (
+        mission.fundingIntent.policy.bindingHash !== receipt.bindingHash
+      )
+        throw new Error("Funding receipt does not match the prepared policy.");
+      if (
+        mission.fundingReceipt &&
+        mission.fundingReceipt.transactionHash !== receipt.transactionHash
+      )
+        throw new Error("A different funding receipt is already retained.");
+      mission.fundingReceipt = receipt;
+      this.db
+        .prepare("UPDATE missions SET data=? WHERE id=? AND owner=?")
+        .run(JSON.stringify(mission), id, owner);
+      this.db.exec("COMMIT");
+      return mission;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
   }
   claim(owner: string, id: string, now = Date.now()): Mission {
     this.db.exec("BEGIN IMMEDIATE");
@@ -164,6 +286,10 @@ export class MissionStore {
     mission.reportHash = report
       ? keccak256(toHex(JSON.stringify(report)))
       : null;
+    mission.coverageDecision =
+      report && mission.reportHash
+        ? coverageDecisionReceipt(mission, mission.reportHash)
+        : null;
     mission.status = report ? "reported" : "blocked";
     mission.error = error;
     this.db

@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ThesisStore } from "../src/lib/thesis-store";
-import { evaluateThesis } from "../src/lib/thesis-evidence";
+import {
+  evaluateThesis,
+  graphThesisBaselineFromReport,
+} from "../src/lib/thesis-evidence";
 import type { ThesisSample } from "../src/lib/thesis-types";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -31,6 +34,28 @@ test("research attachments preserve criterion and report commitment with owner a
     const repo=store.create("a",{...input,projectId:"arc-node",metric:"repository-head"},{...baseline,metric:"repository-head",value:"a".repeat(40)},now);
     assert.throws(()=>store.attachResearch("a",repo.id,m.id,missions),/sourced contract/);
   }finally{store.close();missions.close();}
+});
+test("Graph Transfer thesis ignores index time alone and resolves on a later event identity",()=>{
+  const store=new ThesisStore(":memory:");
+  try {
+    const graphReport:MissionReport={
+      version:1,hunter:"distribution",thesis:"Does activity extend beyond one transaction?",conclusion:"Bounded Graph fixture.",stance:"limited-support",provider:"graph",source:"Labeled Graph fixture",observedAt:new Date(now).toISOString(),indexedBlock:500,sampleSize:2,transactions:2,firstEventAt:"2026-09-04T23:58:00Z",lastEventAt:"2026-09-04T23:59:00Z",
+      evidence:[{transaction:`0x${"1".repeat(64)}`,block:490,from:`0x${"2".repeat(40)}`,to:`0x${"3".repeat(40)}`,timestamp:"2026-09-04T23:59:00Z",logIndex:4}],observations:[],limitations:["Labeled fixture, not live data."],steps:[],
+    };
+    const graphBaseline=graphThesisBaselineFromReport(graphReport);
+    const graphInput={projectId:"sun-token",claim:"A later Graph Transfer event will appear.",metric:"graph-transfer-event",hours:8,checks:3,intervalMinutes:30};
+    const thesis=store.create("owner",graphInput,graphBaseline,now);
+    assert.equal(describeThesisCriterion(thesis).kind,"new-graph-transfer");
+    const indexOnly={...graphBaseline,observedAt:new Date(now+60000).toISOString(),provenance:{...graphBaseline.provenance!,indexedBlock:510}};
+    const unchanged=evaluateThesis(thesis,indexOnly);
+    assert.equal(unchanged.met,false);
+    assert.match(unchanged.observation,/index progress alone/);
+    const later={...indexOnly,value:`0x${"4".repeat(64)}:0`,sourceEventAt:"2026-09-05T00:01:00Z",provenance:{...indexOnly.provenance!,eventBlock:501,eventLogIndex:0,eventTransaction:`0x${"4".repeat(64)}`}};
+    const changed=evaluateThesis(thesis,later);
+    assert.equal(changed.met,true);
+    assert.match(changed.observation,/later Transfer entity/);
+    assert.throws(()=>store.create("owner",{...graphInput,projectId:"arc-node"},graphBaseline,now),/SUN/);
+  } finally {store.close();}
 });
 test("two worker connections fence completion across a process restart",()=>{
   const dir=mkdtempSync(join(tmpdir(),"arcmap-thesis-test-")), path=join(dir,"theses.sqlite");

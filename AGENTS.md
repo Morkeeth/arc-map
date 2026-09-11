@@ -1,4 +1,30 @@
+<!-- STATE:start -->
+## SHARED WORK STATE · revision ffabe397994e · rendered 2026-09-10 · scope repo arc-map
+This repo's rows of the one shared work state. Authorities: todo.md (human), TASKS.yaml (ids), board clocks, Oscar's rulings (local only). Views such as GLANCE, SLASK and ZUP are adapters over the same revision.
+**A CLOSED task stays closed. Do not requeue, re-verify or re-poll it.**
+Before acting, record that you read this revision, exact session and exact rev: `python3 ~/CODE/fleet-ops/state/state.py ack --session <your session id> --consumer <claude|codex|cursor> --rev ffabe397994e`. In a cloud sandbox instead append `{"session":"<your session id>","consumer":"<claude|codex|cursor>","rev":"ffabe397994e","ts":"<iso>","stage":"acknowledged"}` to `.fleet/ACK.jsonl` in this repo and commit it.
+
+### OPEN
+- **ARCMAP-HOSTING** · ARC MAP: host it, judge URL · owner agent · `arc-map`
+  - next: LAUNCH-OPERATIONS.md:18 says not deployed. A judge-openable URL before Thu 10 Sep 23:59 Stockholm. No runner produces this.
+
+### ACKNOWLEDGED THIS REVISION: claude/dc8db26e-0366-4b4c-8309-460715de7fcb
+<!-- STATE:end -->
+
 # ARC MAP
+
+## Current shared state — public preview, 7 September 2026
+
+- Repository authority is `main` at `490696286b5ca08844940e5f957e4133fc3462c7`.
+- Discovery → Why NOW → Hunt work is based at
+  `f1f9d9344d505d7ec3412c65582aca40838d4017` on
+  `cursor/arc-discovery-hunter-2026-09-07-196a`.
+- The policy-envelope public-preview repair continues on
+  `cursor/arc-policy-envelope-0913-118b`; it must remain simulation-only.
+- Draft PR #9 remains a separate persistent-contribution/revoke slice. Do not silently discard
+  that journey or combine it without resolving re-share eviction and post-commit rollback.
+- Before starting or combining another slice, fetch the relevant remote tip and recheck open PRs
+  and concurrent owners. Root review is still required before merge.
 
 ## Settled product decision
 

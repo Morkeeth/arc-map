@@ -4,6 +4,8 @@ import {
   isAddress,
   keccak256,
   parseEther,
+  parseEventLogs,
+  toHex,
   encodeFunctionData,
   zeroAddress,
   type Address,
@@ -11,8 +13,60 @@ import {
 } from "viem";
 import { arcTestnet } from "viem/chains";
 import { escrowAbi } from "./escrow";
+import { assessEvidenceCoverage } from "./evidence-coverage";
 import type { Mission } from "./hunters";
 import { assessIndexFreshness } from "./index-freshness";
+import type {
+  FundingReceiptObservation,
+  MissionFundingPolicy,
+  MissionFundingReceipt,
+  PreparedMissionTransaction,
+} from "./funding-types";
+
+type MissionAuthorities = {
+  executor: Address;
+  service: Address;
+};
+
+export function encodeUnsignedMissionAction(
+  mission: Mission,
+  action: unknown,
+  authorities: MissionAuthorities,
+) {
+  if (action === "fund") {
+    if (!mission.reportHash)
+      throw new Error("A committed report is required before funding.");
+    const value = parseEther(mission.budget);
+    return {
+      action,
+      data: encodeFunctionData({
+        abi: escrowAbi,
+        functionName: "openMission",
+        args: [
+          mission.id as Hex,
+          mission.thesisHash,
+          mission.reportHash,
+          authorities.executor,
+          authorities.service,
+          parseEther(mission.fee),
+          BigInt(mission.deadline),
+        ],
+      }),
+      value,
+    };
+  }
+  if (action === "close")
+    return {
+      action,
+      data: encodeFunctionData({
+        abi: escrowAbi,
+        functionName: "closeMission",
+        args: [mission.id as Hex],
+      }),
+      value: 0n,
+    };
+  throw new Error("Unsupported wallet action.");
+}
 
 export function chainConfig() {
   const address = process.env.HUNTER_ESCROW_ADDRESS,
@@ -126,19 +180,28 @@ export async function prepareMissionAction(
   mission: Mission,
   action: unknown,
   account: unknown,
-) {
+): Promise<PreparedMissionTransaction> {
   if (typeof account !== "string" || !isAddress(account))
     throw new Error("Connect a wallet first.");
+  if (action === "fund") {
+    const coverage = assessEvidenceCoverage(mission);
+    if (coverage.funding === "withheld") throw new Error(coverage.reason);
+  }
   const { client, config } = await checkedChain();
   const state = await missionChainState(mission);
   if (Math.abs(Math.floor(Date.now() / 1000) - state.blockTimestamp) > 120)
     throw new Error("RPC block is stale. Action blocked.");
   let data: Hex,
-    value = 0n;
+    value = 0n,
+    policy: MissionFundingPolicy | null = null;
   if (action === "fund") {
     if (mission.provider !== "graph" || !mission.report || !mission.reportHash)
       throw new Error(
         "Complete a Graph-backed research preview before funding. Explorer previews are not billable.",
+      );
+    if (mission.report.stance !== "limited-support")
+      throw new Error(
+        "The Hunter evidence does not support funding. Create a new mission with stronger evidence.",
       );
     if (Date.now() - Date.parse(mission.report.observedAt) > 15 * 60_000)
       throw new Error(
@@ -154,20 +217,12 @@ export async function prepareMissionAction(
     if (state.funded) throw new Error("Mission is already funded.");
     if (mission.deadline <= Math.floor(Date.now() / 1000))
       throw new Error("Mission expired. Create a new one.");
-    data = encodeFunctionData({
-      abi: escrowAbi,
-      functionName: "openMission",
-      args: [
-        mission.id as Hex,
-        mission.thesisHash,
-        mission.reportHash!,
-        config.executor!,
-        config.service!,
-        parseEther(mission.fee),
-        BigInt(mission.deadline),
-      ],
+    const unsigned = encodeUnsignedMissionAction(mission, action, {
+      executor: config.executor!,
+      service: config.service!,
     });
-    value = parseEther(mission.budget);
+    data = unsigned.data;
+    value = unsigned.value;
     await client.simulateContract({
       address: config.address!,
       abi: escrowAbi,
@@ -184,6 +239,14 @@ export async function prepareMissionAction(
         BigInt(mission.deadline),
       ],
     });
+    policy = missionFundingPolicy(
+      mission,
+      account as Address,
+      config.address!,
+      config.executor!,
+      config.service!,
+      data,
+    );
   } else if (action === "close") {
     if (
       !state.funded ||
@@ -193,11 +256,12 @@ export async function prepareMissionAction(
       throw new Error(
         "Only the mission owner can reclaim its remaining budget.",
       );
-    data = encodeFunctionData({
-      abi: escrowAbi,
-      functionName: "closeMission",
-      args: [mission.id as Hex],
+    const unsigned = encodeUnsignedMissionAction(mission, action, {
+      executor: config.executor!,
+      service: config.service!,
     });
+    data = unsigned.data;
+    value = unsigned.value;
     await client.simulateContract({
       address: config.address!,
       abi: escrowAbi,
@@ -206,6 +270,7 @@ export async function prepareMissionAction(
       args: [mission.id as Hex],
     });
   } else throw new Error("Unsupported wallet action.");
+  const expiresAt = policy?.expiresAt ?? new Date(Date.now() + 60_000).toISOString();
   return {
     to: config.address!,
     data,
@@ -214,6 +279,221 @@ export async function prepareMissionAction(
     account,
     action,
     simulatedAt: new Date().toISOString(),
-    expiresAt: Date.now() + 60_000,
+    expiresAt,
+    policy,
   };
+}
+
+export function missionFundingPolicy(
+  mission: Mission,
+  account: Address,
+  target: Address,
+  executor: Address,
+  service: Address,
+  calldata: Hex,
+  now = Date.now(),
+): MissionFundingPolicy {
+  if (
+    mission.provider !== "graph" ||
+    !mission.report ||
+    !mission.reportHash ||
+    mission.report.indexedBlock === null ||
+    mission.report.stance !== "limited-support"
+  )
+    throw new Error("A Graph-backed report commitment is required.");
+  const preparedAt = new Date(now).toISOString();
+  const expiresAt = new Date(now + 60_000).toISOString();
+  const unsignedPolicy = {
+    version: 1 as const,
+    action: "fund" as const,
+    chainId: arcTestnet.id,
+    account,
+    target,
+    asset: "native:testnet-usdc" as const,
+    amount: parseEther(mission.budget).toString(),
+    amountCeiling: parseEther(mission.budget).toString(),
+    missionId: mission.id as Hex,
+    thesisHash: mission.thesisHash,
+    reportHash: mission.reportHash,
+    evidence: {
+      provider: "graph" as const,
+      source: mission.report.source,
+      sourceBlock: mission.report.indexedBlock,
+      observedAt: mission.report.observedAt,
+    },
+    executor,
+    service,
+    fee: parseEther(mission.fee).toString(),
+    missionDeadline: mission.deadline,
+    preparedAt,
+    expiresAt,
+    calldata,
+  };
+  return {
+    ...unsignedPolicy,
+    bindingHash: fundingBindingHash(unsignedPolicy),
+  };
+}
+
+function fundingBindingHash(
+  policy: Omit<MissionFundingPolicy, "bindingHash">,
+): Hex {
+  return keccak256(
+    toHex(
+      JSON.stringify({
+        ...policy,
+        account: policy.account.toLowerCase(),
+        target: policy.target.toLowerCase(),
+        executor: policy.executor.toLowerCase(),
+        service: policy.service.toLowerCase(),
+      }),
+    ),
+  );
+}
+
+export function verifyFundingReceiptObservation(
+  mission: Mission,
+  intent: PreparedMissionTransaction,
+  observation: FundingReceiptObservation,
+  verifiedAt = new Date().toISOString(),
+): MissionFundingReceipt {
+  const policy = intent.policy;
+  if (intent.action !== "fund" || !policy)
+    throw new Error("No policy-bound funding request exists.");
+  const { bindingHash, ...unsignedPolicy } = policy;
+  if (fundingBindingHash(unsignedPolicy) !== bindingHash)
+    throw new Error("Prepared funding policy was changed.");
+  if (
+    intent.chainId !== policy.chainId ||
+    intent.account.toLowerCase() !== policy.account.toLowerCase() ||
+    intent.to.toLowerCase() !== policy.target.toLowerCase() ||
+    intent.expiresAt !== policy.expiresAt
+  )
+    throw new Error("Prepared transaction no longer matches its funding policy.");
+  if (
+    mission.id !== policy.missionId ||
+    mission.thesisHash !== policy.thesisHash ||
+    mission.reportHash !== policy.reportHash
+  )
+    throw new Error("Mission or evidence commitment changed after preparation.");
+  if (observation.chainId !== policy.chainId)
+    throw new Error("Funding receipt is from the wrong chain.");
+  if (observation.receiptStatus !== "success")
+    throw new Error("Funding transaction failed. Mission remains inactive.");
+  if (
+    observation.transaction.from.toLowerCase() !== policy.account.toLowerCase() ||
+    observation.opened?.owner.toLowerCase() !== policy.account.toLowerCase()
+  )
+    throw new Error("Funding receipt account does not match the Privy wallet.");
+  if (
+    !observation.transaction.to ||
+    observation.transaction.to.toLowerCase() !== policy.target.toLowerCase()
+  )
+    throw new Error("Funding receipt target does not match the policy.");
+  if (
+    observation.transaction.input !== policy.calldata ||
+    intent.data !== policy.calldata
+  )
+    throw new Error("Funding calldata changed after policy preparation.");
+  if (
+    observation.transaction.value.toString() !== policy.amount ||
+    intent.value !== policy.amount ||
+    BigInt(policy.amount) > BigInt(policy.amountCeiling)
+  )
+    throw new Error("Funding amount is outside the prepared ceiling.");
+  if (observation.blockTimestamp > Math.floor(Date.parse(policy.expiresAt) / 1_000))
+    throw new Error("Funding transaction landed after the policy expired.");
+  const opened = observation.opened;
+  if (
+    !opened ||
+    opened.missionId !== policy.missionId ||
+    opened.thesisHash !== policy.thesisHash ||
+    opened.budget.toString() !== policy.amount ||
+    opened.fee.toString() !== policy.fee ||
+    opened.executor.toLowerCase() !== policy.executor.toLowerCase() ||
+    opened.service.toLowerCase() !== policy.service.toLowerCase() ||
+    opened.deadline !== BigInt(policy.missionDeadline)
+  )
+    throw new Error("MissionOpened event does not match the prepared policy.");
+  const confirmations = Number(
+    observation.currentBlockNumber - observation.blockNumber + 1n,
+  );
+  if (!Number.isSafeInteger(confirmations) || confirmations < 1)
+    throw new Error("Funding receipt has no confirmed block.");
+  return {
+    version: 1,
+    status: "active",
+    transactionHash: observation.transactionHash,
+    verifiedAt,
+    confirmations,
+    chainId: observation.chainId,
+    blockNumber: observation.blockNumber.toString(),
+    blockHash: observation.blockHash,
+    blockTimestamp: observation.blockTimestamp,
+    account: policy.account,
+    target: policy.target,
+    asset: policy.asset,
+    amount: policy.amount,
+    amountCeiling: policy.amountCeiling,
+    missionId: policy.missionId,
+    thesisHash: policy.thesisHash,
+    reportHash: policy.reportHash,
+    policyExpiresAt: policy.expiresAt,
+    bindingHash,
+  };
+}
+
+export async function verifyMissionFundingReceipt(
+  mission: Mission,
+  intent: PreparedMissionTransaction,
+  transactionHash: Hex,
+): Promise<MissionFundingReceipt> {
+  const { client, config } = await checkedChain();
+  const receipt = await client.getTransactionReceipt({ hash: transactionHash });
+  const transaction = await client.getTransaction({ hash: transactionHash });
+  const block = await client.getBlock({ blockNumber: receipt.blockNumber });
+  const currentBlockNumber = await client.getBlockNumber();
+  const openedLog = parseEventLogs({
+    abi: escrowAbi,
+    logs: receipt.logs,
+    eventName: "MissionOpened",
+  }).find((entry) => entry.args.id === mission.id);
+  const opened = openedLog
+    ? {
+        missionId: openedLog.args.id,
+        owner: openedLog.args.owner,
+        thesisHash: openedLog.args.thesisHash,
+        budget: openedLog.args.budget,
+        fee: openedLog.args.fee,
+        executor: openedLog.args.executor,
+        service: openedLog.args.service,
+        deadline: openedLog.args.deadline,
+      }
+    : null;
+  const verified = verifyFundingReceiptObservation(mission, intent, {
+    chainId: config.chainId,
+    receiptStatus: receipt.status,
+    transactionHash,
+    transaction: {
+      from: transaction.from,
+      to: transaction.to,
+      input: transaction.input,
+      value: transaction.value,
+    },
+    blockNumber: receipt.blockNumber,
+    blockHash: receipt.blockHash,
+    blockTimestamp: Number(block.timestamp),
+    currentBlockNumber,
+    opened,
+  });
+  const state = await missionChainState(mission);
+  if (
+    !state.funded ||
+    state.closed ||
+    state.owner.toLowerCase() !== verified.account.toLowerCase() ||
+    state.remaining !== verified.amount ||
+    state.expectedReportHash !== verified.reportHash
+  )
+    throw new Error("Verified receipt does not match current escrow state.");
+  return verified;
 }

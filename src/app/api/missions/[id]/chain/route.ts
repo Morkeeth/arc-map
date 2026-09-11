@@ -11,6 +11,7 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  if(process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1") return missionResponse({error:"Wallet actions are unavailable in this research preview."},undefined,403);
   try {
     const access = missionAccess(request);
     const { id } = await context.params;
@@ -45,6 +46,7 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  if(process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1") return missionResponse({error:"Wallet actions are unavailable in this research preview."},undefined,403);
   let access;
   try {
     access = missionAccess(request, true);
@@ -62,21 +64,32 @@ export async function POST(
         404,
       );
     const body = await readMissionBody(request);
+    const transaction = await prepareMissionAction(
+      mission,
+      body.action,
+      body.account,
+    );
+    const saved =
+      transaction.action === "fund"
+        ? store.saveFundingIntent(access.owner, id, transaction)
+        : mission;
     return missionResponse(
       {
-        transaction: await prepareMissionAction(
-          mission,
-          body.action,
-          body.account,
-        ),
+        mission: saved,
+        transaction:
+          transaction.action === "fund"
+            ? saved.fundingIntent
+            : transaction,
       },
       access.cookie,
     );
-  } catch {
+  } catch (error) {
     return missionResponse(
       {
         error:
-          "Transaction preparation failed. Check deployment, wallet balance, mission state and fresh Graph evidence. No transaction was sent.",
+          error instanceof Error
+            ? error.message
+            : "Transaction preparation failed. No transaction was sent.",
       },
       access.cookie,
       409,

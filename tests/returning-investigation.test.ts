@@ -107,4 +107,5 @@ test("missionForReturn prefers deep-link id then newest reported", () => {
   assert.equal(missionForReturn([newer, older])?.id, "newer");
   assert.equal(missionForReturn([blocked])?.id, "blocked");
   assert.equal(missionForReturn([]), null);
+  assert.equal(missionForReturn([newer, older], "other-owner-or-missing"), null);
 });

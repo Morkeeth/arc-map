@@ -1,5 +1,27 @@
 import { randomBytes, createHash, timingSafeEqual } from "node:crypto";
 
+/** Same-origin CSRF check; localhost and 127.0.0.1 are treated as one loopback host. */
+export function originAllowed(
+  origin: string | null,
+  allowed: string,
+): boolean {
+  if (!origin) return false;
+  if (origin === allowed) return true;
+  try {
+    const want = new URL(allowed);
+    const got = new URL(origin);
+    const loopback = new Set(["localhost", "127.0.0.1"]);
+    return (
+      want.protocol === got.protocol &&
+      want.port === got.port &&
+      loopback.has(want.hostname) &&
+      loopback.has(got.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function missionAccess(
   request: Request,
   mutation = false,
@@ -15,7 +37,7 @@ export function missionAccess(
     throw new Error("Invalid agent token.");
   }
   const allowed = process.env.NEXT_PUBLIC_APP_ORIGIN || "http://localhost:3107";
-  if (mutation && request.headers.get("origin") !== allowed)
+  if (mutation && !originAllowed(request.headers.get("origin"), allowed))
     throw new Error("Same-origin request or agent bearer token required.");
   const token =
     request.headers

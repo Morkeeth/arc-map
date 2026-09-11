@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import type { DailyBrief as BriefData } from "@/lib/daily-brief";
+import type { BriefCard, DailyBrief as BriefData } from "@/lib/daily-brief";
 import type { ResearchUpdate } from "@/lib/research-updates";
-import type { Project } from "@/lib/projects";
+import { projects, type Project } from "@/lib/projects";
 import type { LastHuntReturn } from "@/lib/last-hunt-return";
 import { selectFollowedBrief } from "@/lib/brief-selection";
 
@@ -36,30 +36,47 @@ const workerTime = (at: string | null) =>
 
 function workerSummary(workers: WorkerData[] | null) {
   if (workers === null) return "Status unavailable";
-  if (!workers.length || workers.some((w) => w.freshness === "missing"))
-    return "Missing expected workers";
+  if (!workers.length) return "No worker identities registered";
   if (workers.every((w) => w.freshness === "running"))
     return "All source cycles live";
-  return "Inspect freshness";
+  const counts = workers.reduce(
+    (result, worker) => {
+      if (worker.freshness !== "running") result[worker.freshness] += 1;
+      return result;
+    },
+    { stale: 0, failed: 0, stopped: 0, missing: 0 },
+  );
+  return [
+    counts.failed && `${counts.failed} failed`,
+    counts.stale && `${counts.stale} stale`,
+    counts.stopped && `${counts.stopped} stopped`,
+    counts.missing && `${counts.missing} missing`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 export function DailyBrief({
   data,
+  missionsReady,
   updates,
   workers,
   following,
   lastHunt,
   onSelect,
   onReview,
+  onOpenChanges,
   error,
 }: {
   data: BriefData | null;
+  missionsReady: boolean;
   updates: ResearchUpdate[] | null;
   workers: WorkerData[] | null;
   following: string[];
   lastHunt: LastHuntReturn | null;
-  onSelect: (p: Project) => void;
+  onSelect: (p: Project, story?: BriefCard) => void;
   onReview: (id: string) => Promise<void>;
+  onOpenChanges?: () => void;
   error: string | null;
 }) {
   const [filter, setFilter] = useState("All leads");
@@ -85,8 +102,16 @@ export function DailyBrief({
           .includes(query.trim().toLowerCase()),
     ) || [];
 
+
   return (
     <div className="daily-brief">
+      {missionsReady && !lastHunt && <section className="field-entry" aria-label="Choose your first investigation">
+        <div className="list-caption"><span>NEW TO ARC?</span><span>NO WALLET NEEDED</span></div>
+        <p>Start with a question you can test.</p>
+        {projects.filter(p => p.contract || p.repo).map(p => <button key={p.id} className="field-entry-target" onClick={() => onSelect(p)}><strong>{p.name}</strong><span>{p.question}</span><small>{p.repo ? "Read code and check a published release" : "Inspect actual transfers and their dates"} →</small></button>)}
+        <details><summary>What am I looking at?</summary><p>Arc is Circle’s blockchain network for stablecoin finance. This map explores its testnet: experiments, contract activity and public code. A token name does not prove who issued it.</p><a className="evidence-link" href="https://www.circle.com/pressroom/circle-launches-arc-public-testnet" target="_blank" rel="noreferrer">Read Circle’s testnet announcement ↗</a><p>Follow a project to keep it in Changes. Save a thesis to track a specific condition. Both stay in this browser’s private workspace; clearing its cookie loses access.</p></details>
+      </section>}
+      <details className="source-status-details"><summary>Source update status · {workerSummary(workers)}</summary>
       <section className="worker-pulse" aria-label="Local source workers">
         <div className="list-caption">
           <span>RETURN PATH</span>
@@ -117,7 +142,7 @@ export function DailyBrief({
             relabeled fresh.
           </p>
         )}
-      </section>
+      </section></details>
 
       {lastHunt && (
         <section
@@ -147,16 +172,57 @@ export function DailyBrief({
                 ? `${lastHunt.evidenceCount} retained evidence record${lastHunt.evidenceCount === 1 ? "" : "s"}${lastHunt.firstEvidenceTx ? ` · first tx ${lastHunt.firstEvidenceTx.slice(0, 10)}…` : ""}`
                 : "No transfer evidence rows on this report."}
             </p>
+            {(lastHunt.decision || lastHunt.baselineDecision) && (
+              <div className="return-decision">
+                <strong>Retained decision</strong>
+                {lastHunt.decision ? (
+                  <p>
+                    {lastHunt.decision.kind.replaceAll("-", " ")} ·{" "}
+                    {lastHunt.decision.status} · {lastHunt.decision.summary}
+                  </p>
+                ) : (
+                  <p>
+                    The current rerun has no saved review decision. Its pinned
+                    baseline retains a {lastHunt.baselineDecision!.kind.replaceAll("-", " ")}{" "}
+                    decision: {lastHunt.baselineDecision!.status}.
+                  </p>
+                )}
+                {lastHunt.decision && lastHunt.baselineDecision && (
+                  <p>
+                    Pinned baseline decision:{" "}
+                    {lastHunt.baselineDecision.kind.replaceAll("-", " ")} ·{" "}
+                    {lastHunt.baselineDecision.status}. The rerun did not
+                    overwrite it.
+                  </p>
+                )}
+                {lastHunt.hasComparison && (
+                  <small>
+                    {lastHunt.status === "reported"
+                      ? "A later immutable report is ready to compare with its pinned baseline."
+                      : "The failed retrieval is retained beside its pinned baseline; no change is inferred."}
+                  </small>
+                )}
+              </div>
+            )}
             <div className="brief-actions">
               <Link className="evidence-link" href={lastHunt.href}>
                 Reopen investigation →
               </Link>
+              {onOpenChanges && (
+                <button
+                  type="button"
+                  className="evidence-link"
+                  onClick={onOpenChanges}
+                >
+                  Review followed source changes →
+                </button>
+              )}
             </div>
           </article>
         </section>
       )}
 
-      <section className="research-inbox" aria-label="Research inbox">
+      {(unread.length > 0 || error) && <section className="research-inbox" aria-label="Research inbox">
         <div className="list-caption">
           <span>YOUR RESEARCH INBOX</span>
           <span>
@@ -216,14 +282,15 @@ export function DailyBrief({
         <Link className="evidence-link" href="/theses">
           All monitored questions →
         </Link>
-      </section>
+      </section>}
 
       <div className="list-caption">
         <span>LEADS TO INVESTIGATE</span>
         <span>{cards.length} grouped leads</span>
       </div>
       <p className="brief-intro">
-        What the sources show. Why it may matter. What they do not prove.
+        What the sources show. Why it matters <em>now</em> (original event
+        clocks, not holder volume). What they do not prove.
       </p>
       <div className="work-tabs" role="group" aria-label="Brief scope">
         <button
@@ -307,6 +374,14 @@ export function DailyBrief({
               </p>
             )}
             <p className="brief-finding">{c.finding}</p>
+            <p className="brief-question"><strong>Ask the Hunter</strong> {c.question}</p>
+            <p className="brief-why-now">
+              <strong>
+                Why now{" "}
+                <span className={`cooling-chip ${c.cooling}`}>{c.cooling}</span>
+              </strong>{" "}
+              {c.whyNow}
+            </p>
             <p className="brief-why">
               <strong>Why investigate</strong> {c.whyInvestigate}
             </p>
@@ -315,14 +390,19 @@ export function DailyBrief({
             </p>
             <p className="report-time">
               Observed {time(c.observedAt)} ·{" "}
-              {c.firstEventAt
-                ? `Source events ${time(c.firstEventAt)}${c.lastEventAt !== c.firstEventAt ? ` → ${time(c.lastEventAt!)}` : ""}`
-                : "Source event time unknown"}
+              {c.signalAt
+                ? `Signal ${time(c.signalAt)}`
+                : c.firstEventAt
+                  ? `Source events ${time(c.firstEventAt)}${c.lastEventAt !== c.firstEventAt ? ` → ${time(c.lastEventAt!)}` : ""}`
+                  : "Source event time unknown"}
+              {c.signalAgeMs !== null
+                ? ` · age ${Math.max(0, Math.round(c.signalAgeMs / 60000))}m`
+                : ""}
             </p>
             <div className="brief-actions">
               <button
                 className="work-primary-button"
-                onClick={() => onSelect(c.project)}
+                onClick={() => onSelect(c.project, c)}
               >
                 Hunt this →
               </button>

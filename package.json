@@ -4,10 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3107",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start --hostname 127.0.0.1 --port 3107",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
+    "rehearse:mission": "tsx scripts/rehearse-mission-action.ts",
+    "rehearse:opportunity": "tsx scripts/simulate-opportunity-action.ts",
+    "test:opportunity-action": "tsx --test tests/opportunity-action.test.ts && tsx scripts/simulate-opportunity-action.ts",
+    "test:graph-revisit": "tsx scripts/test-graph-thesis-revisit.ts",
+    "test:graph-http": "tsx scripts/test-graph-thesis-http.ts",
+    "eval:discovery-rank": "tsx scripts/eval-discovery-rank.ts",
     "ingest": "tsx scripts/ingest.ts",
     "ingest:watch": "tsx scripts/ingest.ts --watch",
     "radar": "tsx scripts/radar.ts",
@@ -21,7 +27,8 @@
     "test:agent": "tsx scripts/test-agent-client.ts",
     "check:integrations": "tsx scripts/check-integrations.ts",
     "check:hosting": "tsx scripts/check-hosting-readiness.ts",
-    "workers": "tsx scripts/workers.ts"
+    "workers": "tsx scripts/workers.ts",
+    "serve:all": "node scripts/serve-all.mjs"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.40.0",
@@ -32,11 +39,13 @@
     "viem": "^2.56.0"
   },
   "devDependencies": {
+    "@foundry-rs/anvil": "^1.7.1",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@openzeppelin/contracts": "5.6.1",
     "@types/node": "^22.0.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "^19.2.0",
+    "solc": "^0.8.36",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
   },

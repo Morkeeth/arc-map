@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { projects, type Project } from "@/lib/projects";
 import { hunters, type Mission } from "@/lib/hunters";
+import { loadBrowserFollows } from "@/lib/browser-follows";
 import { missionForReturn } from "@/lib/mission-return";
 import { lastHuntReturn } from "@/lib/last-hunt-return";
 import type { FeedData } from "@/lib/feed-types";
@@ -27,8 +28,19 @@ import { RepositoryPanel } from "./repository-panel";
 import { FollowedChanges, type FollowedData } from "./followed-changes";
 import { ReportComparison } from "./report-comparison";
 import { DailyBrief } from "./daily-brief";
-import type { DailyBrief as BriefData } from "@/lib/daily-brief";
+import type { BriefCard, DailyBrief as BriefData } from "@/lib/daily-brief";
 import type { ResearchUpdate } from "@/lib/research-updates";
+import { actionProposalFor } from "@/lib/action-proposal";
+import { ActionProposalPanel } from "./action-proposal-panel";
+import { formatEther } from "viem";
+import type {
+  MissionFundingReceipt,
+  PreparedMissionTransaction,
+} from "@/lib/funding-types";
+import {
+  assessEvidenceCoverage,
+  type EvidenceCoverageAssessment,
+} from "@/lib/evidence-coverage";
 
 const time = (value: string) =>
   new Date(value).toLocaleString("en-GB", {
@@ -68,9 +80,11 @@ async function api(url: string, body?: unknown) {
 export function Workspace({
   initialView = "today",
   initialMissionId,
+  initialProject,
 }: {
   initialView?: "today" | "discover" | "hunters";
   initialMissionId?: string;
+  initialProject?: Project;
 }) {
   const [view, setView] = useState<"today"|"discover"|"hunters"|"changes">(initialView);
   const [brief,setBrief]=useState<BriefData|null>(null),[updates,setUpdates]=useState<ResearchUpdate[]|null>(null),[briefError,setBriefError]=useState<string|null>(null);
@@ -79,7 +93,9 @@ export function Workspace({
   const [radar, setRadar] = useState<RadarData | null>(null);
   const [catalogView, setCatalogView] = useState<"radar" | "curated">("radar");
   const [displayLimit, setDisplayLimit] = useState(8);
-  const [selected, setSelected] = useState<Project>(projects[0]);
+  const [selected, setSelected] = useState<Project>(initialProject ?? projects[0]);
+  const [story, setStory] = useState<BriefCard | null>(null);
+  const [followNotice, setFollowNotice] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All activity");
   const [following, setFollowing] = useState<string[]>([]);
@@ -87,14 +103,17 @@ export function Workspace({
   const [followBusy, setFollowBusy] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [missionsReady, setMissionsReady] = useState(false);
   const [mission, setMission] = useState<Mission | null>(null);
   const [capabilities, setCapabilities] = useState<Capability | null>(null);
   const [indexHealth, setIndexHealth] = useState<{ checkedAt: string; graph: { queryVerified: boolean; fresh: boolean; reason: string | null; indexedBlock: number | null } } | null>(null);
-  const [provider, setProvider] = useState<"graph" | "explorer">("graph");
+  const [provider, setProvider] = useState<"graph" | "explorer">(process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1" ? "explorer" : "graph");
   const [budget, setBudget] = useState("0.05");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [tx, setTx] = useState<string | null>(null);
+  const [preparedFunding, setPreparedFunding] =
+    useState<PreparedMissionTransaction | null>(null);
   const [chain, setChain] = useState<{
     funded: boolean;
     completed: boolean;
@@ -104,13 +123,34 @@ export function Workspace({
     block: string;
   } | null>(null);
   const wallet = useHunterWallet();
+  const researchPreview = process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1";
+  const targetGeneration = useRef(0);
+  const newTarget = useRef(Boolean(initialProject));
   const detailRef = useRef<HTMLElement>(null);
   const reportRef = useRef<HTMLElement>(null);
   function showProject(project: Project) {
+    targetGeneration.current += 1;
+    newTarget.current = true;
     setSelected(project);
+    setStory(null);
+    setMission(null);
+    setChain(null);
+    setError("");
+    setFollowNotice("");
     if (window.innerWidth <= 760)
       requestAnimationFrame(() =>
         detailRef.current?.scrollIntoView({ block: "start" }),
+      );
+  }
+  function startInvestigation(project: Project, lead?: BriefCard) {
+    showProject(project);
+    setStory(lead ?? null);
+    setView("hunters");
+    if (window.innerWidth <= 760)
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          detailRef.current?.scrollIntoView({ block: "start" }),
+        ),
       );
   }
   useEffect(() => {
@@ -124,18 +164,16 @@ export function Workspace({
     );
     if (target) setSelected(target);
   }, [mission?.id, mission?.projectId, radar]);
+  useEffect(() => {
+    setPreparedFunding(mission?.fundingIntent ?? null);
+  }, [mission?.id, mission?.fundingIntent?.policy?.bindingHash]);
   async function load() {
+    const loadGeneration = targetGeneration.current;
     setError("");
     // Establish the private cookie before any other owner-scoped route starts.
     try {
-      let data=await api("/api/follows");
-      try { if(!localStorage.getItem("arcmap.follows.migrated.v2")) {
-        const legacy=JSON.parse(localStorage.getItem("arcmap.projects.v1")||"[]");
-        if(Array.isArray(legacy)) for(const id of legacy.slice(0,100)) {
-          if(typeof id==="string" && (projects.some(p=>p.id===id)||/^arc:0x[0-9a-f]{40}$/.test(id))) data=await api("/api/follows",{action:"follow",projectId:id});
-        }
-        localStorage.setItem("arcmap.follows.migrated.v2","true");
-      } } catch { setError("Old local follows could not be imported. Server-saved follows remain available."); }
+      const {data,migrationError} = await loadBrowserFollows();
+      if(migrationError)setError("Some old browser follows could not be imported. They remain in browser storage; server-saved follows are available.");
       setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));setStorageReady(true);
     }
     catch { setError("Saved follows unavailable. Existing data remains visible."); }
@@ -156,8 +194,10 @@ export function Workspace({
     if (results[2].status === "fulfilled") {
       const nextMissions = results[2].value.missions as Mission[];
       setMissions(nextMissions);
+      setMissionsReady(true);
       setMission((current) => {
-        if (current?.status === "researching") {
+        if(loadGeneration !== targetGeneration.current) return current;
+        if (current?.status === "researching" || current?.status === "created") {
           return (
             nextMissions.find((item) => item.id === current.id) || current
           );
@@ -167,7 +207,8 @@ export function Workspace({
             nextMissions.find((item) => item.id === current.id) || current
           );
         }
-        return missionForReturn(nextMissions, initialMissionId);
+        if(initialMissionId && !nextMissions.some(m=>m.id===initialMissionId)) {setError("This investigation is not available in your private workspace. Choose a saved Hunt below or start a new one.");return null;}
+        return newTarget.current && !current ? null : missionForReturn(nextMissions, initialMissionId);
       });
     }
     if (results[3].status === "fulfilled") {
@@ -188,6 +229,7 @@ export function Workspace({
     try {
       const data=await api("/api/follows",{action:following.includes(id)?"unfollow":"follow",projectId:id});
       setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));
+      setFollowNotice(data.follows.some((f:{projectId:string})=>f.projectId===id) ? "Saved. Return to Changes to compare source observations; reading does not reset your baseline." : "Removed from following.");
     } catch { setError("Your follow could not be saved. Try again."); }
     finally {setFollowBusy(false);}
   }
@@ -199,13 +241,19 @@ export function Workspace({
     finally {setFollowBusy(false);}
   }
   function selectMission(item: Mission) {
+    targetGeneration.current += 1;
+    newTarget.current = false;
     setMission(item);
+    setStory(null);
     setChain(null);
     setTx(null);
+    setPreparedFunding(item.fundingIntent ?? null);
     const target = allProjects.find((p) => p.id === item.projectId);
     if (target) setSelected(target);
   }
   async function run(previous?:Mission) {
+    const generation = ++targetGeneration.current;
+    newTarget.current = false;
     setBusy("Researching");
     setError("");
     setChain(null);
@@ -215,14 +263,14 @@ export function Workspace({
         projectId: previous?.projectId || selected.id,
         provider: previous?.provider || provider,
         budget: previous?.budget || budget,
-        ...(previous?{previousMissionId:previous.id}:{}),
+        ...(previous?{previousMissionId:previous.id}:story?{leadId:story.id}:{}),
       });
-      setMission(created.mission);
+      if(generation === targetGeneration.current) setMission(created.mission);
       const result = await api(`/api/missions/${created.mission.id}/run`, {});
-      setMission(result.mission);
+      if(generation === targetGeneration.current) setMission(result.mission);
       setMissions((await api("/api/missions")).missions);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Mission failed.");
+      if(generation === targetGeneration.current) setError(e instanceof Error ? e.message : "Mission failed.");
     } finally {
       setBusy("");
     }
@@ -239,13 +287,61 @@ export function Workspace({
       setBusy("");
     }
   }
-  async function transact(action: "fund" | "close") {
+  async function prepareFunding() {
     if (!mission || !wallet.address) return;
-    setBusy(action === "fund" ? "Review in wallet" : "Reclaiming budget");
+    setBusy("Preparing bounded funding request");
     setError("");
     try {
       const prepared = await api(`/api/missions/${mission.id}/chain`, {
-        action,
+        action: "fund",
+        account: wallet.address,
+      });
+      setMission(prepared.mission);
+      setPreparedFunding(prepared.transaction);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Funding request could not be prepared. Nothing was sent.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function signFunding() {
+    if (!mission || !wallet.address || !preparedFunding?.policy) return;
+    setBusy("Waiting for Privy wallet signature");
+    setError("");
+    try {
+      const hash = await wallet.send(preparedFunding);
+      setBusy("Verifying Arc receipt and MissionOpened event");
+      const verified = await api(
+        `/api/missions/${mission.id}/chain/verify`,
+        {
+          transactionHash: hash,
+          bindingHash: preparedFunding.policy.bindingHash,
+        },
+      );
+      setTx(hash);
+      setMission(verified.mission);
+      setChain(verified.chain);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Funding receipt was not verified. Mission remains inactive.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function reclaim() {
+    if (!mission || !wallet.address) return;
+    setBusy("Reclaiming budget");
+    setError("");
+    try {
+      const prepared = await api(`/api/missions/${mission.id}/chain`, {
+        action: "close",
         account: wallet.address,
       });
       const hash = await wallet.send(prepared.transaction);
@@ -255,15 +351,32 @@ export function Workspace({
       setError(
         e instanceof Error
           ? e.message
-          : "Wallet action failed. No success assumed.",
+          : "Reclaim failed. No success assumed.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function switchWalletChain() {
+    setBusy("Switching linked wallet to Arc testnet");
+    setError("");
+    try {
+      await wallet.switchToArc();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Wallet network could not be changed.",
       );
     } finally {
       setBusy("");
     }
   }
   const allProjects = [...projects, ...(radar?.projects || [])];
+  const storyExpired = Boolean(story && brief && !brief.cards.some(card=>card.id===story.id));
   const selectedRecord = radar?.records.find(r => r.id === selected.id);
   const graphCovered = selected.contract?.toLowerCase() === projects[0].contract?.toLowerCase();
+  useEffect(() => {
+    if ((!graphCovered || capabilities?.graphConfigured === false) && provider === "graph") setProvider("explorer");
+  }, [graphCovered, provider, selected.id, capabilities?.graphConfigured]);
   const visible = (catalogView === "radar" ? radar?.projects || [] : projects).filter(
     (p) =>
       `${p.name} ${p.symbol} ${p.category} ${p.summary} ${p.question} ${p.contract || ""}`
@@ -282,7 +395,14 @@ export function Workspace({
       (filter !== "Code" || e.kind === "code") &&
       (filter !== "Onchain" || e.kind !== "code"),
   ).sort((a,b) => Number(Boolean(b.eventAt)) - Number(Boolean(a.eventAt)) || (b.eventAt || b.observedAt).localeCompare(a.eventAt || a.observedAt)).slice(0, 12);
+  const missionTargetUnavailable = Boolean(mission && radar && !allProjects.some(p=>p.id===mission.projectId));
   const report = mission?.report;
+  const coverage =
+    mission?.report ? assessEvidenceCoverage(mission) : null;
+  const selectedWallet = wallet.wallets.find(
+    (candidate) =>
+      candidate.address.toLowerCase() === wallet.address?.toLowerCase(),
+  );
   const previousReport=mission?.previousMissionId?missions.find(m=>m.id===mission.previousMissionId):undefined;
   const selectedHunter = selected.researchKind === "contract" ? hunters[1] : hunters[0];
   return (
@@ -314,6 +434,7 @@ export function Workspace({
           </Link>
           <Link href="/theses">Theses</Link>
         </nav>
+        {!researchPreview && <>
         <button
           className="wallet-button"
           disabled={!wallet.ready}
@@ -328,6 +449,7 @@ export function Workspace({
               ? "Connect wallet"
               : "Loading wallet…"}
         </button>
+        </>}
       </header>
       <main className="work-main">
         <div className="work-title">
@@ -486,7 +608,7 @@ export function Workspace({
                   )}
                 </div>
               </>
-            ) : view==="today" ? <DailyBrief data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={showProject} onReview={reviewUpdate} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={showProject} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
+            ) : view==="today" ? <DailyBrief missionsReady={missionsReady} data={brief} updates={updates} workers={workers} following={following} lastHunt={lastHuntReturn(missions)} onSelect={startInvestigation} onReview={reviewUpdate} onOpenChanges={()=>setView("changes")} error={briefError}/> : view==="changes" ? <FollowedChanges data={followedData} onSelect={startInvestigation} onReview={()=>void reviewChanges()} busy={followBusy}/> : (
               <>
                 <section className="hunter-profile">
                   <div className="hunter-insignia">
@@ -507,7 +629,7 @@ export function Workspace({
                   <h3>What would change the view?</h3>
                   <p>{selectedHunter.falsifier}</p>
                   <div className="hunter-tool-list">
-                    {selectedHunter.tools.map((t) => (
+                    {selectedHunter.tools.filter(t => !researchPreview || !t.includes("payment")).map((t) => (
                       <span key={t}>
                         <Terminal size={12} />
                         {t.replaceAll("_", " ")}
@@ -548,11 +670,9 @@ export function Workspace({
                   ))
                 )}
                 <div className="research-boundary">
-                  <strong>Research first. Capital with limits.</strong>
+                  <strong>{researchPreview ? "Research preview. Actions stay simulated." : "Research first. Capital with limits."}</strong>
                   <p>
-                    Mission funding pays a fixed research fee. It is not an
-                    investment, a trade, or ownership of this Hunter. Strategy
-                    shares are not available.
+                    {researchPreview ? "Inspect the source sample, retain its limits, and revisit it. No fee, wallet transaction or investment action occurs in this preview." : "Mission funding pays a fixed research fee. It is not an investment, a trade, or ownership of this Hunter. Strategy shares are not available."}
                   </p>
                 </div>
               </>
@@ -563,6 +683,7 @@ export function Workspace({
             className="work-detail"
             aria-label="Selected project and Hunter mission"
           >
+            {missionTargetUnavailable ? <section className="selected-story"><span className="work-kicker">SAVED REPORT TARGET</span><h2>Contract no longer in the source catalog</h2><code>{mission?.address}</code><p>Your original Hunt remains below. New research and monitoring need this target to be available in the source catalog.</p></section> : <>
             <div className="detail-heading">
               <span className="project-monogram">
                 {selected.symbol.slice(0, 3)}
@@ -582,6 +703,9 @@ export function Workspace({
                 </span>
               </button>
             </div>
+            {followNotice && !report && <p className="setup-note" role="status">{followNotice} <button className="evidence-link" onClick={()=>setView("changes")}>Open Changes →</button></p>}
+            {story && story.project.id === selected.id && <section className="selected-story" aria-label="Lead being investigated"><span className="work-kicker">YOUR LEAD</span><h3>{story.question}</h3><p>{story.finding}</p><p className="report-time">{story.whyNow}</p><details><summary>Original evidence and limits</summary><p>{story.counterevidence}</p>{story.evidence.map(e=><a key={e.id} className="evidence-link" href={e.url} target="_blank" rel="noreferrer">{e.title} ↗</a>)}</details></section>}
+            {storyExpired && <p className="setup-note" role="alert">This lead changed or left the current brief. Your original question stays above; choose a current lead before running another Hunt. <button className="evidence-link" onClick={()=>setView("today")}>Choose a current lead →</button></p>}
             <p className="detail-summary">{selected.summary}</p>
             <p className="detail-relation">{selected.relation}</p>
             <div className="detail-links">
@@ -609,7 +733,8 @@ export function Workspace({
               <span className="work-kicker">
                 <Crosshair size={13} /> THE HUNT
               </span>
-              <h3>{selectedHunter.question}</h3>
+              <h3>{selected.repo ? "Want to inspect onchain activity too?" : selectedHunter.question}</h3>
+              {story && selected.contract && <p className="report-time">This Hunt answers the activity part of your lead with a bounded source sample. It does not explain the contract code or verify the team.</p>}
               {!selected.contract ? (
                 <p className="work-empty">
                   No verified contract association is configured for this
@@ -626,7 +751,7 @@ export function Workspace({
                         setProvider(e.target.value as "graph" | "explorer")
                       }
                     >
-                      <option value="graph" disabled={!graphCovered}>
+                      <option value="graph" disabled={!graphCovered || capabilities?.graphConfigured !== true}>
                         The Graph · transfer subgraph
                       </option>
                       <option value="explorer">
@@ -634,11 +759,10 @@ export function Workspace({
                       </option>
                     </select>
                   </label>
-                  {!graphCovered && <p className="setup-note">This target is outside the deployed Graph index. Choose Arcscan explicitly for a free preview. Graph coverage will not be implied.</p>}
-                  {provider === "graph" && !capabilities?.graphConfigured && (
+                  {!graphCovered && <p className="setup-note">This target is outside the deployed Graph index. Arcscan is selected for a free preview. Graph coverage will not be implied.</p>}
+                  {graphCovered && capabilities?.graphConfigured !== true && (
                     <p className="setup-note">
-                      Graph endpoint not configured. A Graph run will stop with
-                      a visible error; it will not substitute explorer data.
+                      {capabilities ? "The Graph is not configured for this server. Arcscan is available as a separate free preview; it is not Graph evidence." : "Checking whether The Graph is available. You can choose the separate Arcscan preview."}
                     </p>
                   )}
                   {provider === "graph" && capabilities?.graphConfigured && (
@@ -649,8 +773,9 @@ export function Workspace({
                       {indexHealth && ` Checked ${time(indexHealth.checkedAt)}.`}
                     </p>
                   )}
+                  <details className="research-terms"><summary>Optional research budget · no charge to run</summary><p className="report-time">These terms apply only if you later choose a separate payment or simulation action. Running this Hunt is free.</p>
                   <label>
-                    Proposed mission budget <span>testnet USDC</span>
+                    {researchPreview ? "Simulation ceiling" : "Proposed mission budget"} <span>testnet USDC</span>
                     <input
                       type="number"
                       min="0.01"
@@ -660,6 +785,7 @@ export function Workspace({
                       onChange={(e) => setBudget(e.target.value)}
                     />
                   </label>
+                  {!researchPreview && <>
                   <div className="mission-terms">
                     <span>
                       Fixed service fee <strong>0.01 USDC</strong>
@@ -671,9 +797,11 @@ export function Workspace({
                       Mission deadline <strong>24 hours from creation</strong>
                     </span>
                   </div>
+                  </>}
+                  </details>
                   <button
                     className="work-primary-button"
-                    disabled={Boolean(busy) || (provider === "graph" && !graphCovered)}
+                    disabled={Boolean(busy) || storyExpired || (provider === "graph" && (!graphCovered || !capabilities?.graphConfigured))}
                     onClick={() => {
                       setView("hunters");
                       void run();
@@ -684,14 +812,15 @@ export function Workspace({
                     ) : (
                       <Crosshair size={16} />
                     )}
-                    Run research preview <ArrowRight size={16} />
+                    Hunt this · free <ArrowRight size={16} />
                   </button>
                   <small className="no-charge">
-                    No wallet charge. Review evidence before funding.
+                    {researchPreview ? "Research preview. No wallet, payment or transaction execution." : "No wallet charge. Review evidence before funding."}
                   </small>
                 </>
               )}
             </section>
+            </>}
           </aside>
         </div>
         {mission && (
@@ -700,8 +829,12 @@ export function Workspace({
             className="mission-report"
             aria-live="polite"
           >
-            {previousReport && report && <ReportComparison previous={previousReport} current={mission}/>}
-            {report && <button className="work-refresh work-text-button" disabled={Boolean(busy)} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
+            {previousReport &&
+              (mission.status === "reported" ||
+                mission.status === "blocked") && (
+              <ReportComparison previous={previousReport} current={mission} />
+            )}
+            {report && <button className="work-refresh work-text-button" disabled={Boolean(busy) || missionTargetUnavailable} onClick={()=>void run(mission)}>{busy||"Run again and compare"}</button>}
             <div className="report-heading">
               <div>
                 <span className="work-kicker">MISSION {short(mission.id)}</span>
@@ -717,6 +850,7 @@ export function Workspace({
                 {mission.status}
               </span>
             </div>
+            {mission.sourceLead && <section className="selected-story"><span className="work-kicker">THE LEAD YOU SAVED</span><h3>{mission.sourceLead.question}</h3><p>{mission.sourceLead.finding}</p><details><summary>Original source links · observed {time(mission.sourceLead.observedAt)}</summary>{mission.sourceLead.evidence.map(e=><a className="evidence-link" key={e.id} href={e.url} target="_blank" rel="noreferrer">{e.title} ↗</a>)}</details><p className="report-time">The Hunter tests the bounded activity question below. The original lead is context, not an additional verified conclusion.</p></section>}
             {mission.error && <p className="work-error">{mission.error}</p>}
             {report && (
               <>
@@ -724,8 +858,45 @@ export function Workspace({
                   <span className="work-kicker">
                     {report.stance.replaceAll("-", " ").toUpperCase()}
                   </span>
+                  <p className="report-time">Question tested: {report.thesis}</p>
                   <h3>{report.conclusion}</h3>
                 </div>
+                {coverage && (
+                  <EvidenceCoveragePanel
+                    assessment={coverage}
+                    mission={mission}
+                  />
+                )}
+                {report && (
+                  <section className="graph-revisit-cta">
+                    <div>
+                      <span className="work-kicker">
+                        KEEP THIS QUESTION OPEN
+                      </span>
+                      <h3>What would make you revisit this conclusion?</h3>
+                      <p>
+                        {report.provider === "graph" ? "Save this report and watch for a later Transfer event from this exact contract. A newer index or retrieval alone does not meet the condition." : "Keep this report and choose a measurable counter change to check next. The counter starts from a fresh source reading; it is not the size of this report’s sample."}
+                      </p>
+                    </div>
+                    <Link
+                      className="work-primary-button"
+                      href={`/theses?project=${encodeURIComponent(mission.projectId)}&mission=${encodeURIComponent(mission.id)}`}
+                    >
+                      Save a revisit condition <ArrowRight size={15} />
+                    </Link>
+                    <button className="work-refresh work-text-button" disabled={!storageReady || followBusy} onClick={()=>void follow(mission.projectId)}>{following.includes(mission.projectId) ? "Following · remove" : "Follow this project"}</button>
+                    <p className="report-time">Your report is saved. Reopen it from Today’s last investigation or Hunters. Scheduled thesis checks need a running worker.</p>
+                    {followNotice && <p role="status" className="setup-note">{followNotice}</p>}
+                  </section>
+                )}
+                <ActionProposalPanel
+                  key={mission.id}
+                  proposal={actionProposalFor(report, mission.address)}
+                  missionId={mission.id}
+                  savedReview={mission.policyReview}
+                  report={report}
+                  savedOpportunityReceipt={mission.opportunityReceipt}
+                />
                 <div className="report-facts">
                   <div>
                     <strong>{report.sampleSize}</strong>
@@ -804,6 +975,7 @@ export function Workspace({
                     </details>
                   </div>
                 </div>
+                {!researchPreview && <>
                 <div className="funding-panel">
                   <div>
                     <h3>Approve a bounded mission.</h3>
@@ -813,6 +985,35 @@ export function Workspace({
                       the report hash to collect the fee; this is not proof that
                       the report is correct.
                     </p>
+                    {coverage?.funding === "eligible" && wallet.address && (
+                      <div className="selected-wallet">
+                        <p>
+                          Selected wallet for preparation (user-owned external vs
+                          Privy embedded — choose explicitly):
+                        </p>
+                        <label className="opportunity-wallet-select">
+                          <span>Connected account</span>
+                          <select
+                            value={wallet.address}
+                            onChange={(event) =>
+                              wallet.select(event.target.value)
+                            }
+                          >
+                            {wallet.wallets.map((item) => (
+                              <option value={item.address} key={item.address}>
+                                {item.kind} · {item.address}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <p className="report-time">
+                          Using {selectedWallet?.kind ?? "linked"} ·{" "}
+                          <code>{wallet.address}</code>. Preparing terms does not
+                          broadcast; Sign and fund remains a separate step and is
+                          not required for research review.
+                        </p>
+                      </div>
+                    )}
                     {!capabilities?.escrow.configured && (
                       <p className="setup-note">
                         {capabilities?.escrow.reason ||
@@ -828,7 +1029,11 @@ export function Workspace({
                     )}
                   </div>
                   <div className="funding-actions">
-                    {!wallet.address ? (
+                    {coverage?.funding === "withheld" ? (
+                      <button disabled>
+                        Funding withheld — {coverage.status}
+                      </button>
+                    ) : !wallet.address ? (
                       <button
                         disabled={!wallet.ready}
                         onClick={() => wallet.connect()}
@@ -840,12 +1045,37 @@ export function Workspace({
                         disabled={
                           Boolean(busy) ||
                           !capabilities?.escrow.configured ||
-                          mission.provider !== "graph" ||
-                          Boolean(chain?.funded)
+                          coverage?.funding !== "eligible" ||
+                          Boolean(chain?.funded) ||
+                          Boolean(mission.fundingReceipt)
                         }
-                        onClick={() => void transact("fund")}
+                        onClick={() => void prepareFunding()}
                       >
-                        Review funding in wallet
+                        {preparedFunding?.policy &&
+                        Date.parse(preparedFunding.expiresAt) >= Date.now()
+                          ? "Refresh funding terms"
+                          : "Prepare exact funding terms"}
+                      </button>
+                    )}
+                    {wallet.address && preparedFunding?.policy && (
+                      <button
+                        disabled={
+                          Boolean(busy) ||
+                          Boolean(chain?.funded) ||
+                          Boolean(mission.fundingReceipt) ||
+                          Date.parse(preparedFunding.expiresAt) < Date.now()
+                        }
+                        onClick={() => void signFunding()}
+                      >
+                        Sign and fund with Privy
+                      </button>
+                    )}
+                    {wallet.address && preparedFunding?.policy && (
+                      <button
+                        disabled={Boolean(busy)}
+                        onClick={() => void switchWalletChain()}
+                      >
+                        Switch wallet to Arc testnet
                       </button>
                     )}
                     <button
@@ -863,12 +1093,20 @@ export function Workspace({
                         !chain?.funded ||
                         chain.closed
                       }
-                      onClick={() => void transact("close")}
+                      onClick={() => void reclaim()}
                     >
                       Cancel / reclaim surplus
                     </button>
                   </div>
                 </div>
+                {preparedFunding?.policy &&
+                  !mission.fundingReceipt && (
+                    <FundingPolicyView transaction={preparedFunding} />
+                  )}
+                {mission.fundingReceipt && (
+                  <FundingReceiptView receipt={mission.fundingReceipt} />
+                )}
+                </>}
                 {busy && <p role="status">{busy}…</p>}
                 {tx && (
                   <a
@@ -908,5 +1146,130 @@ export function Workspace({
         </footer>
       </main>
     </div>
+  );
+}
+
+function EvidenceCoveragePanel({
+  assessment,
+  mission,
+}: {
+  assessment: EvidenceCoverageAssessment;
+  mission: Mission;
+}) {
+  const retained = mission.coverageDecision;
+  return (
+    <section
+      className={`coverage-decision ${assessment.status}`}
+      aria-label="Evidence coverage decision"
+    >
+      <div className="list-caption">
+        <span>DATA COVERAGE</span>
+        <span className="coverage-status">{assessment.status}</span>
+      </div>
+      <h3>
+        {assessment.funding === "eligible"
+          ? "Evidence clears the coverage gate."
+          : "Funding is withheld."}
+      </h3>
+      <p>{assessment.reason}</p>
+      <dl className="coverage-facts">
+        <div>
+          <dt>Exact target</dt>
+          <dd><code>{mission.address}</code></dd>
+        </div>
+        <div>
+          <dt>Provider</dt>
+          <dd>{mission.report?.provider === "graph" ? "The Graph" : "Arcscan preview"}</dd>
+        </div>
+        <div>
+          <dt>Report observed</dt>
+          <dd>{mission.report?.observedAt}</dd>
+        </div>
+        <div>
+          <dt>Current decision</dt>
+          <dd>{assessment.funding} · recalculated when this mission is opened</dd>
+        </div>
+      </dl>
+      {retained && (
+        <details>
+          <summary>Retained coverage receipt {retained.id}</summary>
+          <p>
+            {retained.funding} as {retained.status} at {retained.evaluatedAt}.
+            Report commitment <code>{retained.reportHash}</code>.
+          </p>
+        </details>
+      )}
+      {assessment.neededEvidence.length > 0 && (
+        <div className="coverage-requirements">
+          <strong>What evidence would make this eligible</strong>
+          <ol>
+            {assessment.neededEvidence.map((requirement) => (
+              <li key={requirement}>{requirement}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+      <p className="coverage-boundary">
+        Coverage eligibility never authorizes a signature or broadcast. The
+        wallet and policy checks are separate.
+      </p>
+    </section>
+  );
+}
+
+function FundingPolicyView({
+  transaction,
+}: {
+  transaction: PreparedMissionTransaction;
+}) {
+  const policy = transaction.policy;
+  if (!policy) return null;
+  return (
+    <section className="funding-receipt prepared" aria-label="Prepared funding policy">
+      <div className="list-caption">
+        <span>PREPARED FUNDING POLICY</span>
+        <span>signature required</span>
+      </div>
+      <h3>Review what the wallet will authorize.</h3>
+      <dl className="policy-receipt-facts">
+        <div><dt>Account</dt><dd>{policy.account}</dd></div>
+        <div><dt>Target</dt><dd>{policy.target}</dd></div>
+        <div><dt>Asset</dt><dd>Arc testnet native USDC</dd></div>
+        <div><dt>Amount / ceiling</dt><dd>{formatEther(BigInt(policy.amount))} / {formatEther(BigInt(policy.amountCeiling))}</dd></div>
+        <div><dt>Evidence</dt><dd>The Graph · block {policy.evidence.sourceBlock} · {policy.evidence.observedAt}</dd></div>
+        <div><dt>Report commitment</dt><dd><code>{policy.reportHash}</code></dd></div>
+        <div><dt>Action expiry</dt><dd>{policy.expiresAt}</dd></div>
+        <div><dt>Policy binding</dt><dd><code>{policy.bindingHash}</code></dd></div>
+      </dl>
+      <p className="report-time">
+        The next click opens the linked Privy wallet. A wrong account, wrong chain,
+        changed calldata, stale request or failed receipt cannot activate the mission.
+      </p>
+    </section>
+  );
+}
+
+function FundingReceiptView({ receipt }: { receipt: MissionFundingReceipt }) {
+  return (
+    <section className="funding-receipt active" aria-label="Verified funding receipt">
+      <div className="list-caption">
+        <span>VERIFIED ARC RECEIPT</span>
+        <span>{receipt.status}</span>
+      </div>
+      <h3>Mission active.</h3>
+      <p className="policy-pass">
+        The successful transaction, MissionOpened event and current escrow state
+        match the prepared policy.
+      </p>
+      <dl className="policy-receipt-facts">
+        <div><dt>Transaction</dt><dd><a href={`https://testnet.arcscan.app/tx/${receipt.transactionHash}`} target="_blank" rel="noreferrer">{receipt.transactionHash}</a></dd></div>
+        <div><dt>Account</dt><dd>{receipt.account}</dd></div>
+        <div><dt>Amount / ceiling</dt><dd>{formatEther(BigInt(receipt.amount))} / {formatEther(BigInt(receipt.amountCeiling))} testnet USDC</dd></div>
+        <div><dt>Block</dt><dd>{receipt.blockNumber} · {receipt.confirmations} confirmation{receipt.confirmations === 1 ? "" : "s"}</dd></div>
+        <div><dt>Report commitment</dt><dd><code>{receipt.reportHash}</code></dd></div>
+        <div><dt>Policy binding</dt><dd><code>{receipt.bindingHash}</code></dd></div>
+        <div><dt>Verified</dt><dd>{receipt.verifiedAt}</dd></div>
+      </dl>
+    </section>
   );
 }

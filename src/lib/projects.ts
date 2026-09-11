@@ -86,6 +86,8 @@ export const projects: Project[] = [
 
 export const findProject = (id: string) =>
   projects.find((project) => project.id === id);
+export const graphCovers = (address: string) =>
+  address.toLowerCase() === projects[0].contract!.toLowerCase();
 export const sourceIds = (project: Project) => [
   ...(project.repo ? [`github:${project.repo}`] : []),
   ...(project.contract
