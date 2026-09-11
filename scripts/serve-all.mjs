@@ -1,19 +1,15 @@
-// Single-service entrypoint: one container, one process tree, one volume.
-// Runs the standalone Next.js server and the existing worker supervisor
-// (scripts/workers.ts: ingest, radar, theses) side by side.
-//
-// Why this exists: Railway attaches a volume to exactly one service and turns a
-// compose file into separate services, so four services cannot share one SQLite
-// directory. This process owns .data alone.
-//
-// Lifecycle: SIGTERM/SIGINT is forwarded to both children. If the web server
-// exits on its own the whole process exits non-zero so the platform restarts
-// the container. If the worker supervisor exits on its own it is relaunched
-// after two seconds; the supervisor already restarts its own children.
+// One service, one data directory, one owned process tree.
+// The worker supervisor restarts its own workers. If the supervisor or web
+// exits unexpectedly, stop the whole service nonzero so its host can restart it.
+// POSIX process groups let us reclaim workers even after their parent dies.
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
+if (process.platform === "win32") {
+  throw new Error("serve-all requires POSIX process groups (Linux or macOS).");
+}
 const root = resolve(process.cwd());
 const dataDir = process.env.ARCMAP_DATA_DIR || resolve(root, ".data");
 mkdirSync(dataDir, { recursive: true });
@@ -30,61 +26,63 @@ const env = {
 const server = existsSync(resolve(root, ".next/standalone/server.js"))
   ? resolve(root, ".next/standalone/server.js")
   : resolve(root, "server.js");
-
+const children = [];
 let shuttingDown = false;
-let web;
-let workers;
-let workersRestart;
 
 function log(line) {
   process.stdout.write(`[serve-all ${new Date().toISOString()}] ${line}\n`);
 }
-
-function startWeb() {
-  web = spawn(process.execPath, [server], { env, stdio: "inherit" });
-  log(`web pid ${web.pid} port ${env.PORT}`);
-  web.on("exit", (code, signal) => {
-    if (shuttingDown) return;
-    log(`web exited (${code ?? signal}); exiting so the platform restarts the container`);
-    stopWorkers();
-    process.exit(code ?? 1);
-  });
-}
-
-function startWorkers() {
-  workers = spawn(
-    process.execPath,
-    ["--import", "tsx", resolve(root, "scripts/workers.ts")],
-    { env, stdio: "inherit" },
-  );
-  log(`workers supervisor pid ${workers.pid}`);
-  workers.on("exit", (code, signal) => {
-    if (shuttingDown) return;
-    log(`workers supervisor exited (${code ?? signal}); relaunch in 2s`);
-    workersRestart = setTimeout(startWorkers, 2000);
-  });
-}
-
-function stopWorkers() {
-  if (workersRestart) clearTimeout(workersRestart);
-  if (workers && workers.exitCode === null) workers.kill("SIGTERM");
-}
-
-function shutdown(signal) {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  log(`received ${signal}; stopping web and workers`);
-  stopWorkers();
-  if (web && web.exitCode === null) web.kill(signal);
-  const deadline = setTimeout(() => process.exit(0), 8000);
-  deadline.unref();
-  let left = [web, workers].filter((c) => c && c.exitCode === null).length;
-  if (left === 0) process.exit(0);
-  for (const c of [web, workers]) {
-    if (c && c.exitCode === null) c.once("exit", () => { if (--left === 0) process.exit(0); });
+function signalGroup(child, signal) {
+  if (!child.pid) return;
+  try { process.kill(-child.pid, signal); }
+  catch (error) {
+    if (error.code !== "ESRCH") throw error;
   }
 }
-for (const s of ["SIGTERM", "SIGINT"]) process.on(s, () => shutdown(s));
-
-startWeb();
-startWorkers();
+function groupExists(child) {
+  if (!child.pid) return false;
+  try { process.kill(-child.pid, 0); return true; }
+  catch (error) {
+    if (error.code === "ESRCH") return false;
+    throw error;
+  }
+}
+async function stop(code, signal = "SIGTERM") {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  log(`stopping all process groups; exit ${code}`);
+  for (const child of children) signalGroup(child, signal);
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline && children.some(groupExists)) await delay(50);
+  // A hung descendant must not outlive a cleanly exited direct child.
+  for (const child of children) if (groupExists(child)) signalGroup(child, "SIGKILL");
+  const reapingDeadline = Date.now() + 1000;
+  while (Date.now() < reapingDeadline && children.some(c => c.exitCode === null && c.signalCode === null)) await delay(25);
+  process.exit(code);
+}
+function stopSafely(code, signal) {
+  void stop(code, signal).catch(error => {
+    log(`shutdown failed: ${error.message}`);
+    for (const child of children) {
+      try { signalGroup(child, "SIGKILL"); } catch { /* best effort after reported failure */ }
+    }
+    process.exit(1);
+  });
+}
+function start(name, args) {
+  const child = spawn(process.execPath, args, { env, stdio: "inherit", detached: true });
+  children.push(child);
+  log(`${name} pid ${child.pid}${name === "web" ? ` port ${env.PORT}` : ""}`);
+  child.once("error", error => {
+    log(`${name} failed to start: ${error.message}`);
+    stopSafely(1);
+  });
+  child.once("exit", (code, signal) => {
+    if (shuttingDown) return;
+    log(`${name} exited (${code ?? signal}); stopping service for host restart`);
+    stopSafely(code && code > 0 ? code : 1);
+  });
+}
+for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => stopSafely(0, signal));
+start("web", [server]);
+start("workers supervisor", ["--import", "tsx", resolve(root, "scripts/workers.ts")]);
