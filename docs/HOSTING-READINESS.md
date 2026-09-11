@@ -12,16 +12,16 @@ public launch. Oscar / root retain those decisions.
 | Config | `.env.local` copied from `.env.example`; `NEXT_PUBLIC_APP_ORIGIN` matches the browser origin | Secrets in `NEXT_PUBLIC_*`; executor private key committed |
 | Optional Graph | `GRAPH_TRANSFERS_URL` set only if you intend Graph hunts; explorer path works without it | Missing Graph is relabeled as explorer success |
 | Optional escrow | Addresses + code hash set only after an **explicit** testnet deploy authorization | Defaulting to “configured” because env keys exist empty |
-| Container sketch | `Dockerfile` multi-stage `web` + collector targets build with Node 22 | Treating the Dockerfile as a live hosted service |
+| Single-service container | `Dockerfile` target `all` builds with Node 22; web and supervisor restart together; `/app/.data` survives replacement | Treating local container checks as hosted acceptance |
 
 ## Zero-spend local path (authorized)
 
 This is the **exact free / no-new-spend hosting option** for judges and operators:
 run the product on a local machine (or a machine you already control) with Node 22,
-SQLite under `.data/`, and optional `compose.yaml`/`Dockerfile` sketches. Limitations:
+SQLite under `.data/`, or the tested single-service Dockerfile target `all`. Limitations:
 no public judge URL until Root deploys; cookie workspace is device-local; Graph remains
-SUN-only unless a verified index is configured; workers must run separately for live
-radar/thesis freshness.
+SUN-only unless another index is verified. With the Node commands below, run workers in a
+separate terminal. The `all` container target starts both web and the worker supervisor.
 
 ```sh
 # Node 22.x required
@@ -53,11 +53,19 @@ npm run check:integrations   # may report optional Graph/escrow as not configure
 
 When Oscar authorizes a host (still no spend from this doc):
 
-1. **Build artifact:** `Dockerfile` target `web` (standalone Next) + separate collector process(es) from `npm run workers` or per-script watches. Persist `.data/` on a volume; do not bake SQLite into the image.
+1. **Build artifact:** `Dockerfile` target `all` (the final stage), one service and one writable volume at `/app/.data`. It runs standalone Next.js and the worker supervisor. Do not bake SQLite into the image. Use the checked-in `railway.toml` for health checks and restart-on-failure; do not assume it creates the required volume.
 2. **Origin:** set `NEXT_PUBLIC_APP_ORIGIN` to the exact HTTPS origin before `npm run build` (baked into client). CSRF/cookie checks use this value.
-3. **Secrets:** inject `ARCMAP_AGENT_TOKEN`, Graph, escrow keys at runtime only; never into git or client bundles.
+3. **Secrets:** inject `ARCMAP_AGENT_TOKEN` and Graph query credentials at runtime only. Escrow addresses and expected code hash are configuration, not signing authority. Never provide a user wallet key or `HUNTER_EXECUTOR_PRIVATE_KEY` to this research host.
 4. **Health:** `GET /api/workers` and `GET /api/integrations` for operators; do not treat process-up as evidence freshness.
 5. **Stop conditions:** no public DNS cutover, no paid API upgrade, no mainnet escrow from this checklist.
+
+## Container acceptance recorded on 11 September 2026
+
+The image built from commit `3cf2e5d` passed local health, supervisor-failure restart,
+web-failure restart, clean stop, and replacement with the same named volume. The image was
+built immediately before the commit; its Dockerfile bytes match that commit. This is local
+container evidence. After deployment, repeat the saved-record return journey over HTTPS,
+check secure cookies and origin handling, and verify retention on the actual host.
 
 ## Explicit non-goals
 
@@ -68,6 +76,6 @@ When Oscar authorizes a host (still no spend from this doc):
 ## Related
 
 - `.env.example` — variable inventory
-- `Dockerfile` — container sketch
+- `Dockerfile` and `railway.toml` — single-service build and restart configuration
 - `scripts/check-hosting-readiness.ts` — mechanical gate for this checklist
 - Returning Hunt stack: PRs #3–#6 (supervisor → follow-return → Hunt return → Today card)

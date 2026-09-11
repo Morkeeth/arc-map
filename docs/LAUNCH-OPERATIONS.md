@@ -3,8 +3,8 @@
 ## Current boundary
 
 The web app and three read-only workers run locally. Graph indexing and the fixed-fee research
-escrow are on Arc testnet. There is no public web hosting, domain purchase, public source push,
-mainnet deployment, live investment token or verified browser wallet-payment flow.
+escrow are on Arc testnet. The source repository is public. This release candidate has no
+verified public web hosting, mainnet deployment, live investment token or browser wallet-payment flow.
 
 `npm run dev` starts the web app on 3107. Run `ingest:watch`, `radar:watch` and `theses:watch`
 as separate processes. They must remain running on an awake machine. A closed laptop is not
@@ -12,10 +12,22 @@ a scheduler. The release watcher is a one-shot payment verification tool, not a 
 
 ## Persistent host
 
-`compose.yaml` defines web, curated collector, radar and thesis services with one persistent
-volume. The web service binds localhost:3117; terminate HTTPS at a reverse proxy. Build with the
-real `NEXT_PUBLIC_APP_ORIGIN` and configure the same permitted origin in Privy before browser
-authentication testing. Docker configuration is not evidence that a host was deployed.
+Use the Dockerfile target `all` for a host with one persistent volume per service. It runs
+Next.js and the worker supervisor in one process tree and stores data at `/app/.data`.
+The supervisor manages curated collector, radar and thesis workers. An unexpected web or
+supervisor exit stops the whole service with a nonzero exit; the host must restart it.
+`railway.toml` specifies ON_FAILURE with ten retries and `/api/workers` as the health path.
+A normal termination stops the owned process groups and exits cleanly.
+
+The separate-service `compose.yaml` remains available for local operation on one Docker host.
+It binds web to localhost:3117. Both arrangements need HTTPS termination for public access.
+Build with the real `NEXT_PUBLIC_APP_ORIGIN` and configure that origin in Privy before
+browser authentication testing. Inject server credentials at runtime.
+
+On 11 September 2026 the single-service image was built and checked locally: web and supervisor
+failure caused nonzero exit and restart, normal stop exited cleanly, and replacement with
+the same named volume retained data. These checks do not establish hosted TLS, platform volume
+retention or browser wallet authentication.
 
 Do not copy `.env.local`, deployment keys, wallet exports, private release state or backups into
 the image. `.dockerignore` excludes local data. Runtime Graph query credentials are separate
