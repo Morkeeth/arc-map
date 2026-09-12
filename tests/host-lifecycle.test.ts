@@ -42,7 +42,7 @@ for (const scenario of ["supervisor-kill", "web-zero-exit", "hung-worker"] as co
     let output = "";
     const service = spawn(process.execPath, [join(root, "scripts/serve-all.mjs")], {
       cwd: root,
-      env: { PATH: process.env.PATH, PROBE_SCENARIO: scenario },
+      env: { NODE_ENV: "test", PATH: process.env.PATH, PROBE_SCENARIO: scenario },
       stdio: ["ignore", "pipe", "pipe"],
     });
     service.stdout.on("data", chunk => { output += chunk; });
