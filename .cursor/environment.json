@@ -1,0 +1,17 @@
+{
+  "name": "ARC MAP",
+  "install": "npm ci",
+  "ports": [{ "name": "web", "port": 3107 }],
+  "terminals": [
+    {
+      "name": "web",
+      "command": "npm run dev",
+      "description": "Next.js app (ARC MAP) on http://127.0.0.1:3107. Explore, Discover, Hunter and MCP endpoints."
+    },
+    {
+      "name": "workers",
+      "command": "npm run workers",
+      "description": "Supervised read-only collectors (ingest, radar, theses). Restarts its own workers; evidence persists to SQLite under .data/."
+    }
+  ]
+}
