@@ -133,7 +133,7 @@ test("HTTP dual-session share → counterevidence → revoke (isolated DB)", asy
     assert.equal(challenged.mission.collaboration?.counterevidence.length, 1);
     assert.equal(challenged.mission.reportHash, finished.reportHash);
     assert.equal(
-      lastHuntReturn([challenged.mission as never])?.decision,
+      lastHuntReturn([challenged.mission as never])?.sharedDecision,
       "reassess",
     );
 

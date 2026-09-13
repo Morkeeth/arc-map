@@ -87,7 +87,7 @@ test("one investigation is deliberately shared and counterevidence survives rest
       note: "This source shows the two rows belong to one bounded publication event.",
     });
     assert.equal(challenged.collaboration?.counterevidence.length, 1);
-    assert.equal(lastHuntReturn([challenged])?.decision, "reassess");
+    assert.equal(lastHuntReturn([challenged])?.sharedDecision, "reassess");
     assert.equal(challenged.reportHash, shared.reportHash);
     assert.deepEqual(challenged.report?.evidence, shared.report?.evidence);
     first.close();
@@ -149,4 +149,56 @@ test("counterevidence requires a bounded public source and note", () => {
   } finally {
     store.close();
   }
+});
+
+test("a new invite cannot silently evict an active contributor", () => {
+  const store = new MissionStore(":memory:");
+  try {
+    const mission = completed(store, "owner");
+    const first = store.createInvite("owner", mission.id);
+    store.acceptInvite("contributor", first.token);
+    store.addCounterevidence("contributor", mission.id, {
+      sourceUrl: "https://example.com/source",
+      note: "This public source challenges the scope of the original sample.",
+    });
+    assert.throws(() => store.createInvite("owner", mission.id), /Revoke/);
+    assert.equal(store.getVisible("contributor", mission.id)?.collaboration?.counterevidence.length, 1);
+    store.revokeInvite("owner", mission.id);
+    const next = store.createInvite("owner", mission.id);
+    const replacement = store.acceptInvite("replacement", next.token);
+    assert.equal(replacement.collaboration?.counterevidence.length, 1);
+    assert.equal(replacement.reportHash, mission.reportHash);
+  } finally { store.close(); }
+});
+
+test("failed invite read rolls back acceptance without masking the original error", () => {
+  const store = new MissionStore(":memory:");
+  try {
+    const mission = completed(store, "owner");
+    const invite = store.createInvite("owner", mission.id);
+    const original = store.getVisible;
+    store.getVisible = () => { throw new Error("simulated read failure"); };
+    assert.throws(() => store.acceptInvite("contributor", invite.token), /simulated read failure/);
+    store.getVisible = original;
+    assert.equal(store.getVisible("contributor", mission.id), null);
+    assert.equal(store.acceptInvite("replacement", invite.token).id, mission.id);
+  } finally { store.close(); }
+});
+
+test("contributor receives the report but not the owner's private policy or funding records", () => {
+  const store = new MissionStore(":memory:");
+  try {
+    const mission = completed(store, "owner");
+    // Persist an owner-only decision through the real store API.
+    const reviewed = store.savePolicyReview("owner", mission.id, { decision: "withhold", reason: "Private owner reasoning about follow-up research." });
+    assert.ok(reviewed.policyReview);
+    const invite = store.createInvite("owner", mission.id);
+    const visible = store.acceptInvite("contributor", invite.token);
+    assert.equal(visible.policyReview, undefined);
+    assert.equal(visible.fundingIntent, undefined);
+    assert.equal(visible.fundingReceipt, undefined);
+    assert.equal(visible.opportunityReceipt, undefined);
+    assert.deepEqual(visible.report, mission.report);
+    assert.equal(visible.reportHash, mission.reportHash);
+  } finally { store.close(); }
 });

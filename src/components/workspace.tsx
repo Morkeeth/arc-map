@@ -131,6 +131,7 @@ export function Workspace({
   const researchPreview = process.env.NEXT_PUBLIC_RESEARCH_PREVIEW === "1";
   const targetGeneration = useRef(0);
   const newTarget = useRef(Boolean(initialProject));
+  const loading = useRef(false);
   const detailRef = useRef<HTMLElement>(null);
   const reportRef = useRef<HTMLElement>(null);
   function showProject(project: Project) {
@@ -173,6 +174,9 @@ export function Workspace({
     setPreparedFunding(mission?.fundingIntent ?? null);
   }, [mission?.id, mission?.fundingIntent?.policy?.bindingHash]);
   async function load() {
+    if (loading.current) return;
+    loading.current = true;
+    try {
     const loadGeneration = targetGeneration.current;
     setError("");
     // Establish the private cookie before any other owner-scoped route starts.
@@ -181,7 +185,23 @@ export function Workspace({
       if(migrationError)setError("Some old browser follows could not be imported. They remain in browser storage; server-saved follows are available.");
       setFollowedData(data);setFollowing(data.follows.map((f:{projectId:string})=>f.projectId));setStorageReady(true);
     }
-    catch { setError("Saved follows unavailable. Existing data remains visible."); }
+    catch {
+      setError("Saved follows unavailable. Existing data remains visible.");
+      // Never bind a one-use invite before the browser workspace is established.
+      if (window.location.hash.startsWith("#invite=")) return;
+    }
+    const invite = window.location.hash.match(/^#invite=([a-f0-9]{64})$/);
+    if (invite) {
+      try {
+        const result = await api("/api/investigation-share", {action: "accept", token: invite[1]});
+        setMission(result.mission);
+        setView("hunters");
+        window.history.replaceState(null, "", `/hunters?id=${encodeURIComponent(result.mission.id)}`);
+        setShareNotice("Shared investigation accepted. Its original report is unchanged; add a sourced challenge below.");
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Investigation invite could not be accepted.");
+      }
+    }
     void api("/api/integrations").then(setIndexHealth).catch(() => setIndexHealth(null));
     void api("/api/workers").then(result => setWorkers(result.workers)).catch(() => setWorkers(null));
     const results = await Promise.allSettled([
@@ -224,38 +244,11 @@ export function Workspace({
     if(results[4].status==="fulfilled")setBrief(results[4].value);
     if(results[5].status==="fulfilled")setUpdates(results[5].value.updates);
     setBriefError(results[4].status==="rejected"||results[5].status==="rejected"?"Some brief or research updates are unavailable. Saved evidence has not been replaced.":null);
+    } finally { loading.current = false; }
   }
   async function reviewUpdate(id:string){try{const result=await api("/api/research-updates",{ids:[id]});setUpdates(result.updates);setBriefError(null);}catch{setBriefError("Update could not be marked reviewed. Try again.");}}
   useEffect(() => {
     void load();
-  }, []);
-  useEffect(() => {
-    const match = window.location.hash.match(/^#invite=([a-f0-9]{64})$/);
-    if (!match) return;
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${window.location.search}`,
-    );
-    void api("/api/investigation-share", {
-      action: "accept",
-      token: match[1],
-    })
-      .then(async (result) => {
-        setMission(result.mission);
-        setView("hunters");
-        setMissions((await api("/api/missions")).missions);
-        setShareNotice(
-          "Shared investigation accepted. Its original report is unchanged; add a sourced challenge below.",
-        );
-      })
-      .catch((cause) =>
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Investigation invite could not be accepted.",
-        ),
-      );
   }, []);
   async function follow(id: string) {
     setFollowBusy(true);

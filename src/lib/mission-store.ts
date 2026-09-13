@@ -141,6 +141,12 @@ export class MissionStore {
       inviteAccepted: Boolean(invite?.accepted_by),
       counterevidence,
     };
+    if (viewer !== missionOwner) {
+      // A share grants the completed report, not the owner's policy, wallet or prior Hunts.
+      const { policyReview, opportunityReceipt, fundingIntent, fundingReceipt,
+        previousMissionId, ...reportView } = mission;
+      return { ...reportView, collaboration };
+    }
     return { ...mission, collaboration };
   }
   createInvite(owner: string, missionId: string) {
@@ -152,6 +158,10 @@ export class MissionStore {
     const createdAt = new Date().toISOString();
     this.db.exec("BEGIN IMMEDIATE");
     try {
+      const active = this.db.prepare(
+        "SELECT 1 FROM mission_invites WHERE mission_id=? AND owner=? AND revoked_at IS NULL",
+      ).get(missionId, owner);
+      if (active) throw new Error("Revoke the active invite before creating a new one.");
       this.db
         .prepare("DELETE FROM mission_invites WHERE mission_id=? AND owner=?")
         .run(missionId, owner);
@@ -192,9 +202,9 @@ export class MissionStore {
           )
           .run(recipient, now, tokenHash);
       }
-      this.db.exec("COMMIT");
       const mission = this.getVisible(recipient, String(invite.mission_id));
       if (!mission) throw new Error("Shared investigation is unavailable.");
+      this.db.exec("COMMIT");
       return mission;
     } catch (error) {
       this.db.exec("ROLLBACK");

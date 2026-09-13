@@ -167,7 +167,7 @@ export function DailyBrief({
               {lastHunt.conclusion ||
                 "Open the saved mission to inspect what was retained."}
             </p>
-            <p className={`investigation-decision ${lastHunt.decision}`}>
+            <p className={`investigation-decision ${lastHunt.sharedDecision}`}>
               <strong>
                 Research decision:{" "}
                 {lastHunt.sharedDecision === "reassess"
