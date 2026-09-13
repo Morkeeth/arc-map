@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1160" viewBox="0 0 1600 1160"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#326BFF"/></marker></defs><rect width="1600" height="1160" fill="white"/><style>text{font-family:'DM Sans',Arial,sans-serif;fill:#18335B}.title{font-size:42px;font-weight:700}.heading{font-size:25px;font-weight:700}.body{font-size:21px}.small{font-size:18px;fill:#627998}.eyebrow{font-size:17px;letter-spacing:2px;fill:#326BFF;font-weight:700}</style>
+<text x="50" y="57" class="eyebrow">ARC MAP / SYSTEM ARCHITECTURE</text>
+<text x="50" y="111" class="title">Discover → investigate → retain evidence → return</text>
+<text x="50" y="148" class="small">Implemented source architecture · 13 September 2026 · Arc testnet research workspace</text>
+<rect x="50" y="200" width="390" height="230" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="74" y="240" class="heading">People + external agents</text>
+<text x="74" y="279" class="body">Next.js / React browser UI</text>
+<text x="74" y="311" class="body">Today · Hunters · Map · Theses</text>
+<text x="74" y="343" class="body">Private reports + shared Hunt</text>
+<text x="74" y="375" class="body">External agent: MCP client</text>
+<rect x="500" y="200" width="520" height="340" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="524" y="240" class="heading">Next.js server · API + MCP</text>
+<text x="524" y="279" class="body">Browser API routes + agent tools</text>
+<text x="524" y="311" class="body">Separate cookie / bearer workspaces</text>
+<text x="524" y="343" class="body">Owner-scoped missions and follows</text>
+<text x="524" y="375" class="body">Scoped, revocable Hunt contributions</text>
+<text x="524" y="407" class="body"></text>
+<text x="524" y="439" class="body">Shared research / provider modules</text>
+<text x="524" y="471" class="body">Rules-based analysis; bounded findings</text>
+<rect x="1080" y="200" width="470" height="340" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="1104" y="240" class="heading">Explicit public evidence sources</text>
+<text x="1104" y="279" class="body">The Graph: SUN Transfer subgraph</text>
+<text x="1104" y="311" class="body">Coverage + indexed-block freshness</text>
+<text x="1104" y="343" class="body"></text>
+<text x="1104" y="375" class="body">Arcscan: separate explorer reads</text>
+<text x="1104" y="407" class="body">GitHub: commits + published releases</text>
+<text x="1104" y="439" class="body"></text>
+<text x="1104" y="471" class="body">Failures visible; no silent relabeling</text>
+<path d="M440 302 H500" fill="none" stroke="#326BFF" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="451" y="282" class="small">HTTP</text>
+<path d="M1020 369 H1080" fill="none" stroke="#326BFF" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="1098" y="573" class="small">Read-only source requests</text>
+<rect x="50" y="490" width="390" height="242" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="74" y="530" class="heading">Supervised read-only workers</text>
+<text x="74" y="569" class="body">Ingest: feed + source history</text>
+<text x="74" y="601" class="body">Radar: bounded discovery</text>
+<text x="74" y="633" class="body">Theses: finite scheduled checks</text>
+<text x="74" y="665" class="body">Restart status + failure visibility</text>
+<text x="74" y="697" class="body">Same research/provider modules</text>
+<path d="M440 552 H468 V498 H500" fill="none" stroke="#326BFF" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="500" y="606" width="520" height="164" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="524" y="646" class="heading">SQLite · persistent data volume</text>
+<text x="524" y="685" class="body">Feed / radar / mission / thesis stores</text>
+<text x="524" y="717" class="body">Follows + reports + counterevidence</text>
+<text x="524" y="749" class="body">Worker status; append evidence history</text>
+<path d="M760 540 V606" fill="none" stroke="#326BFF" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M440 668 H500" fill="none" stroke="#326BFF" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="1080" y="629" class="eyebrow">EVIDENCE CONTRACT</text>
+<text x="1080" y="666" class="body">Source + sample + time window</text>
+<text x="1080" y="702" class="body">Event time ≠ observation time</text>
+<text x="1080" y="738" class="body">Original report + hash preserved</text>
+<text x="50" y="808" class="small">One service can supervise web + workers. Persistent storage and host operation are deployment concerns.</text>
+<rect x="50" y="850" width="1500" height="245" rx="14" fill="white" stroke="#9CB8ED" stroke-width="2" stroke-dasharray="8 7"/>
+<text x="75" y="889" class="eyebrow">OPTIONAL WALLET / ARC TESTNET ESCROW</text>
+<rect x="75" y="914" width="405" height="73" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="99" y="954" class="heading">Privy wallet + viem</text>
+<rect x="565" y="914" width="375" height="73" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="589" y="954" class="heading">Wallet-approved transaction</text>
+<rect x="1025" y="914" width="495" height="73" rx="14" fill="#F8FBFF" stroke="#CBDAEF" stroke-width="2"/>
+<text x="1049" y="954" class="heading">Arc testnet · HunterEscrow</text>
+<path d="M480 950 H565" fill="none" stroke="#326BFF" stroke-width="3" marker-end="url(#arrow)" stroke-dasharray="8 7"/>
+<path d="M940 950 H1025" fill="none" stroke="#326BFF" stroke-width="3" marker-end="url(#arrow)" stroke-dasharray="8 7"/>
+<text x="75" y="1027" class="body">Browser funding / cancellation / refund: NOT YET VERIFIED. Read-only research needs no wallet.</text>
+<text x="75" y="1068" class="body">Separate operator CLI receipt: 0.05 USDC lifecycle verified · 0.01 fee + 0.04 refund. No mainnet claim.</text>
+<text x="50" y="1134" class="small">Solid arrows: research/data flow. Dashed arrows: optional wallet flow. Diagram does not claim public hosting or sponsor qualification.</text>
+</svg>

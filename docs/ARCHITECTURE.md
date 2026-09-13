@@ -1,5 +1,7 @@
 # Architecture and next proofs
 
+For the current source-based diagram, see [Submission architecture](SUBMISSION-ARCHITECTURE.md).
+
 ## Current implementation — 2026-09-05
 
 The sections below preserve the earlier launch plan. For current execution status, use
