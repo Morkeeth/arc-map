@@ -72,6 +72,12 @@ An agent bearer token currently identifies one server-configured workspace. It i
 per-user OAuth grant or a cross-device browser account. Do not expose the development server
 as a public paid service without deployment authentication and abuse controls.
 
+Completed browser investigations can be deliberately shared one at a time with a one-use
+capability link. Acceptance binds that investigation to one contributor workspace, which can
+append a public source URL and a bounded counterevidence note. Revocation removes that
+workspace's access; accepted counterevidence remains in the owner's record. This is not account
+sharing, recovery, public reporting or access to the owner's other research.
+
 No research tool can sign transactions, fund a mission, trade or change spending permissions.
 Source content cannot grant those capabilities. A tool failure never authorizes a provider
 switch, another transaction or a higher budget.

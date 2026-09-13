@@ -16,6 +16,8 @@ export type LastHuntReturn = {
   decision: RetainedDecision | null;
   baselineDecision: RetainedDecision | null;
   hasComparison: boolean;
+  counterevidenceCount: number;
+  sharedDecision: "reassess" | "provisional";
   href: string;
 };
 
@@ -32,6 +34,8 @@ export function lastHuntReturn(
   const baseline = mission.previousMissionId
     ? missions.find((item) => item.id === mission.previousMissionId)
     : undefined;
+  const counterevidence =
+    mission.collaboration?.counterevidence.length || 0;
   return {
     missionId: mission.id,
     projectId: mission.projectId,
@@ -46,6 +50,8 @@ export function lastHuntReturn(
       baseline?.report &&
         (mission.report || mission.status === "blocked"),
     ),
+    counterevidenceCount: counterevidence,
+    sharedDecision: counterevidence ? "reassess" : "provisional",
     href: `/hunters?id=${encodeURIComponent(mission.id)}`,
   };
 }

@@ -167,6 +167,17 @@ export function DailyBrief({
               {lastHunt.conclusion ||
                 "Open the saved mission to inspect what was retained."}
             </p>
+            <p className={`investigation-decision ${lastHunt.sharedDecision}`}>
+              <strong>
+                Research decision:{" "}
+                {lastHunt.sharedDecision === "reassess"
+                  ? "reassess before relying on the conclusion"
+                  : "provisional"}
+              </strong>
+              {lastHunt.counterevidenceCount
+                ? ` · ${lastHunt.counterevidenceCount} sourced counterevidence contribution${lastHunt.counterevidenceCount === 1 ? "" : "s"} preserved`
+                : " · no collaborator counterevidence yet"}
+            </p>
             <p className="report-time">
               {lastHunt.evidenceCount
                 ? `${lastHunt.evidenceCount} retained evidence record${lastHunt.evidenceCount === 1 ? "" : "s"}${lastHunt.firstEvidenceTx ? ` · first tx ${lastHunt.firstEvidenceTx.slice(0, 10)}…` : ""}`

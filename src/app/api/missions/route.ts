@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const store = new MissionStore();
     try {
       return missionResponse(
-        { missions: store.list(access.owner) },
+        { missions: store.listVisible(access.owner) },
         access.cookie,
       );
     } finally {

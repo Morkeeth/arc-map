@@ -23,6 +23,8 @@ test("Today last-hunt card deep-links reported evidence", () => {
   assert.equal(card.stance, "limited-support");
   assert.equal(card.evidenceCount, 2);
   assert.equal(card.firstEvidenceTx, `0x${"a".repeat(64)}`);
+  assert.equal(card.counterevidenceCount, 0);
+  assert.equal(card.sharedDecision, "provisional");
   assert.equal(lastHuntReturn([]), null);
 });
 
