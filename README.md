@@ -200,7 +200,8 @@ coverage; and mainnet security/operational readiness. See
 
 ## Architecture and provenance
 
-- [Architecture](docs/ARCHITECTURE.md)
+- [Current architecture diagram](docs/SUBMISSION-ARCHITECTURE.md)
+- [Architecture history and plan](docs/ARCHITECTURE.md)
 - [Hunter execution and payment boundaries](docs/HUNTER-EXECUTION.md)
 - [Decisions and code origin](docs/DECISIONS.md)
 - [Sponsor implementation requirements](docs/SPONSORS.md)
